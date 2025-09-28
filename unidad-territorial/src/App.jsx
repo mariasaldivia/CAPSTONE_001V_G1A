@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import Certificados from "./Modulos/Certificados/Certificados.jsx";
 import ComunicacionNoticias from "./Modulos/ComunicacionNoticias/ComunicacionNoticias.jsx";
+import Home from "./Modulos/Home.jsx";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       </nav>
 
       <Routes>
+        <Route path="/home" element={<Home/>} />
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
 
