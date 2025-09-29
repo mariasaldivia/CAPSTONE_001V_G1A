@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./Certificados.css";
+import { Link } from "react-router-dom";
+
 
 /* Función que acomoda el RUT con puntos y guion */
 function formatearRut(input) {
@@ -116,7 +118,7 @@ export default function Certificados() {
     <div className="page">
       {/* Menú superior */}
       <header className="topbar">
-        <div className="brand"><span>JVVV</span></div>
+        <Link className="brand" to="/Home"><span href="Home.jsx">JVVV</span></Link>
         <nav className="nav">
           <a className="link" href="#inicio">Inicio</a>
           <a className="link" href="#sobre">Sobre Nosotros</a>

@@ -1,6 +1,7 @@
 import HeroCarousel from "../components/HeroCaroulsel";
 import Header from "../components/Header";
 
+
 function Home({user, setUser}) {
   return (
     <div>
@@ -36,7 +37,9 @@ function Home({user, setUser}) {
             </p>
           </div>
         </div>
+        
       </section>
+       
 
       {/* Servicios */}
       <section id="servicios" style={styles.section}>

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import Certificados from "./Modulos/Certificados/Certificados.jsx";
 import ComunicacionNoticias from "./Modulos/ComunicacionNoticias/ComunicacionNoticias.jsx";
 import Home from "./Modulos/Home.jsx";
+import ProyectosVecinales from "./Modulos/ProyectosVecinales/ProyectosVecinales.jsx";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/home" element={<Home/>} />
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
+        <Route path="/ProyectosVecinales" element={<ProyectosVecinales />}/>
 
         {/* Redirecciones */}
         <Route path="/" element={<Navigate to="/certificados" replace />} />

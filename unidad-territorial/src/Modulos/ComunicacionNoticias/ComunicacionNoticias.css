@@ -4,7 +4,7 @@
   padding: 12px 24px; background: #0c1130; color: white;
   margin-bottom: 20px; /* espacio respecto al slider */
 }
-.topbar .brand { font-weight: bold; font-size: 18px; }
+.topbar .brand { font-weight: bold; font-size: 18px;text-decoration: none; }
 .topbar .nav { display: flex; gap: 12px; }
 .topbar .nav .link {
   padding: 8px 14px; border-radius: 10px; border: 1px solid #28305b;

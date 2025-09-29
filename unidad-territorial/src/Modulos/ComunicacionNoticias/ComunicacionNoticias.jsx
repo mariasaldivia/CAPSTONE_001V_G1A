@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
 import "./ComunicacionNoticias.css";
+import { Link } from "react-router-dom";
 
 export default function ComunicacionNoticias() {
   // Noticias del SLIDER (izquierda)
@@ -125,9 +126,8 @@ export default function ComunicacionNoticias() {
     <div className="page comu">
       {/* 🔷 BARRA SUPERIOR (idéntica a Certificados) */}
       <header className="topbar">
-        <div className="brand">
-          <span>JVVV</span>
-        </div>
+        <Link className="brand" to="/Home">
+        <span href="Home.jsx">JVVV</span></Link>
         <nav className="nav">
           <a className="link" href="#inicio">
             Inicio
