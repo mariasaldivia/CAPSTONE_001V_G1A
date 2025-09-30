@@ -11,7 +11,7 @@ a{color:inherit}
 .page{max-width:1100px;margin:0 auto;padding:18px}
 
 .topbar{display:flex;justify-content:space-between;align-items:center;background:#0e1433cc;border:1px solid var(--border);backdrop-filter:blur(6px);border-radius:16px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.brand{display:flex;gap:8px;align-items:center;font-weight:900;letter-spacing:.5px}
+.brand{display:flex;gap:8px;align-items:center;font-weight:900;letter-spacing:.5px; text-decoration: none;}
 .brand span{display:inline-flex;width:36px;height:36px;border-radius:50%;background:#111944;align-items:center;justify-content:center;border:1px solid var(--border)}
 .nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .link{padding:8px 12px;border-radius:999px;border:1px solid transparent;color:#d8dcff}

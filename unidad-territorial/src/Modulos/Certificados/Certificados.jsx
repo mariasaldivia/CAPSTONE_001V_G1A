@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Certificados.css";
+import { Link } from "react-router-dom";
+
 
 /* Función para dejar el RUT con puntos y guion
    (solo formatea, no valida) */

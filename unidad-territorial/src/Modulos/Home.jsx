@@ -31,6 +31,7 @@ function Home({ user, setUser }) {
             </p>
           </div>
         </div>
+        
       </section>
 
       <section id="servicios" style={styles.section}>
