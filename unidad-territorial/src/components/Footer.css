@@ -1,0 +1,105 @@
+/* Variables de colores */
+:root{
+  --nav-bg:#0f172a;
+  --nav-fg:#e5e7eb;
+  --nav-accent:#38bdf8;
+}
+
+/* Pie principal */
+.ft{
+  background:#0b1224;
+  color:var(--nav-fg);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+/* Contenedor en grid */
+.ft__grid{
+  max-width:1200px;
+  margin:0 auto;
+  padding:2rem 1rem;
+  display:grid;
+  gap:1.25rem;
+  grid-template-columns:1fr;
+}
+
+/* Grid en pantallas grandes */
+@media (min-width: 900px){
+  .ft__grid{
+    grid-template-columns: 1.2fr 1fr 1fr 1fr; /* marca + 3 columnas */
+    align-items:start;
+  }
+}
+
+/* Marca y logo */
+.ft__brand{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  margin-bottom:.5rem;
+}
+.ft__logo{
+  height: 250px;
+  width:auto;
+  object-fit:contain;
+  border-radius:8px;
+}
+.ft__brand-name{ font-size:1.05rem; font-weight:800; }
+.ft__brand-sub{ opacity:.9; }
+
+/* Columnas */
+.ft__col{ display:grid; gap:.5rem; }
+.ft__title{ margin:0; font-size:1.05rem; font-weight:800; }
+.ft__text{ margin:0; opacity:.95; line-height:1.6; }
+
+/* Listas de contacto */
+.ft__list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap:.35rem;
+}
+
+/* Enlaces */
+.ft__link{
+  color:inherit;
+  text-decoration:none;
+  opacity:.95;
+}
+.ft__link:hover{ color:var(--nav-accent); }
+
+/* Parte inferior del footer */
+.ft__bottom{
+  max-width:1200px;
+  margin:0 auto;
+  padding: .9rem 1rem 1.25rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.75rem;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.ft__legal{ display:flex; gap:.9rem; }
+
+/* Ajustes móviles */
+@media (max-width:640px){
+  .ft__bottom{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+
+/* Icono de Instagram */
+.ft__social {
+  margin-top: 10px;
+}
+
+.ft__icon {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.2s ease;
+}
+
+.ft__icon:hover {
+  transform: scale(1.1);
+}

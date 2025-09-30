@@ -1,15 +1,10 @@
 import HeroCarousel from "../components/HeroCaroulsel";
-import Header from "../components/Header";
 
-function Home({user, setUser}) {
+function Home({ user, setUser }) {
   return (
     <div>
-      {/* Header */}
-      <Header/>
-
-      {/*Aqui se llama al componente carrusel */}
       <HeroCarousel/>
-      {/* Sección Misión, Visión y Quiénes Somos */}
+
       <section id="nosotros" style={styles.section}>
         <h2>Nuestra Organización</h2>
         <div style={styles.mvvContainer}>
@@ -38,7 +33,6 @@ function Home({user, setUser}) {
         </div>
       </section>
 
-      {/* Servicios */}
       <section id="servicios" style={styles.section}>
         <h2>Nuestros Servicios</h2>
         <div style={styles.cardContainer}>
@@ -48,35 +42,26 @@ function Home({user, setUser}) {
         </div>
       </section>
 
-      {/* Contacto */}
-      <section id="contacto" style={styles.section}>
-        <h2>Contacto</h2>
-        <p>Email: contacto@miradorvolcanes.cl</p>
-        <p>Teléfono: +56 9 1234 5678</p>
-      </section>
-
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <p>© 2025 Mirador de Volcanes IV - Todos los derechos reservados</p>
-      </footer>
+  
+    
     </div>
   );
 }
 
 const styles = {
   mvvContainer: {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-  gap: "20px",
-  marginTop: "20px",
-},
-card: {
-  background: "#f4f4f4",
-  padding: "20px",
-  borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-  textAlign: "left",
-},
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "20px",
+    marginTop: "20px",
+  },
+  card: {
+    background: "#f4f4f4",
+    padding: "20px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    textAlign: "left",
+  },
 
   section: {
     padding: "50px 20px",
