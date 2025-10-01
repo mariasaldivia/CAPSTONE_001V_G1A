@@ -3,15 +3,20 @@ import { NavLink, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar() {
-  // Estado para saber si el menú móvil (hamburguesa) está abierto o cerrado
+  // Estado para saber si el menú móvil está abierto o cerrado
   const [open, setOpen] = useState(false);
 
   // Referencias: sirven para detectar clics fuera del menú
   const panelRef = useRef(null);
   const btnRef = useRef(null);
 
-  // Saber en qué página estamos (para cerrar el menú al cambiar de ruta)
+  // Saber en qué página estamos
   const { pathname } = useLocation();
+
+  // 🔴 Si estamos en /solicitudes (panel directiva), no mostramos la Navbar
+  if (pathname.startsWith("/solicitudes")) {
+    return null;
+  }
 
   // Cada vez que cambiamos de página → cerrar menú móvil
   useEffect(() => {
@@ -21,11 +26,13 @@ export default function Navbar() {
   // Si hacemos clic fuera del menú y el botón → cerrar menú
   useEffect(() => {
     function onClickOutside(e) {
-      if (!open) return; // si ya está cerrado, no hace nada
+      if (!open) return;
       const tgt = e.target;
       if (
-        panelRef.current && !panelRef.current.contains(tgt) &&
-        btnRef.current && !btnRef.current.contains(tgt)
+        panelRef.current &&
+        !panelRef.current.contains(tgt) &&
+        btnRef.current &&
+        !btnRef.current.contains(tgt)
       ) {
         setOpen(false);
       }
@@ -36,16 +43,20 @@ export default function Navbar() {
 
   // Si ensanchamos la pantalla (desktop), se cierra el menú móvil automáticamente
   useEffect(() => {
-    function onResize() { if (window.innerWidth >= 1024) setOpen(false); }
+    function onResize() {
+      if (window.innerWidth >= 1024) setOpen(false);
+    }
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Lista de enlaces del menú
+  // Lista de enlaces del menú (incluí Requerimientos Vecinos)
   const navItems = [
     { to: "/home", label: "Inicio" },
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
+    { to: "/requerimientos", label: "Solicitudes" }, // 👈 para los vecinos
+  
   ];
 
   return (
@@ -54,7 +65,7 @@ export default function Navbar() {
         {/* Logo + título de la junta */}
         <NavLink to="/home" className="nav__brand" aria-label="Unidad Territorial - Inicio">
           <img
-            src="/logo.png" // el logo está en la carpeta /public
+            src="/logo.png"
             alt="Unidad Territorial"
             className="nav__logo-img"
             loading="eager"
@@ -94,7 +105,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Panel del menú en móviles (aparece cuando presionas el botón hamburguesa) */}
+      {/* Panel del menú en móviles */}
       <div
         id="mobile-menu"
         ref={panelRef}
