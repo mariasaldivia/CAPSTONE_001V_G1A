@@ -1,0 +1,161 @@
+:root{
+  --adm-bg: #0b1224;
+  --adm-panel: #101937;
+  --adm-text: #e5e7eb;
+  --adm-soft: rgba(255,255,255,.08);
+  --accent: #38bdf8;
+}
+
+*{ box-sizing: border-box; }
+
+/* ===== LAYOUT BASE ===== */
+.adm{
+  background: var(--adm-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.adm__main{
+  padding: 1rem;
+  flex: 1;
+  display: grid;
+  gap: 1rem;
+}
+
+/* ===== ASIDE (mobile drawer por defecto) ===== */
+.adm__aside{
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  width: 82vw;
+  max-width: 300px;
+  background: #0f172a;
+  color: var(--adm-text);
+  transform: translateX(-100%);   /* oculto por defecto (mobile) */
+  transition: transform .25s ease;
+  z-index: 80;
+  padding: .9rem .75rem 1rem;
+  overflow-y: auto;
+}
+.adm__aside--open{ transform: translateX(0); }
+
+/* Backdrop móvil */
+.adm__backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.6);
+  backdrop-filter: blur(2px);
+  z-index: 70;
+}
+
+/* Marca: logo + nombre/cargo */
+.adm__brand{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: .75rem 0 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  margin-bottom: .75rem;
+  text-align: center;
+}
+.adm__brand-logo{
+  width: 72px; height: 72px; object-fit: contain; border-radius: 12px;
+}
+.adm__brand-user{ margin-top: .6rem; line-height: 1.2; padding: 0 .25rem; }
+.adm__brand-name,
+.adm__brand-role{
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 220px;
+}
+.adm__brand-name{ font-weight: 600; font-size: .95rem; }
+.adm__brand-role{ font-size: .8rem; opacity: .8; }
+
+/* Menú */
+.adm__menu{ display: grid; gap: .25rem; }
+.adm__item{
+  display: block; text-decoration: none; color: var(--adm-text);
+  background: transparent; border: 0; text-align: left;
+  padding: .65rem .75rem; border-radius: .6rem; cursor: pointer;
+}
+.adm__item:hover{ background: var(--adm-soft); }
+.adm__item--active{ background: rgba(56,189,248,.12); color: var(--accent); }
+.adm__spacer{ height: .8rem; }
+
+/* ===== TOP BAR ===== */
+.adm__top{
+  position: sticky; top: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem;
+  padding: .65rem .9rem;
+  background: var(--adm-bg);
+  color: var(--adm-text);
+  border-bottom: 1px solid var(--adm-soft);
+  z-index: 50;
+}
+.adm__title{ font-size: 1.05rem; margin: 0; }
+
+/* Usuario (puedes ocultarlo desde props showTopUser) */
+.adm__user{ text-align: right; line-height: 1.1; }
+.adm__user-name{ display: block; }
+.adm__user-role{ opacity: .8; }
+
+/* Hamburguesa: visible en móvil */
+.adm__burger{
+  display: inline-flex; flex-direction: column; gap: 4px;
+  width: 36px; height: 30px;
+  background: transparent; border: 0; cursor: pointer;
+}
+.adm__burger span{
+  height: 2px; width: 24px; background: var(--adm-text);
+  transition: transform .2s ease, opacity .2s ease;
+}
+.adm__burger.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
+.adm__burger.is-open span:nth-child(2){ opacity: 0; }
+.adm__burger.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+
+/* ===== DESKTOP (≥1024px): aside fijo, hamburguesa oculta ===== */
+@media (min-width: 1024px){
+  .adm{
+    display: grid;
+    grid-template-columns: 280px 1fr;
+  }
+  .adm__aside{
+    transform: none !important;    /* siempre visible */
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 280px;
+    border-right: 1px solid var(--adm-soft);
+  }
+  .adm__main{ margin-left: 0px; }
+  .adm__burger{ display: none; }   /* solo barra (sin hamburguesa) en desktop */
+  .adm__backdrop{ display: none !important; }
+  .adm__brand-name, .adm__brand-role{ max-width: 240px; }
+}
+/* Estado activo tipo "pill" (como tu ejemplo de Certificados) */
+.adm__item {
+  display: block;
+  text-decoration: none;
+  color: var(--adm-text);
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: .65rem .75rem;
+  border-radius: .8rem;           /* un poco más redondeado */
+  cursor: pointer;
+}
+
+.adm__item--active {
+  /* Fondo verdoso suave + texto verde */
+  background: rgba(34, 197, 94, 0.15);   /* verde suave */
+  box-shadow: inset 0 0 0 9999px rgba(34, 197, 94, 0.08); /* efecto pill lleno */
+  color: #22c55e;                        /* texto verde */
+  font-weight: 600;
+}
+
+/* Hover consistente */
+.adm__item:hover {
+  background: var(--adm-soft);
+}
+.adm__item--active:hover {
+  background: rgba(34, 197, 94, 0.18);
+}

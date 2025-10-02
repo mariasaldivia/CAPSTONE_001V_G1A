@@ -1,274 +1,394 @@
-import { useMemo, useState } from "react";
+// src/Modulos/Requerimientos/RequerimientosDirectiva.jsx
+import { useMemo, useRef, useState } from "react";
+import PanelLateralD from "../../components/PanelLateralD";
 import "./RequerimientosDirectiva.css";
 
-// Datos de ejemplo (puedes reemplazar por tu fetch a API)
-const PENDIENTES_MOCK = [
-  { id: "R0001", socio: "Fauget", tipo: "Actividades", fecha: "Hoy", estado: "Pendiente" },
-  { id: "R0002", socio: "Claudia", tipo: "Seguridad",  fecha: "Hoy (2m)", estado: "En revisión" },
-  { id: "R0003", socio: "Jorge",   tipo: "Mejoras",    fecha: "01/09/25", estado: "Aprobado" },
+const MOCK = [
+  {
+    id: "R10234",
+    socio: "Claudia",
+    tipo: "Seguridad",
+    fecha: "2025-10-01T12:00:00",
+    fechaLabel: "Hoy",
+    estado: "Pendiente",
+    telefono: "+569 9999 9999",
+    direccion: "Calle 12 #345, Villa X",
+    detalle:
+      "Solicito revisión de cámaras por incidentes ocurridos anoche en la calle 12.",
+    adjunto:
+      "https://images.unsplash.com/photo-1509099836639-18ba1795216d?q=80&w=1200&auto=format&fit=crop",
+    creado_hace: "5m",
+  },
+  {
+    id: "R10235",
+    socio: "Jorge",
+    tipo: "Mejoras",
+    fecha: "2025-09-01T10:00:00",
+    fechaLabel: "01/09/25",
+    estado: "En revisión",
+    telefono: "+569 8888 8888",
+    direccion: "Los Robles 221, Villa Y",
+    detalle:
+      "Petición de cambio de escaños en la plaza por desgaste y astillas.",
+    adjunto:
+      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=1200&auto=format&fit=crop",
+    creado_hace: "2h",
+  },
+  {
+    id: "R10236",
+    socio: "Fauget",
+    tipo: "Actividades",
+    fecha: "2025-10-01T12:20:00",
+    fechaLabel: "Hoy",
+    estado: "Pendiente",
+    telefono: "+569 7777 7777",
+    direccion: "Av. Central 123",
+    detalle: "Solicitud de permiso para actividad recreativa comunitaria.",
+    adjunto:
+      "https://images.unsplash.com/photo-1542044801-7ea5c6e69e7a?q=80&w=1200&auto=format&fit=crop",
+    creado_hace: "12m",
+  },
 ];
 
-const HISTORIAL_MOCK = [
-  { id: "R0003", socio: "Jorge",   tipo: "Mejoras",   fecha: "01/09/25",  estado: "Aprobado" },
-  { id: "R0004", socio: "María",   tipo: "Ambiente",  fecha: "28/08/25",  estado: "Rechazado" },
-  { id: "R0005", socio: "Pedro",   tipo: "Seguridad", fecha: "21/08/25",  estado: "Derivado" },
+const MOCK_HISTORY = [
+  { id: "R10234", accion: "Pendiente",    ts: "2025-10-01T09:20:00" },
+  { id: "R10235", accion: "En revisión",  ts: "2025-10-01T09:35:00" },
+  { id: "R10230", accion: "Aprobado",     ts: "2025-09-30T18:12:00" },
+  { id: "R10229", accion: "Rechazado",    ts: "2025-09-29T14:05:00" },
+  { id: "R10228", accion: "Pendiente",    ts: "2025-09-29T08:41:00" },
 ];
 
-export default function RequerimientosDirectiva() {
-  // Lista principal (puedes separar en "pendientes" y "historial")
-  const [pendientes, setPendientes] = useState(PENDIENTES_MOCK);
-  const [historial, setHistorial] = useState(HISTORIAL_MOCK);
-
-  // Fila seleccionada para revisar
+function RequerimientosContent() {
+  // Lista
+  const [orden, setOrden] = useState("recientes");
   const [seleccion, setSeleccion] = useState(null);
 
-  // Comentario de respuesta
-  const [comentario, setComentario] = useState("");
+  // Historial
+  const [showHistory, setShowHistory] = useState(false);
+  const [histOrder, setHistOrder] = useState("recientes"); // recientes | antiguos | aprobados | rechazados | pendientes | en_revision
 
-  // Acciones
-  const revisar = (req) => {
-    setSeleccion({
-      ...req,
-      // Detalle ficticio para mostrar abajo
-      detalle:
-        "Solicito revisar cámaras de seguridad del pasaje. Ayer hubo un robo de bicicleta.",
-      adjunto:
-        "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=1200&q=80&auto=format&fit=crop",
-    });
-  };
+  // Otros
+  const [respuesta, setRespuesta] = useState("");
+  const detailRef = useRef(null);
+  const historyRef = useRef(null);
 
-  const moverAPasado = (req, nuevoEstado) => {
-    // quita de pendientes
-    setPendientes((p) => p.filter((x) => x.id !== req.id));
-    // agrega al historial
-    setHistorial((h) => [
-      { ...req, estado: nuevoEstado, fecha: "Hoy" },
-      ...h,
-    ]);
-    // limpia panel
-    setSeleccion(null);
-    setComentario("");
-  };
-
-  const aprobar = () => { if (seleccion) moverAPasado(seleccion, "Aprobado"); };
-  const rechazar = () => { if (seleccion) moverAPasado(seleccion, "Rechazado"); };
-  const derivar  = () => { if (seleccion) moverAPasado(seleccion, "Derivado"); };
-
-  // Exportar a “PDF”: usa impresión del navegador sobre el área #admin-export
-  const exportarPDF = () => {
-    window.print();
-  };
-
-  // Conteos para “torta” (simple)
-  const totales = useMemo(() => {
-    const base = { Pendiente: 0, "En revisión": 0, Aprobado: 0, Rechazado: 0, Derivado: 0 };
-    [...pendientes, ...historial].forEach((r) => {
-      if (r.estado === "Pendiente") base["Pendiente"]++;
-      else if (r.estado === "En revisión") base["En revisión"]++;
-      else if (r.estado === "Aprobado") base["Aprobado"]++;
-      else if (r.estado === "Rechazado") base["Rechazado"]++;
-      else base["Derivado"]++;
-    });
+  const list = useMemo(() => {
+    const base = [...MOCK];
+    if (orden === "recientes") {
+      return base.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    }
+    if (orden === "pendientes") {
+      return base.sort((a, b) =>
+        (a.estado === "Pendiente" ? -1 : 1) - (b.estado === "Pendiente" ? -1 : 1)
+      );
+    }
     return base;
-  }, [pendientes, historial]);
+  }, [orden]);
+
+  const histList = useMemo(() => {
+    let arr = [...MOCK_HISTORY];
+    const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
+    const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
+    switch (histOrder) {
+      case "antiguos":
+        return arr.sort(byTsAsc);
+      case "aprobados":
+        return arr.filter((h) => h.accion.toLowerCase() === "aprobado").sort(byTsDesc);
+      case "rechazados":
+        return arr.filter((h) => h.accion.toLowerCase() === "rechazado").sort(byTsDesc);
+      case "pendientes":
+        return arr.filter((h) => h.accion.toLowerCase() === "pendiente").sort(byTsDesc);
+      case "en_revision":
+        return arr.filter((h) => h.accion.toLowerCase() === "en revisión").sort(byTsDesc);
+      case "recientes":
+      default:
+        return arr.sort(byTsDesc);
+    }
+  }, [histOrder]);
+
+  const aprobar = () => seleccion && alert(`Aprobado ${seleccion.id}`);
+  const rechazar = () => seleccion && alert(`Rechazado ${seleccion.id}`);
+  const derivar = () => seleccion && alert(`Derivado ${seleccion.id}`);
+
+  const scrollTo = (ref) =>
+    ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const onRevisar = (r) => {
+    setSeleccion(r);
+    scrollTo(detailRef);
+  };
+
+  const onToggleHistory = () => {
+    setShowHistory((s) => !s);
+    setTimeout(() => scrollTo(historyRef), 0);
+  };
+
+  const exportHistoryToPDF = () => {
+    // Asegura que el historial esté visible durante la impresión
+    const wasVisible = showHistory;
+    if (!wasVisible) setShowHistory(true);
+    setTimeout(() => {
+      window.print();
+      if (!wasVisible) setShowHistory(false);
+    }, 50);
+  };
+
+  const fmtHour = (iso) =>
+    new Date(iso).toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const fmtDay = (iso) =>
+    new Date(iso).toLocaleDateString(undefined, {
+      year: "2-digit",
+      month: "2-digit",
+      day: "2-digit",
+    });
 
   return (
-    <div className="adm">
-      {/* Sidebar propia (esta vista no usa la Navbar global) */}
-      <aside className="adm__aside">
-        <div className="adm__brand">
-          <img src={import.meta.env.BASE_URL + "logo.png"} alt="JVVV" />
-          <div className="adm__brand-name">Panel Directiva</div>
+    <div className="rd">
+      <header className="rd__header">
+        <div className="rd__headerRow">
+          <h1 className="rd__title">Requerimientos</h1>
+
+          {/* Acciones top: Historial + Exportar PDF */}
+          <div className="rd__actionsTop">
+            <button
+              type="button"
+              className="rd__btn rd__btn--ghost"
+              onClick={onToggleHistory}
+              aria-expanded={showHistory}
+              aria-controls="rd-history"
+            >
+              {showHistory ? "Ocultar historial" : "Historial"}
+            </button>
+            <button
+              type="button"
+              className="rd__btn rd__btn--ghost"
+              onClick={exportHistoryToPDF}
+              aria-label="Exportar historial a PDF"
+            >
+              Exportar PDF
+            </button>
+          </div>
         </div>
 
-        <nav className="adm__menu">
-          <button className="adm__item">Dashboard</button>
-          <button className="adm__item">Socios</button>
-          <button className="adm__item">Pagos y Cuotas</button>
-          <button className="adm__item">Certificados</button>
-         
+        <p className="rd__desc">
+          En este espacio podrás <strong>revisar</strong>,{" "}
+          <strong>aceptar</strong> o <strong>rechazar</strong> los
+          requerimientos enviados por los vecinos, y dejar comentarios cuando
+          corresponda.
+        </p>
+      </header>
 
-          <button className="adm__item adm__item--active">Solicitudes</button>
-
-          
-          <button className="adm__item">Documentos</button>
-          <button className="adm__item">Noticias</button>
-
-          <div className="adm__spacer" />
-          <button className="adm__item">Cuenta</button>
-          <button className="adm__item">Configuración</button>
-          <button className="adm__item">Centro de Ayuda</button>
-          <button className="adm__item">Cerrar sesión</button>
-        </nav>
-      </aside>
-
-      {/* Contenido */}
-      <main className="adm__main">
-        {/* Encabezado: bienvenida + búsqueda */}
-        <header className="adm__top">
-          <h1>Bienvenid@ Directiva</h1>
-          <div className="adm__search">
-            
-            <div className="adm__user">
-              <span>Nombre directiva</span>
-              <small>Cargo</small>
-            </div>
-          </div>
-        </header>
-
-        {/* Bloque principal con tabla + gráfico + botones */}
-        <section id="admin-export" className="adm__card">
-          <div className="adm__card-head">
-            <h2>Requerimientos Pendientes</h2>
-            <div className="adm__actions">
-              <button className="btn btn-ghost" onClick={() => alert("Mostrando historial debajo")}>
-                Historial
-              </button>
-              <button className="btn" onClick={exportarPDF}>Exportar</button>
-            </div>
+      <section className="rd__grid">
+        {/* LISTA */}
+        <section className="rd__card rd__list">
+          <div className="rd__listHead">
+            <h2>Requerimientos pendientes</h2>
+            <label className="rd__order">
+              Ordenar por{" "}
+              <select
+                value={orden}
+                onChange={(e) => setOrden(e.target.value)}
+                aria-label="Ordenar lista"
+              >
+                <option value="recientes">Recientes</option>
+                <option value="pendientes">Pendientes</option>
+              </select>
+            </label>
           </div>
 
-          <div className="adm__grid2">
-            {/* Tabla pendientes */}
-            <div className="adm__table-wrap">
-              <table className="adm__table">
-                <thead>
-                  <tr>
-                    <th>N°</th>
-                    <th>Socio</th>
-                    <th>Tipo de R.</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
+          <div className="rd__tableWrap">
+            <table className="rd__table">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Socio</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((r) => (
+                  <tr key={r.id} className={seleccion?.id === r.id ? "is-sel" : ""}>
+                    <td>{r.id}</td>
+                    <td>{r.socio}</td>
+                    <td>{r.tipo}</td>
+                    <td>{r.fechaLabel ?? fmtDay(r.fecha)}</td>
+                    <td>
+                      <span
+                        className={
+                          "rd__badge " +
+                          (r.estado === "Pendiente"
+                            ? "is-pending"
+                            : r.estado === "En revisión"
+                            ? "is-review"
+                            : "is-ok")
+                        }
+                      >
+                        {r.estado}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="rd__btn rd__btn--ghost"
+                        onClick={() => onRevisar(r)}
+                      >
+                        Revisar
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {pendientes.map((r) => (
-                    <tr key={r.id}>
-                      <td>{r.id}</td>
-                      <td>{r.socio}</td>
-                      <td>{r.tipo}</td>
-                      <td>{r.fecha}</td>
-                      <td>
-                        <span className={`pill pill--${r.estado.replace(" ", "").toLowerCase()}`}>
-                          {r.estado}
-                        </span>
-                      </td>
-                      <td>
-                        <button className="btn btn-small" onClick={() => revisar(r)}>
-                          Revisar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {pendientes.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: "center", opacity: .8 }}>
-                        No hay pendientes
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              <button className="linklike" onClick={() => alert("Ir a un listado completo")}>
-                Ver todos los Requerimientos
-              </button>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            {/* “Gráfico” simple de conteos (texto) */}
-            <div className="adm__counts">
-              <h3>Resumen</h3>
-              <ul>
-                <li>En revisión: {totales["En revisión"]}</li>
-                <li>Pendientes: {totales["Pendiente"]}</li>
-                <li>Aprobados: {totales["Aprobado"]}</li>
-                <li>Rechazados: {totales["Rechazado"]}</li>
-                <li>Derivados: {totales["Derivado"]}</li>
-              </ul>
-            </div>
+          <div className="rd__listFooter">
+            <button className="rd__link" type="button">
+              Ver todos los requerimientos
+            </button>
           </div>
         </section>
 
-        {/* Panel de detalle (aparece al presionar “Revisar”) */}
-        <section className="adm__card">
-          <div className="adm__detail">
-            <div className="adm__detail-left">
-              <h3>Datos de solicitante</h3>
-              {seleccion ? (
-                <>
-                  <div className="row"><strong>Socio:</strong> {seleccion.socio}</div>
-                  <div className="row"><strong>ID:</strong> {seleccion.id}</div>
-                  <div className="row"><strong>Tipo:</strong> {seleccion.tipo}</div>
-                  <div className="row"><strong>Fecha:</strong> {seleccion.fecha}</div>
+        {/* DETALLE */}
+        <section className="rd__card rd__detail" ref={detailRef} id="rd-detail">
+          <h2>Detalle del requerimiento</h2>
 
-                  <h4>Detalle del Requerimiento</h4>
-                  <p className="adm__detalle-text">{seleccion.detalle}</p>
-
-                  <h4>Archivo Adjunto</h4>
-                  <div className="adm__adjunto">
-                    <img src={seleccion.adjunto} alt="Adjunto" />
-                  </div>
-                </>
-              ) : (
-                <p style={{opacity:.8}}>Selecciona un requerimiento para revisarlo.</p>
-              )}
-            </div>
-
-            <div className="adm__detail-right">
-              <h3>Acción</h3>
-              <div className="adm__botones">
-                <button className="btn ok"     disabled={!seleccion} onClick={aprobar}>Aprobar</button>
-                <button className="btn danger" disabled={!seleccion} onClick={rechazar}>Rechazar</button>
-                <button className="btn warn"   disabled={!seleccion} onClick={derivar}>Derivar</button>
+          {seleccion ? (
+            <div className="rd__detailGrid">
+              <div className="rd__kv">
+                <span className="rd__k">Solicitante</span>
+                <span className="rd__v">
+                  {seleccion.socio} · {seleccion.telefono}
+                </span>
               </div>
 
-              <label className="adm__label">Agregar comentario de respuesta</label>
-              <textarea
-                className="adm__textarea"
-                rows={4}
-                placeholder="Escribe un comentario para el vecino…"
-                value={comentario}
-                onChange={(e) => setComentario(e.target.value)}
-                disabled={!seleccion}
-              />
+              <div className="rd__kv">
+                <span className="rd__k">Tipo</span>
+                <span className="rd__v">{seleccion.tipo}</span>
+              </div>
+
+              <div className="rd__kv">
+                <span className="rd__k">Dirección</span>
+                <span className="rd__v">{seleccion.direccion}</span>
+              </div>
+
+              <div className="rd__kv">
+                <span className="rd__k">Estado</span>
+                <span className="rd__v">
+                  <span className="rd__badge is-review">{seleccion.estado}</span>
+                </span>
+              </div>
+
+              <div className="rd__block">
+                <span className="rd__k">Detalle</span>
+                <p className="rd__text">{seleccion.detalle}</p>
+              </div>
+
+              <div className="rd__block">
+                <span className="rd__k">Adjunto</span>
+                <div className="rd__img">
+                  <img src={seleccion.adjunto} alt="Adjunto del requerimiento" />
+                </div>
+              </div>
+
+              <div className="rd__actions">
+                <button className="rd__btn rd__btn--ok" onClick={aprobar}>
+                  Aprobar
+                </button>
+                <button className="rd__btn rd__btn--danger" onClick={rechazar}>
+                  Rechazar
+                </button>
+                <button className="rd__btn rd__btn--warn" onClick={derivar}>
+                  Derivar
+                </button>
+              </div>
+
+              <div className="rd__resp">
+                <label htmlFor="resp">Agregar comentario de respuesta</label>
+                <textarea
+                  id="resp"
+                  rows={4}
+                  value={respuesta}
+                  onChange={(e) => setRespuesta(e.target.value)}
+                  placeholder="Escribe aquí el comentario para el vecino…"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rd__empty">
+              Selecciona <strong>Revisar</strong> en un requerimiento para ver el detalle.
+            </div>
+          )}
         </section>
 
-        {/* Historial simple */}
-        <section className="adm__card">
-          <h2>Historial</h2>
-          <table className="adm__table">
-            <thead>
-              <tr>
-                <th>N°</th>
-                <th>Socio</th>
-                <th>Tipo</th>
-                <th>Fecha</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historial.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.id}</td>
-                  <td>{r.socio}</td>
-                  <td>{r.tipo}</td>
-                  <td>{r.fecha}</td>
-                  <td>
-                    <span className={`pill pill--${r.estado.replace(" ", "").toLowerCase()}`}>
-                      {r.estado}
-                    </span>
-                  </td>
-                </tr>
+        {/* HISTORIAL: solo visible cuando showHistory === true */}
+        {showHistory && (
+          <section
+            className="rd__card rd__history is-open"
+            ref={historyRef}
+            id="rd-history"
+          >
+            <div className="rd__historyHead">
+              <h2>Historial</h2>
+              <div className="rd__historyActions">
+                <label className="rd__order">
+                  Ordenar por{" "}
+                  <select
+                    value={histOrder}
+                    onChange={(e) => setHistOrder(e.target.value)}
+                    aria-label="Ordenar historial"
+                  >
+                    <option value="recientes">Más recientes</option>
+                    <option value="antiguos">Más antiguos</option>
+                    <option value="aprobados">Aprobados</option>
+                    <option value="rechazados">Rechazados</option>
+                    <option value="pendientes">Pendientes</option>
+                    <option value="en_revision">En revisión</option>
+                  </select>
+                </label>
+                {/* Botón para cerrar el historial */}
+                <button
+                  type="button"
+                  className="rd__btn rd__btn--ghost"
+                  onClick={() => setShowHistory(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+
+            <ul className="rd__timeline">
+              {histList.map((h, i) => (
+                <li key={i}>
+                  <span className="rd__tWhen">
+                    {fmtDay(h.ts)} · {fmtHour(h.ts)}
+                  </span>
+                  <span className="rd__tDot" />
+                  <span className="rd__tTxt">
+                    <strong>{h.id}</strong>{" "}
+                    {h.accion === "Pendiente" ? "marcado como" : "cambiado a"}{" "}
+                    <em>{h.accion}</em>.
+                  </span>
+                </li>
               ))}
-              {historial.length === 0 && (
-                <tr><td colSpan={5} style={{textAlign:"center", opacity:.8}}>Sin historial</td></tr>
-              )}
-            </tbody>
-          </table>
-        </section>
-      </main>
+            </ul>
+          </section>
+        )}
+      </section>
     </div>
+  );
+}
+
+export default function RequerimientosDirectiva() {
+  const user = { nombre: "Nombre Directiva", cargo: "Cargo" }; // reemplaza por los reales
+  return (
+    <PanelLateralD title="Requerimientos" user={user} showTopUser={false}>
+      <RequerimientosContent />
+    </PanelLateralD>
   );
 }
