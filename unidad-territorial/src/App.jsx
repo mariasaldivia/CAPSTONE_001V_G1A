@@ -10,6 +10,8 @@ import ProyectosVecinales from "./Modulos/ProyectosVecinales/ProyectosVecinales.
 // 👇 Importa ambas vistas
 import RequerimientosDirectiva from "./Modulos/Requerimientos/RequerimientosDirectiva.jsx";
 import RequerimientosVecino from "./Modulos/Requerimientos/RequerimientosVecino.jsx";
+import Login from "./Modulos/Auth/Login.jsx";
+import Register from "./Modulos/Auth/Register.jsx";
 
 export default function App() {
   return (
@@ -33,6 +35,8 @@ function AppInner() {
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
         <Route path="/proyectos-vecinales" element={<ProyectosVecinales />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* 👇 DIRECTIVA */}
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />

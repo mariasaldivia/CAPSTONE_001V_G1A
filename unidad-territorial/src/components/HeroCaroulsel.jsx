@@ -29,7 +29,7 @@ function HeroCarousel() {
       navigation
       autoplay={{ delay: 4000, disableOnInteraction: false }}
       loop={true}
-      style={{ width: "100%", height: "70vh" }}
+      style={{ width: "100%", height: "80vh" }}
     >
       {slides.map((slide, index) => (
         <SwiperSlide key={index}>

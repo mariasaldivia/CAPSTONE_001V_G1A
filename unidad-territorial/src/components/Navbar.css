@@ -132,21 +132,20 @@
 .nav__inner {
   max-width: 1200px;
   margin: 0 auto;
-  height: 64px;
-  padding: 0 .75rem 0 .25rem;
+  padding: 0 .75rem 0 .25rem; 
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: .5rem;
 }
 
-/* Imagen del logo */
+/* Imagen del logo 
 .nav__logo-img {
   height: 70px;
   width: auto;
   object-fit: contain;
   border-radius: 8px;
-}
+}*/
 
 /* Ocultar texto en móvil */
 @media (max-width: 640px) {
@@ -158,8 +157,8 @@
   max-width: none;
   width: 100%;
   margin: 0;
-  height: 64px;
-  padding: 0 .75rem 0 0;
+  height: 70px;
+  padding: 0 .75rem 0 2rem; /* arriba, derecha, abajo, izquierda */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -168,7 +167,7 @@
 
 /* Logo más grande */
 .nav__logo-img {
-  height: 80px;
+  height: 65px;
   width: auto;
   object-fit: contain;
 }
