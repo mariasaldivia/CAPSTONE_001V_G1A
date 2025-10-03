@@ -18,6 +18,7 @@
   border-radius: 15px;
   box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
   width: 400px;
+  max-width: 90%; /* nunca más ancho que el viewport */
   text-align: center;
   animation: fadeIn 0.7s ease-in-out;
   border: 1px solid #1C2758;
@@ -33,12 +34,21 @@
 /* Inputs */
 .input-group {
   margin-bottom: 15px;
+  position: relative;
+}
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #dbdbdb;
 }
 
 .input-group input {
   background-color: #0A0F2C;
   width: 100%;
   padding: 12px;
+  padding-left: 40px;
   border: 1px solid #1C2758;
   border-radius: 8px;
   outline: none;
@@ -65,7 +75,7 @@
 }
 
 .btn-auth:hover {
-  background: #b05521;
+  background: #006a9f; /* azul más profundo */
 }
 
 .error-text {
@@ -75,10 +85,12 @@
 }
 
 .demo-credentials {
-  margin-top: 20px;
+  margin-top: 25px;
+  padding-top: 10px;
   font-size: 13px;
   color: #ffffff;
   text-align: center;
+  border-top: 1px solid #1C2758;
 }
 
 .register-text {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../Auth/Auth.css";
+import { FaUser, FaLock } from "react-icons/fa";
 //Usuarios falsos para probar rutas
 const fakeUsers = [
   { username: "admin", password: "1234", role: "directiva" },
@@ -40,6 +41,7 @@ function Login({ setUser }) {
           <h2>Inicia Sesión</h2>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
+              <FaUser className="input-icon" />
               <input
                 type="text"
                 placeholder="Usuario o correo"
@@ -50,6 +52,7 @@ function Login({ setUser }) {
             </div>
 
             <div className="input-group">
+              <FaLock className="input-icon" />
               <input
                 type="password"
                 placeholder="Contraseña"
