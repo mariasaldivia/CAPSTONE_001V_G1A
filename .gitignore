@@ -1,0 +1,47 @@
+#  FRONTEND (React + Vite) 
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node modules
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+#  BACKEND (Node + Express + PostgreSQL) 
+# Archivos de entorno
+.env
+/build
+/tmp
+coverage/
+*.pid
+*.seed
+*.tgz
+
+# Carpetas de build / dist
+dist/
+build/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# --- DEPLOY O DOCKER ---
+docker-compose.override.yml
