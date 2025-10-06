@@ -5,11 +5,11 @@ import Footer from "./components/Footer.jsx";
 import Certificados from "./Modulos/Certificados/Certificados.jsx";
 import ComunicacionNoticias from "./Modulos/ComunicacionNoticias/ComunicacionNoticias.jsx";
 import Home from "./Modulos/Home.jsx";
-import ProyectosVecinales from "./Modulos/ProyectosVecinales/ProyectosVecinales.jsx";
-
 // 👇 Importa ambas vistas
 import RequerimientosDirectiva from "./Modulos/Requerimientos/RequerimientosDirectiva.jsx";
 import RequerimientosVecino from "./Modulos/Requerimientos/RequerimientosVecino.jsx";
+import ProyectosVecinalesAdmin from "./Modulos/ProyectosVecinales/ProyectosVecinalesAdmin";
+import ProyectosVecinalesVecino from "./Modulos/ProyectosVecinales/ProyectosVecinalesVecino.jsx";
 import Login from "./Modulos/Auth/Login.jsx";
 import Register from "./Modulos/Auth/Register.jsx";
 
@@ -34,15 +34,16 @@ function AppInner() {
         <Route path="/home" element={<Home />} />
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
-        <Route path="/proyectos-vecinales" element={<ProyectosVecinales />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* 👇 DIRECTIVA */}
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />
+        <Route path="/proyectos-vecinales" element={<ProyectosVecinalesAdmin />} /> 
 
         {/* 👇 VECINOS */}
         <Route path="/requerimientos" element={<RequerimientosVecino />} />
+        <Route path="/proyectosVecino" element={<ProyectosVecinalesVecino />} />  
 
         {/* Redirecciones */}
         <Route path="/" element={<Navigate to="/home" replace />} />

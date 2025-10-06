@@ -1,0 +1,12 @@
+.rv__table td, .rv__table th {
+  color: #111827; /* texto más oscuro */
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e40af;
+}
+details[open] summary {
+  color: #0f172a;
+}
