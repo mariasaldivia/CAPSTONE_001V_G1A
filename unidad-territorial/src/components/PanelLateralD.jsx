@@ -1,3 +1,4 @@
+// src/components/PanelLateralD.jsx
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./PanelLateralD.css";
@@ -64,7 +65,7 @@ export default function PanelLateralD({
         </div>
 
         <nav className="adm__menu" onClick={closeMenu}>
-          {/* ⚠️ Este path debe existir en tu router */}
+          {/* ✅ Directiva: Requerimientos (ruta existente) */}
           <NavLink
             to="/solicitudes"
             end
@@ -75,7 +76,7 @@ export default function PanelLateralD({
             Requerimientos
           </NavLink>
 
-          {/* (Placeholders para futuras vistas) */}
+          {/* 👇 ejemplos estos no tienen ruta */}
           <NavLink
             to="/admin/socios"
             className={({ isActive }) =>
@@ -84,6 +85,7 @@ export default function PanelLateralD({
           >
             Socios
           </NavLink>
+
           <NavLink
             to="/admin/pagos"
             className={({ isActive }) =>
@@ -92,14 +94,18 @@ export default function PanelLateralD({
           >
             Pagos y Cuotas
           </NavLink>
+
+          {/* ✅ Certificados de la Directiva tiene ruta */}
           <NavLink
-            to="/admin/certificados"
+            to="/directiva/certificados"
+            end
             className={({ isActive }) =>
               "adm__item" + (isActive ? " adm__item--active" : "")
             }
           >
             Certificados
           </NavLink>
+
           <NavLink
             to="/admin/documentos"
             className={({ isActive }) =>
@@ -108,6 +114,7 @@ export default function PanelLateralD({
           >
             Documentos
           </NavLink>
+
           <NavLink
             to="/admin/noticias"
             className={({ isActive }) =>
@@ -127,6 +134,7 @@ export default function PanelLateralD({
           >
             Cuenta
           </NavLink>
+
           <NavLink
             to="/admin/config"
             className={({ isActive }) =>
@@ -135,6 +143,7 @@ export default function PanelLateralD({
           >
             Configuración
           </NavLink>
+
           <NavLink
             to="/admin/ayuda"
             className={({ isActive }) =>
