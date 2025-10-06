@@ -2,20 +2,25 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 
+/* Vistas Vecinos */
+import Home from "./Modulos/Home.jsx";
 import Certificados from "./Modulos/Certificados/Certificados.jsx";
 import ComunicacionNoticias from "./Modulos/ComunicacionNoticias/ComunicacionNoticias.jsx";
-import Home from "./Modulos/Home.jsx";
-// 👇 Importa ambas vistas
-import RequerimientosDirectiva from "./Modulos/Requerimientos/RequerimientosDirectiva.jsx";
 import RequerimientosVecino from "./Modulos/Requerimientos/RequerimientosVecino.jsx";
-import ProyectosVecinalesAdmin from "./Modulos/ProyectosVecinales/ProyectosVecinalesAdmin";
 import ProyectosVecinalesVecino from "./Modulos/ProyectosVecinales/ProyectosVecinalesVecino.jsx";
+
+/* Vistas Directiva */
+import RequerimientosDirectiva from "./Modulos/Requerimientos/RequerimientosDirectiva.jsx";
+import ProyectosVecinalesAdmin from "./Modulos/ProyectosVecinales/ProyectosVecinalesAdmin";
+import CertificadosDirectiva from "./Modulos/Certificados/CertificadosDirectiva.jsx";
+
+/* Auth */
 import Login from "./Modulos/Auth/Login.jsx";
 import Register from "./Modulos/Auth/Register.jsx";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter /* basename={import.meta.env.BASE_URL} */>
       <AppInner />
     </BrowserRouter>
   );
@@ -23,34 +28,40 @@ export default function App() {
 
 function AppInner() {
   const { pathname } = useLocation();
-  const isAdminPanel = pathname.startsWith("/solicitudes"); // solo para directiva
+
+  // 🔹 Considera panel de directiva tanto /solicitudes como cualquier /directiva/*
+  const isAdminPanel =
+    pathname === "/solicitudes" ||
+    pathname.startsWith("/directiva/");
 
   return (
     <>
-      {/* Navbar: la ocultas dentro de Navbar.jsx si es /solicitudes */}
-      <Navbar />
+      {/* Oculta el Navbar en panel de directiva si así lo deseas */}
+      {!isAdminPanel && <Navbar />}
 
       <Routes>
+        {/* Público / Vecinos */}
         <Route path="/home" element={<Home />} />
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
+        <Route path="/requerimientos" element={<RequerimientosVecino />} />
+        <Route path="/proyectosVecino" element={<ProyectosVecinalesVecino />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* 👇 DIRECTIVA */}
+        {/* Directiva */}
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />
-        <Route path="/proyectos-vecinales" element={<ProyectosVecinalesAdmin />} /> 
+        <Route path="/proyectos-vecinales" element={<ProyectosVecinalesAdmin />} />
+        <Route path="/directiva/certificados" element={<CertificadosDirectiva />} />
+        {/* Redirección por defecto de /directiva → certificados */}
+        <Route path="/directiva" element={<Navigate to="/directiva/certificados" replace />} />
 
-        {/* 👇 VECINOS */}
-        <Route path="/requerimientos" element={<RequerimientosVecino />} />
-        <Route path="/proyectosVecino" element={<ProyectosVecinalesVecino />} />  
-
-        {/* Redirecciones */}
+        {/* Redirecciones base */}
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
 
-      {/* Si es panel de directiva oculto el footer */}
+      {/* Oculta el Footer también en panel de directiva */}
       {!isAdminPanel && <Footer />}
     </>
   );
