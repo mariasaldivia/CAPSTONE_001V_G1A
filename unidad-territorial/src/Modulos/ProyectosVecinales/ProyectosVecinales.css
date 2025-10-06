@@ -130,3 +130,106 @@ details[open] summary {
 .pv-btn:hover {
   background-color: #1e293b;
 }
+/* 🔹 MODAL */
+
+.pv-modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.pv-modal {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pv-modalTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.pv-modalDesc {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+.pv-form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.pv-form input,
+.pv-form textarea {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.pv-form input:focus,
+.pv-form textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.pv-modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.pv-cancel,
+.pv-submit {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pv-cancel {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.pv-cancel:hover {
+  background: #cbd5e1;
+}
+
+.pv-submit {
+  background: #0f172a;
+  color: white;
+}
+
+.pv-submit:hover {
+  background: #1e293b;
+}

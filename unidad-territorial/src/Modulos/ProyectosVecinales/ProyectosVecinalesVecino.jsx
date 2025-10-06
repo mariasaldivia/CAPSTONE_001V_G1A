@@ -9,7 +9,7 @@ function ProyectosVecinalesVecino() {
       bases: "Debe contar con espacio disponible en su propiedad.",
       fechaInicio: "2025-10-01",
       fechaFin: "2025-10-20",
-      estado: "Abierto",
+      estado: "Aceptado",
     },
     {
       nombre: "Pintura de Sede",
@@ -17,12 +17,46 @@ function ProyectosVecinalesVecino() {
       bases: "",
       fechaInicio: "2025-10-05",
       fechaFin: "2025-10-25",
-      estado: "Abierto",
+      estado: "Aceptado",
     },
   ]);
 
-  const postularAProyecto = (index) => {
-    alert(`✅ Te has postulado al proyecto: ${proyectos[index].nombre}`);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
+  const [form, setForm] = useState({
+    nombre: "",
+    rut: "",
+    direccion: "",
+    comentarios: "",
+  });
+
+  const abrirModal = (proyecto) => {
+    setProyectoSeleccionado(proyecto);
+    setModalOpen(true);
+  };
+
+  const cerrarModal = () => {
+    setModalOpen(false);
+    setForm({ nombre: "", rut: "", direccion: "", comentarios: "" });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const enviarPostulacion = (e) => {
+    e.preventDefault();
+    alert(`✅ Postulación enviada para: ${proyectoSeleccionado.nombre}`);
+    cerrarModal();
+  };
+
+  const postularAProyecto = (proyecto) => {
+    if (proyecto.bases) {
+      abrirModal(proyecto);
+    } else {
+      alert(`✅ Te has postulado al proyecto: ${proyecto.nombre}`);
+    }
   };
 
   return (
@@ -46,7 +80,7 @@ function ProyectosVecinalesVecino() {
             <p className="pv-descripcion">{p.descripcion}</p>
 
             <div className="pv-fechas">
-              <strong>Fechas:</strong>
+              <strong>Fechas:</strong>{" "}
               <span>
                 {p.fechaInicio} → {p.fechaFin}
               </span>
@@ -63,20 +97,89 @@ function ProyectosVecinalesVecino() {
             </div>
 
             <div className="pv-actions">
-              <button
-                className="pv-btn"
-                onClick={() => postularAProyecto(index)}
-              >
+              <button className="pv-btn" onClick={() => postularAProyecto(p)}>
                 Postular
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* 🔹 MODAL DE POSTULACIÓN */}
+      {modalOpen && (
+        <div className="pv-modalOverlay" onClick={cerrarModal}>
+          <div
+            className="pv-modal"
+            onClick={(e) => e.stopPropagation()} // evita cerrar al hacer clic dentro
+          >
+            <h3 className="pv-modalTitle">
+              📝 Postulación - {proyectoSeleccionado?.nombre}
+            </h3>
+
+            <p className="pv-modalDesc">
+              Para postular, completa la siguiente información requerida por las
+              bases del proyecto.
+            </p>
+
+            <form className="pv-form" onSubmit={enviarPostulacion}>
+              <label>
+                Nombre completo:
+                <input
+                  type="text"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label>
+                RUT:
+                <input
+                  type="text"
+                  name="rut"
+                  value={form.rut}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Dirección:
+                <input
+                  type="text"
+                  name="direccion"
+                  value={form.direccion}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Comentarios adicionales:
+                <textarea
+                  name="comentarios"
+                  rows={3}
+                  value={form.comentarios}
+                  onChange={handleChange}
+                />
+              </label>
+
+              <div className="pv-modalActions">
+                <button type="button" onClick={cerrarModal} className="pv-cancel">
+                  Cancelar
+                </button>
+                <button type="submit" className="pv-submit">
+                  Enviar Postulación
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default ProyectosVecinalesVecino;
-
 
