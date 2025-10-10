@@ -107,12 +107,12 @@ export default function PanelLateralD({
           </NavLink>
 
           <NavLink
-            to="/admin/documentos"
+            to="/Proyectos-vecinales"
             className={({ isActive }) =>
               "adm__item" + (isActive ? " adm__item--active" : "")
             }
           >
-            Documentos
+            Proyectos Vecinales
           </NavLink>
 
           <NavLink

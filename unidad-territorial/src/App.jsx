@@ -45,7 +45,7 @@ function AppInner() {
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
         <Route path="/requerimientos" element={<RequerimientosVecino />} />
-        <Route path="/proyectosVecino" element={<ProyectosVecinalesVecino />} />
+        <Route path="/proyectov" element={<ProyectosVecinalesVecino />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

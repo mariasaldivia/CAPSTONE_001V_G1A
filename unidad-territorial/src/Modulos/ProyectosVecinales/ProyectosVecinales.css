@@ -11,7 +11,7 @@ details[open] summary {
   color: #0f172a;
 }
 .pv-container {
-  background-color: #f7f9fb;
+  background-color: #0f172a;
   min-height: 100vh;
   padding: 3rem 2rem;
 }
@@ -20,7 +20,7 @@ details[open] summary {
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #e2e8f0;
   margin-bottom: 2.5rem;
 }
 
@@ -68,16 +68,33 @@ details[open] summary {
   border-radius: 999px;
   text-transform: uppercase;
 }
+/* 🔹 Estado base */
+.pv-estado {
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
 
-.estado-ok {
+/* 🟢 Abierto */
+.estado-abierto {
   background-color: #dcfce7;
   color: #15803d;
 }
 
-.estado-pendiente {
+/* 🟡 En revisión */
+.estado-revision {
   background-color: #fef9c3;
   color: #854d0e;
 }
+
+/* ⚫ Finalizado */
+.estado-finalizado {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
 
 .pv-descripcion {
   margin: 0.75rem 0 1rem;
@@ -232,4 +249,170 @@ details[open] summary {
 
 .pv-submit:hover {
   background: #1e293b;
+}
+.pv-details {
+  margin-top: 0.5rem;
+}
+
+.pv-details summary {
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 500;
+  list-style: none;
+}
+
+.pv-details summary::-webkit-details-marker {
+  display: none; /* quita el triángulo por defecto */
+}
+
+.pv-basesText {
+  margin-top: 0.4rem;
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 0.6rem;
+}
+.pv-msg {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  padding: 0.4rem 0.6rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.pv-btn {
+  background-color: #111827;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pv-btn:hover {
+  background-color: #1e3a8a;
+}
+/* Contenedor general */
+.historial-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Tarjeta individual */
+.proyecto-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  border-top: 6px solid transparent;
+}
+
+.proyecto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Cabecera del proyecto */
+.proyecto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.proyecto-header h4 {
+  font-size: 1.2rem;
+  color: #1e293b;
+  margin: 0;
+  font-weight: 600;
+}
+
+.estado-select {
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Texto */
+.proyecto-descripcion {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 0.8rem;
+}
+
+/* Info */
+.proyecto-info {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.ver-bases {
+  color: #1d4ed8;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.ver-bases:hover {
+  text-decoration: underline;
+}
+
+.sin-bases {
+  color: #0f172a;
+  font-style: italic;
+}
+
+/* Colores de borde según estado */
+.estado-abierto {
+  border-top-color: #22c55e;
+}
+
+.estado-revision {
+  border-top-color: #eab308;
+}
+
+.estado-finalizado {
+  border-top-color: #ef4444;
+}
+/* ================================
+   NUEVO DISEÑO FORM + HISTORIAL
+================================ */
+
+/* Título pequeño dentro de las cards */
+
+.pv-subtitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1.2rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.4rem;
+}
+
+/* Card específica del formulario */
+.pv-formCard {
+  margin-bottom: 2rem;
+  background: #ffffff;
+}
+
+/* Card del historial */
+.pv-historialCard {
+  background: #ffffff;
+}
+
+/* Espaciado entre cards internas */
+.historial-container {
+  margin-top: 1rem;
 }
