@@ -130,13 +130,13 @@ function ProyectosVecinalesAdmin() {
                     <strong>Fecha:</strong> {p.fechaInicio} - {p.fechaFin}
                   </p>
                   <p>
-                    {p.bases === "No requiere bases" ? (
+                    {!p.bases || p.bases.trim() === "" || p.bases === "No requiere bases" ? (
                       <span className="sin-bases">No requiere bases</span>
                     ) : (
-                   <details className="pv-details">
-                    <summary className="pv-link">📄 Ver bases</summary>
-                    <p className="pv-basesText">{p.bases}</p>
-                  </details>
+                      <details className="pv-details">
+                        <summary className="pv-link">📄 Ver bases</summary>
+                        <p className="pv-basesText">{p.bases}</p>
+                      </details>
                     )}
                   </p>
                 </div>

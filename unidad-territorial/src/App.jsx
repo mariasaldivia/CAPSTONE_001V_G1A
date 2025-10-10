@@ -13,6 +13,7 @@ import ProyectosVecinalesVecino from "./Modulos/ProyectosVecinales/ProyectosVeci
 import RequerimientosDirectiva from "./Modulos/Requerimientos/RequerimientosDirectiva.jsx";
 import ProyectosVecinalesAdmin from "./Modulos/ProyectosVecinales/ProyectosVecinalesAdmin";
 import CertificadosDirectiva from "./Modulos/Certificados/CertificadosDirectiva.jsx";
+import Gestion_Socios from "./Modulos/GestionSocios/Gestion_Socios.jsx";
 
 /* Auth */
 import Login from "./Modulos/Auth/Login.jsx";
@@ -53,6 +54,7 @@ function AppInner() {
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />
         <Route path="/proyectos-vecinales" element={<ProyectosVecinalesAdmin />} />
         <Route path="/directiva/certificados" element={<CertificadosDirectiva />} />
+        <Route path="/gestion" element={<Gestion_Socios/>} />
         {/* Redirección por defecto de /directiva → certificados */}
         <Route path="/directiva" element={<Navigate to="/directiva/certificados" replace />} />
 

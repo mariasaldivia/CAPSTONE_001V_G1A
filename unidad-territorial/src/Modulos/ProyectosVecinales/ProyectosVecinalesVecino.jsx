@@ -4,20 +4,58 @@ import "./ProyectosVecinales.css";
 
 function ProyectosVecinalesVecino() {
   const [proyectos] = useState([
-    {
-      nombre: "Huerto Comunitario",
-      descripcion: "Creación de un huerto urbano para los vecinos.",
-      bases: "Debe contar con espacio disponible en su propiedad.",
-      fechaInicio: "2025-10-01",
-      fechaFin: "2025-10-20",
+   {
+      nombre: "Campeonato de Rayuela",
+      descripcion: "Torneo comunitario de rayuela en el Parque La Paloma.",
+      horario: "10:30",
+      fechaInicio: "25-10-2025",
+      fechaFin: "25-10-2025",
+      bases: "",
       estado: "Abierto",
     },
     {
-      nombre: "Pintura de Sede",
-      descripcion: "Remodelación y pintura de la sede social.",
+      nombre: "Gran Bingo Bailable Malón",
+      descripcion: "Evento recreativo con bingo, música y convivencia vecinal.",
+       horario: "14:30 - 18:00",
+      fechaInicio: "28-10-2025",
+      fechaFin: "28-10-2025",
+      bases: "Aforo limitado a 120 personas (por orden de inscripción). Max 4 personas por casa",
+      estado: "Abierto",
+    },
+    {
+      nombre: "Feria de Salud Comunitaria",
+      descripcion: "Instancia de atención y prevención en salud para la comunidad.",
+       horario: "08:00 - 13:00",
+      fechaInicio: "30-10-2025",
+      fechaFin: "30-10-2025",
       bases: "",
-      fechaInicio: "2025-10-05",
-      fechaFin: "2025-10-25",
+      estado: "Abierto",
+    },
+    {
+      nombre: "Campeonato de Brisca",
+      descripcion: "Competencia de cartas brisca organizada por la junta de vecinos.",
+      horario: "15:30",
+      fechaInicio: "18-10-2025",
+      fechaFin: "18-10-2025",
+      bases: "",
+      estado: "Abierto",
+    },
+    {
+      nombre: "Bingo Adulto Mayor",
+      descripcion: "Jornada de bingo y convivencia con premios para los participantes.",
+       horario: "15:00",
+      fechaInicio: "22-10-2025",
+      fechaFin: "22-10-2025",
+      bases: "Podrán participar vecinos mayores de 60 años pertenecientes a la Junta. Inscripción previa obligatoria (cupos limitados a 60 personas). Cada participante podrá invitar a un acompañante mayor de edad.",
+      estado: "Abierto",
+    },
+     {
+      nombre: "Muestras Coreograficas de Org. CDR",
+      descripcion: "Competencia de cartas brisca organizada por la junta de vecinos.",
+       horario: "15:00",
+      fechaInicio: "18-10-2025",
+      fechaFin: "18-10-2025",
+      bases: "",
       estado: "En Revisión",
     },
   ]);
@@ -60,16 +98,18 @@ function ProyectosVecinalesVecino() {
     }
   };
   const normalizarEstado = (estado) => {
-    switch (estado.toLowerCase()) {
+    const estadoNormalizado = estado.toLowerCase().trim();
+    switch (estadoNormalizado) {
       case "abierto":
         return "estado-abierto";
-      case "en revisión":
-        return "estado-revision";
-      case "finalizado":
-        return "estado-finalizado";
-      default:
-        return "";
-    };
+        case "en revisión":
+        case "en revision": // ✅ acepta ambas formas
+          return "estado-revision";
+        case "finalizado":
+          return "estado-finalizado";
+        default:
+          return "";
+      };
   }
 
   return (
@@ -87,6 +127,10 @@ function ProyectosVecinalesVecino() {
             </div>
 
             <p className="pv-descripcion">{p.descripcion}</p>
+            <div className="pv-fechas">
+              <strong>Horario:</strong>{" "}
+                <span>{p.horario} hr</span>
+            </div>
 
             <div className="pv-fechas">
               <strong>Fechas:</strong>{" "}
@@ -204,4 +248,3 @@ function ProyectosVecinalesVecino() {
 }
 
 export default ProyectosVecinalesVecino;
-

@@ -1,0 +1,71 @@
+.gs-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+  font-family: Arial, sans-serif;
+   background: #fff;
+}
+
+.gs-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.gs-subtitle {
+  margin-top: 40px;
+  color: #444;
+}
+
+.gs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  color: #0f172a;
+}
+
+.gs-table th, .gs-table td {
+  border: 1px solid #ddd;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.gs-table th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.gs-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.gs-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+button.aceptar {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+button.rechazar {
+  background-color: #E53935;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button.aceptar:hover {
+  background-color: #43a047;
+}
+
+button.rechazar:hover {
+  background-color: #d32f2f;
+}
