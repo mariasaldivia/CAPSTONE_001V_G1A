@@ -158,9 +158,9 @@ export default function Certificados() {
       </section>
 
       {/* Dos columnas: (1) formulario (2) datos de depósito */}
-      <main className="grid">
+      <main className="grid" >
         {/* FORMULARIO */}
-        <form className="card form" onSubmit={onSubmit} noValidate>
+        <form className="card form" onSubmit={onSubmit} noValidate id="formulario">
           {/* Nombre */}
           <div className="group">
             <label htmlFor="nombre">Nombre Completo</label>
@@ -262,7 +262,7 @@ export default function Certificados() {
         </form>
 
         {/* LADO DERECHO: datos para transferir */}
-        <aside className="card side">
+        <aside className="card side" id="datos">
           <div className="side-title">Datos para Depósitos</div>
           <ul className="list">
             <li>
