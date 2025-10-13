@@ -16,6 +16,7 @@
 
 -- TABLA SOCIOS (información específica de socios)
 -- Cada usuario puede aparecer solo una vez como socio
+-- Coas
 CREATE TABLE IF NOT EXISTS socio (
   id_socio SERIAL PRIMARY KEY,
   id_usuario INTEGER UNIQUE REFERENCES usuario(id_usuario) ON DELETE CASCADE,  -- relación 1 a 1. Con CASCADE si se elimina el usuario se elimina el socio
