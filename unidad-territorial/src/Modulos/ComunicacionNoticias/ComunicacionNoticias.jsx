@@ -1,290 +1,298 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import DatePicker from "react-datepicker";
-import { es } from "date-fns/locale";
-import "react-datepicker/dist/react-datepicker.css";
+import { useEffect, useState } from "react";
 import "./ComunicacionNoticias.css";
 
+/* =========================
+   Datos de ejemplo (8 items)
+========================= */
+const NEWS = [
+  {
+    id: 1,
+    titulo: "Más verde para Mirador de Volcanes IV",
+    fecha: "2025-10-04",
+    imagen: "/img/principal.png",
+    imagenes: ["/img/secu1.png", "/img/secu2.png"],
+  resumen: "Jornada comunitaria de plantación sumó nuevas especies al parque del barrio, mejorando sombra, aire y biodiversidad. La directiva llamó a cuidar y regar los ejemplares jóvenes.",
+  cuerpo: `Vecinos y vecinas del sector participaron en una nueva jornada de plantación de especies que ayudará a recuperar áreas verdes y mejorar el entorno del parque del barrio.
+
+Durante la actividad, se incorporaron árboles y arbustos acordes al clima local, con el objetivo de sumar sombra en verano, absorber agua de lluvia y aportar belleza al espacio público. La instancia también sirvió para encontrarnos, conversar y organizar el cuidado posterior de las plantas, fortaleciendo los lazos entre residentes.
+
+La directiva agradeció la participación y el compromiso de quienes asistieron, y anunció que se mantendrán estas jornadas de forma periódica para seguir ampliando la superficie arbolada del sector.
+
+## ¿Por qué importa?
+- **Más sombra** y mejor **calidad del aire**.
+- Mayor **biodiversidad** y refugio para aves e insectos.
+- Espacios que invitan al **cuidado** y al **encuentro comunitario**.
+
+## Cómo puedes aportar
+- **Protege** los árboles jóvenes: evita quebrar ramas o retirar tutores.
+- **No pises el alcorque** y, si puedes, **riega** en días secos.
+- **Reporta** daños o faltantes a la directiva por los canales habituales.
+
+
+ 💙 Pequeñas acciones, grandes cambios.`,
+  },
+  {
+  id: 2,
+  titulo: "Constructora despeja aguas estancadas",
+  fecha: "2025-10-12",
+  imagen: "/img/N2_despues.png",
+  imagenes: ["/img/N2_durante.png", "/img/N2_antes.png"],
+  resumen: "La Constructora JOMAR colaboró en la limpieza y habilitación del escurrimiento de aguas en calle Margot Loyola, mejorando el entorno del sector.",
+  cuerpo: `Durante la jornada de ayer, la Constructora JOMAR brindó un importante apoyo a la comunidad del sector, colaborando en la limpieza y habilitación del escurrimiento de aguas estancadas en la calle Margot Loyola.
+
+Gracias al uso de maquinaria retroexcavadora, fue posible liberar el agua acumulada, la cual generaba malos olores y molestias para los vecinos del sector.
+
+A esta labor se sumó la valiosa participación de dos vecinos, quienes contribuyeron con la limpieza manual de la vía y el retiro de residuos. Gracias a este trabajo conjunto, la calle recuperó su aspecto habitual, mejorando la circulación y el bienestar de quienes transitan por el área.
+
+## Agradecimientos
+La directiva de la Junta de Vecinos expresó su agradecimiento a la Constructora JOMAR por su disposición y compromiso con el barrio, así como a los residentes que colaboraron de manera voluntaria.
+
+ “Este tipo de acciones demuestran que cuando comunidad y empresas locales trabajan unidas, se logran grandes resultados”, señalaron desde la directiva.
+
+ **Con esta intervención, el sector luce más limpio, ordenado y seguro para todos.**
+
+💙 Seguimos trabajando por un mejor barrio.`
+},
+
+  {
+  id: 3,
+  titulo: "Vecino repara los columpios del parque",
+  fecha: "2025-10-13",
+  imagen: "/img/N3_columpios1.png",
+  imagenes: ["/img/N3_columpios2.png"],
+  resumen: "Un vecino voluntario reparó los columpios del área de juegos, devolviendo la diversión y seguridad a los niños del sector.",
+  cuerpo: `Un especial agradecimiento a nuestro vecino que, de manera voluntaria, reparó los columpios del área de juegos del barrio, permitiendo que los niños y niñas vuelvan a disfrutar con seguridad y alegría de este espacio comunitario. 👧🧒
+
+Gracias a su tiempo, compromiso y habilidades, se reforzaron las estructuras y se ajustaron las cadenas, asegurando su correcto funcionamiento. Este gesto demuestra el espíritu solidario y colaborativo que caracteriza a nuestra comunidad.
+
+> “Pequeñas acciones hacen grandes diferencias cuando se hacen con cariño”, destacaron desde la directiva vecinal.
+
+💙 *Seguimos construyendo juntos un barrio mejor para todos.*`
+},
+
+  {
+  id: 4,
+  titulo: "Celebramos el Mes del Adulto Mayor con diversas actividades comunitarias",
+  fecha: "2025-10-30",
+  imagen: "/img/N4_adumayor1.jpeg",
+  imagenes: ["/img/N4_adumayor2.jpeg", ],
+  resumen: "Nuestra comunidad participó en las actividades del Mes del Adulto Mayor, promoviendo la vida activa, la salud y la integración social.",
+  cuerpo: `Durante este mes, nuestra comunidad participó activamente en las **actividades del Mes del Adulto Mayor**, organizadas por la **Dirección de Desarrollo Comunitario (DIDECO)**. Estas jornadas tuvieron como objetivo **promover la participación, el bienestar y la vida activa de las personas mayores** de Puerto Montt. 👵👴
+
+El programa incluyó una amplia variedad de instancias, como **operativos de salud, bingos, ferias comunitarias, talleres de lectura, charlas nutricionales y encuentros recreativos**, todos pensados para fortalecer el vínculo social y reconocer el aporte invaluable de nuestros adultos mayores.
+
+Las actividades se desarrollaron en distintos puntos de la ciudad, entre ellos la **Delegación Mirasol, la Biblioteca Municipal, la Escuela Las Camelias, el Teatro Diego Rivera y el Parque Costanera**, convocando a decenas de vecinos y vecinas que disfrutaron de momentos de aprendizaje, compañía y alegría.
+
+> “Queremos seguir generando espacios donde nuestros adultos mayores se sientan valorados, escuchados y parte activa de la comunidad”, destacaron desde la organización.
+
+💙 *Agradecemos la participación de todos quienes hicieron posible este mes lleno de energía, convivencia y cariño.*`
+}
+,
+ 
+ {
+  id: 5,
+  titulo: "Presente en el desfile cívico: orgullo y representación de nuestra comunidad",
+  fecha: "2025-10-10",
+  imagen: "/img/N8_desfile1.png",
+  imagenes: ["/img/N8_desfile2.png", "/img/N8_desfile3.png"],
+  resumen: "La Junta de Vecinos Mirador de Volcanes IV participó en el desfile cívico, representando al barrio con orgullo y unidad.",
+  cuerpo: `Nuestra Junta de Vecinos Mirador de Volcanes IV estuvo presente en el desfile cívico, participando con entusiasmo y compromiso en la conmemoración de nuestra identidad local. 🇨🇱
+
+Integrantes de la directiva y vecinos del sector se unieron para representar al barrio en este importante evento, que reunió a organizaciones sociales, establecimientos educacionales y autoridades comunales.
+
+La participación destacó por su espíritu de unidad y orgullo comunitario, reflejando el compromiso constante por mantener viva la historia, la cultura y los valores que nos unen como vecinos.
+
+ “Ser parte de este desfile nos recuerda que juntos construimos comunidad y fortalecemos nuestro sentido de pertenencia”, expresó la directiva.
+
+💙 *Agradecemos a todos quienes representaron con orgullo a nuestro barrio y a quienes asistieron para acompañar esta jornada de encuentro y celebración.*`
+}
+,
+/*  { id: 6, titulo: "Taller de reciclaje domiciliario", fecha: "2025-10-05", imagen: "", resumen: "Clasificación y puntos limpios cercanos." },
+  { id: 7, titulo: "Corte programado de agua (sector norte)", fecha: "2025-10-03", imagen: "", resumen: "Trabajos entre 10:00 y 14:00 hrs." },
+  { id: 8, titulo: "Inscripciones: campeonato de babyfútbol", fecha: "2025-10-02", imagen: "", resumen: "Partidos en la multicancha." },*/
+];
+
+/* ===== Markdown ligerito ===== */
+function renderRich(text) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  const out = [];
+  let list = [];
+
+  const flush = () => {
+    if (list.length) {
+      out.push(
+        <ul className="r-ul" key={`ul-${out.length}`}>
+          {list.map((li, i) => <li key={i}>{inline(li)}</li>)}
+        </ul>
+      );
+      list = [];
+    }
+  };
+
+  function inline(s) {
+    const parts = [];
+    let rest = s;
+    const re = /(\*\*([^*]+)\*\*|_([^_]+)_)/;
+    while (true) {
+      const m = rest.match(re);
+      if (!m) { parts.push(rest); break; }
+      const [full, , bold, italic] = m;
+      const idx = rest.indexOf(full);
+      if (idx > 0) parts.push(rest.slice(0, idx));
+      parts.push(bold ? <strong key={parts.length}>{bold}</strong> : <em key={parts.length}>{italic}</em>);
+      rest = rest.slice(idx + full.length);
+    }
+    return <>{parts}</>;
+  }
+
+  lines.forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line) { flush(); return; }
+    if (line.startsWith("## ")) { flush(); out.push(<h2 className="r-h2" key={`h2-${i}`}>{line.slice(3)}</h2>); return; }
+    if (line.startsWith("> "))  { flush(); out.push(<blockquote className="r-quote" key={`q-${i}`}>{inline(line.slice(2))}</blockquote>); return; }
+    if (line.startsWith("- "))  { list.push(line.slice(2)); return; }
+    flush(); out.push(<p className="reader-text" key={`p-${i}`}>{inline(line)}</p>);
+  });
+
+  flush();
+  const fp = out.findIndex(el => el?.type === "p" || el?.props?.className?.includes("reader-text"));
+  if (fp !== -1) out[fp] = <p className="reader-text lead">{out[fp].props.children}</p>;
+  return out;
+}
+
+/* ===== Barra de suscripción ===== */
+function SubscribeBar({ sub, setSub, onSubmit }) {
+  return (
+    <form className="subscribe-bar mt-before-footer" onSubmit={onSubmit}>
+      <div className="sb-text">
+        <strong>Suscríbete a nuestro boletín</strong>
+        <span>Recibe noticias y avisos oficiales en tu correo o WhatsApp.</span>
+      </div>
+      <input
+        type="email"
+        placeholder="tucorreo@ejemplo.cl"
+        value={sub.email}
+        onChange={(e) => setSub((s) => ({ ...s, email: e.target.value }))}
+        required
+      />
+      <input
+        placeholder="WhatsApp (opcional)"
+        value={sub.whatsapp}
+        onChange={(e) => setSub((s) => ({ ...s, whatsapp: e.target.value }))}
+      />
+      <button className="sb-btn">Suscribirme</button>
+    </form>
+  );
+}
 
 export default function ComunicacionNoticias() {
-  
- 
-  // Noticias que rotan en el slider (izquierda)
-  const [noticiasSlider, setNoticiasSlider] = useState([
-    {
-      id: 201,
-      titulo: "Asamblea Extraordinaria",
-      fecha: "2025-09-22",
-      resumen:
-        "Se convoca a reunión en la sede este viernes a las 19:00. Tema principal: seguridad comunitaria.",
-      imagen: null, // aquí va la URL de imagen
-    },
-    {
-      id: 202,
-      titulo: "Operativo de Limpieza",
-      fecha: "2025-09-18",
-      resumen:
-        "Este sábado a las 10:00 nos juntamos en la plaza. Llevar guantes. Habrá hidratación.",
-      imagen: null,
-    },
-    {
-      id: 203,
-      titulo: "Vacunatorio Móvil",
-      fecha: "2025-09-10",
-      resumen:
-        "Martes de 15:00 a 17:00 frente a la sede vecinal. Traer cédula. Dosis influenza y Covid.",
-      imagen: null,
-    },
-  ]);
+  const [detalle, setDetalle] = useState(null);
+  const abrir = (n) => {
+    setDetalle(n);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  };
 
-  // Noticias fijas (derecha)
-  const [noticiasFijas] = useState([
-    { id: 301, titulo: "Corte de Luz Programado", fecha: "2025-09-26", resumen: "Habrá interrupción de energía de 10:00 a 12:00 en el sector norte." },
-    { id: 302, titulo: "Feria de las Pulgas", fecha: "2025-09-28", resumen: "Domingo en la plaza central desde las 9:00. Trae lo que no uses y cámbialo." },
-    { id: 303, titulo: "Taller de Reciclaje", fecha: "2025-10-02", resumen: "Capacitación gratuita en la sede. Inscripciones al correo de la junta." },
-    { id: 304, titulo: "Campeonato de Babyfútbol", fecha: "2025-10-05", resumen: "Equipos de vecinos se enfrentarán en la multicancha. Premios a los ganadores." },
-  ]);
+  // Scroll helper hacia la grilla de noticias pequeñas
+  const scrollToGrid = () => {
+    const el = document.getElementById("inicio-noticias");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
-  /* =========================
-     2) SLIDER (izquierda)
-  ========================== */
-  const [idx, setIdx] = useState(0);         // cuál noticia se muestra
-  const [expandir, setExpandir] = useState(false); // mostrar/ocultar resumen largo
-  const autoRef = useRef(null);              // guarda el setInterval
-  const actual = noticiasSlider[idx] || null;
+  const volver = () => {
+    setDetalle(null);
+    setTimeout(scrollToGrid, 0);
+  };
 
-  // Cambio automático cada 5s
+  // Si el usuario entra con hash #inicio-noticias (por el navbar), scrollea a la grilla
   useEffect(() => {
-    if (!noticiasSlider.length) return;
-    if (autoRef.current) clearInterval(autoRef.current);
-    autoRef.current = setInterval(() => {
-      setIdx((i) => (i + 1) % noticiasSlider.length);
-      setExpandir(false);
-    }, 5000);
-    return () => clearInterval(autoRef.current);
-  }, [noticiasSlider.length]);
+    if (!detalle && window.location.hash === "#inicio-noticias") {
+      scrollToGrid();
+    }
+  }, [detalle]);
 
-  // Botones prev/next
-  const previo = () => {
-    if (!noticiasSlider.length) return;
-    setIdx((i) => (i - 1 + noticiasSlider.length) % noticiasSlider.length);
-    setExpandir(false);
-  };
-  const siguiente = () => {
-    if (!noticiasSlider.length) return;
-    setIdx((i) => (i + 1) % noticiasSlider.length);
-    setExpandir(false);
-  };
-
-  /* ==========================================
-     3) FORM “PUBLICAR” (agrega al slider) 
-  =========================================== */
-  const [nueva, setNueva] = useState({ titulo: "", fecha: "", resumen: "" });
-
-  // Atajo: fecha seleccionada en objeto Date (para el DatePicker)
-  const nuevaFechaDate = useMemo(
-    () => (nueva.fecha ? new Date(nueva.fecha) : null),
-    [nueva.fecha]
-  );
-
-  const publicar = (e) => {
-    e.preventDefault();
-    if (!nueva.titulo || !nueva.fecha || !nueva.resumen) return;
-    // Agrego al principio del slider
-    setNoticiasSlider((prev) => [{ id: Date.now(), imagen: null, ...nueva }, ...prev]);
-    // Reseteo el form
-    setNueva({ titulo: "", fecha: "", resumen: "" });
-    // Muestro la noticia nueva
-    setIdx(0);
-    setExpandir(false);
-    alert("Publicado (demo) en el slider.");
-  };
-
-  /* ==========================================
-     4) FORM “SUSCRIPCIÓN” 
-  =========================================== */
   const [sub, setSub] = useState({ email: "", whatsapp: "" });
-
   const suscribir = (e) => {
     e.preventDefault();
-    if (!sub.email) return;
-    alert("Suscripción registrada (demo).");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sub.email)) return alert("Ingresa un correo válido");
+    alert("Suscripción registrada ✅");
     setSub({ email: "", whatsapp: "" });
   };
 
-  /* ==========================================
-     5) “MÁS NOTICIAS” (derecha) expandibles
-  =========================================== */
-  const [idExpandida, setIdExpandida] = useState(null);
+  /* ===== DETALLE: título grande + grid texto/fotos ===== */
+  if (detalle) {
+    const base = [
+      ...(detalle.imagen ? [detalle.imagen] : []),
+      ...(Array.isArray(detalle.imagenes) ? detalle.imagenes : []),
+    ];
+    const fotos = Array.from(new Set(base)).slice(0, 3);
 
-  return (
-    <div className="page comu">
+    return (
+      <div className="page noticias">
+        <article className="news-detail card">
+          <header className="news-detail__head">
+            <h1 className="news-detail__title">{detalle.titulo}</h1>
+            <p className="news-detail__sub">{detalle.resumen || detalle.fecha}</p>
+          </header>
 
-      {/* 📰 Sección principal: slider + más noticias */}
-      <section id="noticias" className="card comu-hero">
-        {/* IZQUIERDA: Slider */}
-        <div className="comu-hero-left">
-          {actual ? (
-            <>
-              {/* Imagen de la noticia (si no hay, un placeholder) */}
-              <div className="comu-slide-img">
-                {/* Si luego tienen imagen real: <img src={actual.imagen} alt={actual.titulo} /> */}
-                <div className="comu-img-placeholder">Espacio para imagen</div>
-              </div>
+          <section className="news-detail__grid">
+            {/* Cuerpo a la izquierda */}
+            <div className="news-detail__body">{renderRich(detalle.cuerpo)}</div>
 
-              {/* Texto de la noticia actual */}
-              <div className="comu-slide-info">
-                <div className="comu-slide-fecha">{actual.fecha}</div>
-                <h2 className="comu-slide-title">{actual.titulo}</h2>
-
-                {!expandir ? (
-                  <button className="btn btn-ghost" onClick={() => setExpandir(true)}>
-                    Mostrar más
-                  </button>
-                ) : (
-                  <>
-                    <p className="comu-slide-resumen">{actual.resumen}</p>
-                    <button className="btn btn-ghost" onClick={() => setExpandir(false)}>
-                      Ocultar
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Flechas del slider */}
-              <button className="comu-arrow left" onClick={previo} aria-label="Previo">
-                ‹
-              </button>
-              <button className="comu-arrow right" onClick={siguiente} aria-label="Siguiente">
-                ›
-              </button>
-
-              {/* Puntitos para saltar entre noticias */}
-              <div className="comu-dots">
-                {noticiasSlider.map((n, i) => (
-                  <button
-                    key={n.id}
-                    className={`comu-dot ${i === idx ? "activa" : ""}`}
-                    onClick={() => {
-                      setIdx(i);
-                      setExpandir(false);
-                    }}
-                    aria-label={`Ir a ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="comu-slide-vacio">No hay noticias para mostrar.</div>
-          )}
-        </div>
-
-        {/* DERECHA: Más noticias (expandibles) */}
-        <aside className="comu-hero-right">
-          <h3 className="comu-mini-title">Más noticias</h3>
-          <ul className="comu-mini-list">
-            {noticiasFijas.map((n) => (
-              <li
-                key={n.id}
-                className={`comu-mini-item ${idExpandida === n.id ? "abierta" : ""}`}
-                onClick={() => setIdExpandida(idExpandida === n.id ? null : n.id)}
+            {/* Fotos a la derecha */}
+            {fotos.length > 0 && (
+              <aside
+                className={`news-detail__photosCol ${
+                  fotos.length === 3 ? "is-three" : fotos.length === 2 ? "is-two" : ""
+                }`}
               >
-                <div className="comu-mini-dot" />
-                <div className="comu-mini-texts">
-                  <div className="comu-mini-row">
-                    <div className="comu-mini-t">{n.titulo}</div>
-                    <div className="comu-mini-f">{n.fecha}</div>
-                  </div>
-                  {idExpandida === n.id && (
-                    <p className="comu-mini-resumen">{n.resumen}</p>
-                  )}
-                </div>
-                <span className="comu-mini-caret">
-                  {idExpandida === n.id ? "▾" : "▸"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </aside>
+                {fotos.map((src, i) => (
+                  <figure
+                    key={i}
+                    className={`photo ${fotos.length === 3 && i === 0 ? "photo--wide" : ""}`}
+                  >
+                    <img src={src} alt={`Imagen ${i + 1} de la noticia`} />
+                  </figure>
+                ))}
+              </aside>
+            )}
+          </section>
+
+          {/* ← Volver SIEMPRE al final */}
+          <div className="back-row">
+            <button className="back-btn" onClick={volver}>← Volver</button>
+          </div>
+        </article>
+
+        <SubscribeBar sub={sub} setSub={setSub} onSubmit={suscribir} />
+      </div>
+    );
+  }
+
+  /* ===== LISTA: 8 noticias (4 y 4) ===== */
+  return (
+    <div className="page noticias">
+      <header className="news-section-head" id="inicio-noticias">
+        <h2 className="news-section-title">Noticias</h2>
+        <p className="news-section-sub">Información útil y cercana.</p>
+      </header>
+
+      <section className="grid-cards grid-4">
+        {NEWS.slice(0, 8).map((n) => (
+          <article key={n.id} className="news-card">
+            <div className="news-img"><img src={n.imagen} alt={n.titulo} /></div>
+            <div className="news-body">
+              <span className="news-tag">{n.fecha}</span>
+              <h3 className="news-title">{n.titulo}</h3>
+              <button className="news-more" onClick={() => abrir(n)}>
+                Ver más <span className="arrow-cta">→</span>
+              </button>
+            </div>
+          </article>
+        ))}
       </section>
 
-      {/* ⬇️ Parte de abajo: Publicar + Suscripción */}
-      <section className="comu-grid-2col">
-        {/* Publicar noticia (agrega al slider) */}
-        <form id="publicar" className="card form comu-card" onSubmit={publicar}>
-          <h3 className="comu-titulo">Publicar noticia / aviso</h3>
-
-          <div className="group">
-            <label>Título</label>
-            <input
-              name="titulo"
-              value={nueva.titulo}
-              onChange={(e) => setNueva((v) => ({ ...v, titulo: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div className="group">
-            <label>Fecha</label>
-            {/* Calendario para elegir fecha → guardamos "YYYY-MM-DD" */}
-            <DatePicker
-              selected={nuevaFechaDate}
-              onChange={(d) =>
-                setNueva((v) => ({ ...v, fecha: d ? d.toISOString().slice(0, 10) : "" }))
-              }
-              placeholderText="Selecciona fecha"
-              dateFormat="yyyy-MM-dd"
-              locale={es}
-              className="input-fecha"
-              wrapperClassName="picker-wrap"
-              // minDate={new Date()} // si quieren bloquear fechas pasadas
-            />
-          </div>
-
-          <div className="group">
-            <label>Resumen</label>
-            <textarea
-              rows={3}
-              name="resumen"
-              value={nueva.resumen}
-              onChange={(e) => setNueva((v) => ({ ...v, resumen: e.target.value }))}
-              required
-            />
-          </div>
-
-          <button className="btn">Publicar</button>
-          <p className="legal">* En producción, solo la Directiva podrá publicar.</p>
-        </form>
-
-        {/* Suscripción a avisos  */}
-        <form id="suscripcion" className="card form comu-card" onSubmit={suscribir}>
-          <h3 className="comu-titulo">Suscripción a notificaciones</h3>
-
-          <div className="group">
-            <label>Correo electrónico</label>
-            <input
-              type="email"
-              name="email"
-              value={sub.email}
-              onChange={(e) => setSub((s) => ({ ...s, email: e.target.value }))}
-              placeholder="tucorreo@ejemplo.cl"
-              required
-            />
-          </div>
-
-          <div className="group">
-            <label>WhatsApp (opcional)</label>
-            <input
-              name="whatsapp"
-              value={sub.whatsapp}
-              onChange={(e) => setSub((s) => ({ ...s, whatsapp: e.target.value }))}
-              placeholder="+56 9 1234 5678"
-            />
-          </div>
-
-          <button className="btn">Suscribirme</button>
-          <p className="legal">Recibirás avisos y noticias oficiales.</p>
-        </form>
-      </section>
+      <SubscribeBar sub={sub} setSub={setSub} onSubmit={suscribir} />
     </div>
   );
 }

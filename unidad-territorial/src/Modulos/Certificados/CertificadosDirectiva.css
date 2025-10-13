@@ -1,4 +1,4 @@
-/* ===== Vista Certificados Directiva ===== */
+
 
 /* Contenedor centrado */
 .cd{
@@ -37,7 +37,6 @@
   color: var(--adm-text);
   border: 1px solid var(--adm-soft);
   border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.25);
   padding: 1rem;
 }
 
@@ -60,13 +59,30 @@
 }
 .cd__table tr.is-sel{ background: rgba(56,189,248,.06); }
 
+/* ==== Estado (badge) – versión grande y sin salto ==== */
 .cd__badge{
-  font-size: .8rem; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--adm-soft);
+  display: inline-flex;
+  align-items: center;
+  padding: .44rem .9rem;          /* alto/ancho del pill */
+  font-size: 1rem;                /* tamaño de texto */
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid var(--adm-soft);
+  white-space: nowrap;            /* evita “En / revisión” */
 }
 .cd__badge.is-pending{ background: rgba(255,193,7,.12); }
-.cd__badge.is-review{ background: rgba(56,189,248,.12); }
-.cd__badge.is-ok{ background: rgba(16,185,129,.15); }
-.cd__badge.is-bad{ background: rgba(239,68,68,.15); }
+.cd__badge.is-review{  background: rgba(5,189,248,.12); }
+.cd__badge.is-ok{      background: rgba(16,185,129,.15); }
+.cd__badge.is-bad{     background: rgba(239,68,68,.15); }
+
+/* Asegurar ancho y no-wrap en columna Estado (5ª columna) */
+.cd__table th:nth-child(5),
+.cd__table td:nth-child(5){
+  width: 160px;                  /* ajusta si quieres 140–180px */
+}
+.cd__table td:nth-child(5){
+  white-space: nowrap;
+}
 
 /* Detalle */
 .cd__detail h2{ margin: 0 0 .75rem; font-size: 1rem; }
