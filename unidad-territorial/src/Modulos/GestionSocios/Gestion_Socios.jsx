@@ -1,105 +1,182 @@
 import React, { useState } from "react";
+import PanelLateralD from "../../components/PanelLateralD";
 import "./GestionSocios.css";
 
-function GestionSocios() {
-  const [socios] = useState([
-    { name: "Ana", lastname: "Pérez", rut: "11.111.111-1", street: "Av. Las Rosas", number: "120", email: "ana.perez@mail.com", phone: "+56 9 7777 1111" },
-    { name: "Carlos", lastname: "Muñoz", rut: "12.222.222-2", street: "Calle Los Álamos", number: "33", email: "carlos.m@mail.com", phone: "+56 9 5555 2222" },
-    { name: "María", lastname: "Gómez", rut: "13.333.333-3", street: "Av. Central", number: "456", email: "maria.g@mail.com", phone: "+56 9 4444 3333" },
-    { name: "Luis", lastname: "Ramírez", rut: "14.444.444-4", street: "Pje. Estrella", number: "22", email: "luis.r@mail.com", phone: "+56 9 2222 4444" },
-    { name: "Fernanda", lastname: "Leiva", rut: "15.555.555-5", street: "Camino Real", number: "80", email: "fer.leiva@mail.com", phone: "+56 9 1111 5555" },
+
+const GestionSocios = () => {
+    const [socios, setSocios] = useState([
+    { nombre: "Mario", apellido: "Soto", rut: "9.876.543-2", direccion: "Pje. Las Rosas 12", correo: "mario@gmail.com", telefono: "934567812" },
+    { nombre: "Ana", apellido: "Torres", rut: "11.223.344-5", direccion: "Las Encinas 88", correo: "ana@gmail.com", telefono: "956789123" },
+    { nombre: "Carlos", apellido: "Rivas", rut: "7.654.321-0", direccion: "El Bosque 14", correo: "carlos@gmail.com", telefono: "978123456" },
   ]);
 
   const [postulantes, setPostulantes] = useState([
-    { name: "Camila", lastname: "Soto", rut: "21.111.111-1", birthdate: "2000-02-15", street: "Los Jardines", number: "12", email: "camila@mail.com", phone: "+56 9 9999 1111" },
-    { name: "Tomás", lastname: "Fuentes", rut: "22.222.222-2", birthdate: "1998-11-25", street: "El Roble", number: "9", email: "tomas@mail.com", phone: "+56 9 5555 2222" },
-    { name: "Isidora", lastname: "López", rut: "23.333.333-3", birthdate: "2002-05-08", street: "Av. Norte", number: "35", email: "isi@mail.com", phone: "+56 9 3333 3333" },
+    {
+      name: "Jorge",
+      lastname: "Soto",
+      rut: "15.678.123-3",
+      birthdate: "1992-03-12",
+      street: "Los Pinos",
+      number: "234",
+      email: "jorge@gmail.com",
+      phone: "912345678",
+      password: "********",
+      confirmPassword: "********",
+    },
+    {
+      name: "Camila",
+      lastname: "Reyes",
+      rut: "16.543.210-2",
+      birthdate: "1995-08-20",
+      street: "El Aromo",
+      number: "456",
+      email: "camila@gmail.com",
+      phone: "987654321",
+      password: "********",
+      confirmPassword: "********",
+    },
+    {
+      name: "Cecilia",
+      lastname: "Poblete",
+      rut: "18.533.023-1",
+      birthdate: "1995-08-20",
+      street: "El Aromo",
+      number: "356",
+      email: "cecilia@gmail.com",
+      phone: "938261789",
+      password: "********",
+      confirmPassword: "********",
+    },
+    {
+      name: "Gipson",
+      lastname: "Matamala",
+      rut: "20.334.425-k",
+      birthdate: "1995-08-20",
+      street: "Los Pinos",
+      number: "142",
+      email: "gmatamala@gmail.com",
+      phone: "978463355",
+      password: "********",
+      confirmPassword: "********",
+    },
   ]);
+  const [filtro, setFiltro] = useState("");
+  /* const [postulanteSeleccionado, setPostulanteSeleccionado] = useState(null); */
+  const [detalle, setDetalle] = useState(null);
 
-  const aceptarPostulante = (rut) => {
-    const postulante = postulantes.find((p) => p.rut === rut);
-    if (postulante) {
-      setPostulantes(postulantes.filter((p) => p.rut !== rut));
-      alert(`✅ ${postulante.name} ${postulante.lastname} ahora es socio.`);
-    }
+  const aceptarPostulante = (postulante) => {
+    const nuevoSocio = {
+      nombre: postulante.name,
+      apellido: postulante.lastname,
+      rut: postulante.rut,
+      direccion: `${postulante.street} ${postulante.number}`,
+      correo: postulante.email,
+      telefono: postulante.phone,
+    };
+    setSocios([...socios, nuevoSocio]);
+    setPostulantes(postulantes.filter((p) => p.rut !== postulante.rut));
+    setDetalle(null);
   };
 
   const rechazarPostulante = (rut) => {
-    const postulante = postulantes.find((p) => p.rut === rut);
-    if (postulante) {
-      setPostulantes(postulantes.filter((p) => p.rut !== rut));
-      alert(`❌ Postulación rechazada para ${postulante.name} ${postulante.lastname}.`);
-    }
+    setPostulantes(postulantes.filter((p) => p.rut !== rut));
+    setDetalle(null);
   };
+  
 
   return (
     
-    <div className="gs-container">
-      <h2 className="gs-title">👥 Gestión de Socios Vecinales</h2>
-
-      {/* SOCIOS */}
-      <div className="gs-section">
-        <h3 className="gs-subtitle">Socios Inscritos ({socios.length})</h3>
-        <table className="gs-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>RUT</th>
-              <th>Dirección</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-            </tr>
-          </thead>
-          <tbody>
-            {socios.map((s) => (
-              <tr key={s.rut}>
-                <td>{s.name} {s.lastname}</td>
-                <td>{s.rut}</td>
-                <td>{s.street} #{s.number}</td>
-                <td>{s.email}</td>
-                <td>{s.phone}</td>
+    <div className="gestion-container">
+      {/* === PANEL SOCIOS === */}
+      <div className="panel">
+        <h2>Socios Inscritos ({socios.length})</h2>
+        <input
+        type="text"
+        placeholder="🔍 Buscar socio por nombre o RUT..."
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        className="w-full p-2 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+        <div className="tabla-socios">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>RUT</th>
+                <th>Dirección</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {socios.map((s, i) => (
+                <tr key={i}>
+                  <td>{s.nombre} {s.apellido}</td>
+                  <td>{s.rut}</td>
+                  <td>{s.direccion}</td>
+                  <td>{s.correo}</td>
+                  <td>{s.telefono}</td>
+                </tr>
+              ))}
+            </tbody>
+            
+          </table>
+        </div>
       </div>
 
-      {/* POSTULANTES */}
-      <div className="gs-section">
-        <h3 className="gs-subtitle">Postulantes ({postulantes.length})</h3>
-        <table className="gs-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>RUT</th>
-              <th>Fecha Nac.</th>
-              <th>Dirección</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {postulantes.map((p) => (
-              <tr key={p.rut}>
-                <td>{p.name} {p.lastname}</td>
-                <td>{p.rut}</td>
-                <td>{p.birthdate}</td>
-                <td>{p.street} #{p.number}</td>
-                <td>{p.email}</td>
-                <td>{p.phone}</td>
-                <td>
-                  <button className="aceptar" onClick={() => aceptarPostulante(p.rut)}>Aceptar</button>
-                  <button className="rechazar" onClick={() => rechazarPostulante(p.rut)}>Rechazar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* === PANEL POSTULANTES === */}
+      <div className="panel">
+        <h2>Postulantes ({postulantes.length})</h2>
+        <div className="postulantes-list">
+          {postulantes.map((p, i) => (
+            <div key={i} className="postulante-card">
+              <div>
+                <strong>{p.name} {p.lastname}</strong>
+                <p>{p.rut}</p>
+              </div>
+              <button className="revisar-btn" onClick={() => setDetalle(p)}>
+                Revisar
+              </button>
+            </div>
+          ))}
+          {postulantes.length === 0 && (
+            <p className="sin-postulantes">No hay postulantes pendientes.</p>
+          )}
+        </div>
       </div>
+
+      {/* === MODAL DETALLE === */}
+      {detalle && (
+        <div className="modal-overlay" onClick={() => setDetalle(null)}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+            <h3>Detalle del Postulante</h3>
+            <div className="modal-body">
+              <p><strong>Nombre:</strong> {detalle.name} {detalle.lastname}</p>
+              <p><strong>RUT:</strong> {detalle.rut}</p>
+              <p><strong>Fecha de Nacimiento:</strong> {detalle.birthdate}</p>
+              <p><strong>Dirección:</strong> {detalle.street} {detalle.number}</p>
+              <p><strong>Correo:</strong> {detalle.email}</p>
+              <p><strong>Teléfono:</strong> {detalle.phone}</p>
+            </div>
+            <div className="acciones">
+              <button className="btn-aceptar" onClick={() => aceptarPostulante(detalle)}>Aceptar</button>
+              <button className="btn-rechazar" onClick={() => rechazarPostulante(detalle.rut)}>Rechazar</button>
+              <button className="btn-cerrar" onClick={() => setDetalle(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default GestionSocios;
+
+export default function GestionDeSocios(){
+   const user = { nombre: "Nombre Directiva", cargo: "Cargo" };
+    return (
+      <PanelLateralD title="Gestion Socios" user={user} showTopUser={false}>
+        <GestionSocios />
+      </PanelLateralD>
+    );
+}
 

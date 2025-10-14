@@ -1,71 +1,302 @@
-.gs-container {
+/* .gs-container {
   padding: 20px;
   max-width: 1000px;
   margin: auto;
   font-family: Arial, sans-serif;
-   background: #fff;
+   background: #111827;
+    border-radius: 12px;
 }
 
-.gs-title {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
+.gs-section{
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  border-top: 6px solid transparent;
+  margin-top: 1rem;
+
+} */
+/* === ESTILOS GENERALES === */
+
+
+/* otro  */
+.gestion-container {
+  display: flex;
+  gap: 1.5rem;
+  background-color: #0b1224;
+  padding: 2rem;
+  color: #1a1a1a;
+  font-family: "Segoe UI", sans-serif;
+  position: relative;
+  align-items: flex-start;
 }
 
-.gs-subtitle {
-  margin-top: 40px;
-  color: #444;
+/* --- Panel de socios más ancho --- */
+.panel:first-child {
+  flex: 1.7; /* Más ancho */
 }
 
-.gs-table {
+.panel:last-child {
+  flex: 1; /* Más angosto */
+}
+/* PANEL DE DETALLE */
+.detalle-panel {
+  position: absolute;
+  right: 2rem;
+  top: 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 320px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.detalle-panel h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.3rem;
+}
+
+.detalle-panel p {
+  margin: 0.4rem 0;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease;
+}
+
+.panel h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1.2rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.4rem;
+}
+
+/* === TABLA DE SOCIOS === */
+.tabla-socios {
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f9fafc;
+}
+
+.tabla-socios table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-  color: #0f172a;
+  font-size: 0.9rem;
 }
 
-.gs-table th, .gs-table td {
-  border: 1px solid #ddd;
-  padding: 8px 10px;
+.tabla-socios th {
   text-align: left;
+  padding: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f1f5f9;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
 }
 
-.gs-table th {
-  background-color: #f4f4f4;
-  color: #333;
+.tabla-socios td {
+  padding: 0.8rem;
+  color: #1e293b;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.gs-table tr:nth-child(even) {
-  background-color: #fafafa;
+.tabla-socios tr:hover {
+  background-color: #f1f5f9;
 }
 
-.gs-table tr:hover {
-  background-color: #f1f1f1;
+.tabla-socios::-webkit-scrollbar {
+  width: 8px;
+}
+.tabla-socios::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
 }
 
-button.aceptar {
-  background-color: #4CAF50;
+/* === POSTULANTES === */
+.postulantes-list {
+  overflow-y: auto;
+  flex: 1;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.postulante-card {
+  background: #f9fafc;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* === MODAL DETALLE === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-detalle {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  animation: zoomIn 0.3s ease;
+}
+
+.modal-detalle h3 {
+  font-size: 1.4rem;
+  color: #0f172a;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  text-align: center;
+}
+
+.modal-body p {
+  margin: 0.5rem 0;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.acciones {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-aceptar {
+  background-color: #16a34a;
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  margin-right: 6px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-aceptar:hover {
+  background-color: #15803d;
+}
+
+.btn-rechazar {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-rechazar:hover {
+  background-color: #b91c1c;
+}
+
+.btn-cerrar {
+  background-color: #64748b;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-button.rechazar {
-  background-color: #E53935;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
+@keyframes zoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-button.aceptar:hover {
-  background-color: #43a047;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-button.rechazar:hover {
-  background-color: #d32f2f;
+.sin-postulantes {
+  text-align: center;
+  color: #64748b;
+  margin-top: 2rem;
+  font-style: italic;
+}
+/* Contenedor con scroll elegante */
+.socios-table-container,
+.postulantes-list {
+  overflow-y: auto;
+  max-height: 65vh; /* ajusta según tu diseño */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+  scroll-behavior: smooth;
+  padding-right: 0.5rem;
+}
+
+/* Scrollbar estilizado para navegadores WebKit */
+.socios-table-container::-webkit-scrollbar,
+.postulantes-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.socios-table-container::-webkit-scrollbar-track,
+.postulantes-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.socios-table-container::-webkit-scrollbar-thumb,
+.postulantes-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+.socios-table-container::-webkit-scrollbar-thumb:hover,
+.postulantes-list::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Sombra sutil al llegar al final o tener más contenido */
+.socios-table-container,
+.postulantes-list {
+  box-shadow: inset 0 6px 6px -6px rgba(0,0,0,0.1),
+              inset 0 -6px 6px -6px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  background-color: #fff;
 }

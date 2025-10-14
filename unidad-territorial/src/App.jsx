@@ -31,9 +31,10 @@ function AppInner() {
   const { pathname } = useLocation();
 
   // 🔹 Considera panel de directiva tanto /solicitudes como cualquier /directiva/*
+  const adminRoutes = ["/solicitudes", "/gestion", "/gestionProyectos"];
   const isAdminPanel =
-    pathname === "/solicitudes" ||
-    pathname.startsWith("/directiva/");
+  adminRoutes.includes(pathname) ||
+  pathname.startsWith("/directiva/");
 
   return (
     <>
@@ -46,13 +47,13 @@ function AppInner() {
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/noticias" element={<ComunicacionNoticias />} />
         <Route path="/requerimientos" element={<RequerimientosVecino />} />
-        <Route path="/proyectov" element={<ProyectosVecinalesVecino />} />
+        <Route path="/proyectos" element={<ProyectosVecinalesVecino />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Directiva */}
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />
-        <Route path="/proyectos-vecinales" element={<ProyectosVecinalesAdmin />} />
+        <Route path="/gestionProyectos" element={<ProyectosVecinalesAdmin />} />
         <Route path="/directiva/certificados" element={<CertificadosDirectiva />} />
         <Route path="/gestion" element={<Gestion_Socios/>} />
         {/* Redirección por defecto de /directiva → certificados */}
