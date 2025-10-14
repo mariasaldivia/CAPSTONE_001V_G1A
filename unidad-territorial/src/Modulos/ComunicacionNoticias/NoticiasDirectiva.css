@@ -1,0 +1,182 @@
+/*  Paleta general de colores y variables reutilizables */
+:root{
+  --ink:#0b0e1d;        
+  --muted:#5b647a;      
+  --border:#e7e9f3;     
+  --brand:#4b3ff2;       
+  --card:#ffffff;       
+  --bg:#f2f4fb;         
+}
+
+/* Contenedor principal de la vista de noticias */
+.news-page.wide{
+  max-width: 1100px;      
+  margin: 0 auto;
+  padding: 22px 26px 38px; 
+  color: var(--ink);
+  background: transparent;
+}
+
+/* 🏷️ Encabezado principal con título */
+.news-head{
+  margin-bottom: 16px;
+}
+
+/* Título destacado sobre fondo oscuro (del panel de directiva) */
+.news-head--contrast h1{
+  font-size: clamp(26px, 4.5vw, 36px);
+  margin: 6px 0 4px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #fff; /* color claro para contraste */
+  text-shadow: 0 2px 8px rgba(0,0,0,.45); /* sombra para mejor lectura */
+}
+
+/*  Texto de instrucciones bajo el título */
+.news-instructions{
+  color: rgba(255,255,255,.88);
+  margin: 0 0 8px;
+}
+
+/*  Tarjeta principal del formulario */
+.news-card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 22px rgba(11,11,205,.06);
+}
+.news-card--roomy{ 
+  padding: 18px; 
+}
+
+/*  Grillas para alinear campos (2 o 3 columnas) */
+.grid.two{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.grid.three{
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr; /* imagen principal más grande */
+  gap: 16px;
+}
+
+/* diseño adaptable (pantallas medianas y móviles) */
+@media (max-width: 1200px){
+  .grid.three{ grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px){
+  .grid.two{ grid-template-columns: 1fr; }
+  .grid.three{ grid-template-columns: 1fr; }
+}
+
+/* Campos del formulario (título, subtítulo, imágenes) */
+.form-field{ 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+}
+.form-field label{ font-weight: 700; }
+.form-field input[type="text"]{
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  font-size: 1rem;
+  background: #fff;
+}
+.form-field input[type="file"]{
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: #fbfbff;
+}
+
+/* Vista previa de la imagen principal o secundarias */
+.img-preview{ 
+  margin-top: 6px; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  border:1px solid var(--border);
+}
+.img-preview img{ 
+  width:100%; 
+  height: 220px; 
+  object-fit: cover; 
+  display:block; 
+}
+.img-preview.tall img{ height: 280px; } /* imagen principal más alta */
+
+/* Textos secundarios y errores */
+.hint{ color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+.error{ color:#c0342b; }
+
+/* Barra de herramientas del editor (negrita, cursiva, etc.) */
+.editor-toolbar{
+  display:flex; 
+  flex-wrap:wrap; 
+  gap:8px;
+  border:1px solid var(--border);
+  padding:10px; 
+  border-radius:12px; 
+  background:#f9f9ff;
+}
+.editor-toolbar button{
+  border:1px solid var(--border);
+  background:#fff; 
+  padding:10px 12px; 
+  border-radius:10px; 
+  cursor:pointer;
+  font-weight:700;
+}
+.editor-toolbar .sep{ 
+  width:1px; 
+  height:28px; 
+  background:var(--border); 
+  margin:0 4px; 
+}
+
+/* ✍️ Área editable para redactar la noticia */
+.rich-editor{
+  margin-top: 12px;
+  min-height: 220px;
+  border:1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  line-height: 1.75;
+  font-size: 1.02rem;
+  background:#fff;
+}
+.rich-editor.large{ 
+  min-height: 300px; /* altura más cómoda para redactar */
+}
+.rich-editor:empty:before{
+  content: attr(placeholder);
+  color: var(--muted);
+}
+
+/* 🔘 Sección inferior con los botones */
+.actions{
+  display:flex; 
+  gap:12px; 
+  justify-content:flex-end; 
+  margin-top:18px;
+}
+
+/* Botones principales */
+.btn{
+  background: var(--brand);
+  color:#fff; 
+  border:none; 
+  padding:14px 20px; 
+  border-radius:12px; 
+  cursor:pointer;
+  font-weight:800; 
+  letter-spacing:.2px;
+}
+.btn.ghost{
+  background:#fff; 
+  color:var(--ink); 
+  border:1px solid var(--border);
+}
