@@ -2,13 +2,15 @@ import { useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
 import "./CertificadosDirectiva.css";
 
-/* Utilidad: mostrar fecha/hora legible */
+/* Utilidad: mostrar fecha legible (solo fecha) */
 const fmtDate = (iso) =>
-  new Date(iso).toLocaleDateString(undefined, { year: "2-digit", month: "2-digit", day: "2-digit" });
-const fmtTime = (iso) =>
-  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleDateString(undefined, {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
-/* (Opcional) utilidades de RUT si te sirven en detalle */
+/* Utilidades de RUT */
 function formatearRut(input) {
   if (!input) return "";
   let v = input.replace(/\./g, "").replace(/\s+/g, "").toUpperCase();
@@ -20,34 +22,34 @@ function formatearRut(input) {
   return `${cuerpoMiles}-${dv}`;
 }
 
-/* MOCK de solicitudes entrantes */
+/* MOCK de solicitudes */
 const MOCK = [
   {
     id: "C-00041",
     creado_ts: "2025-09-30T18:12:00",
-    nombre: "Claudia Pérez",
-    rut: "12.345.678-5",
-    direccion: "Calle 12 #345, Villa X",
-    email: "claudia@example.com",
+    nombre: "Jorge Soto",
+    rut: "15.678.123-3",
+    direccion: "Los Pinos 345 ",
+    email: "jorgesoto@gmail.com",
     comprobante: {
       name: "deposito_4132.jpg",
       type: "image/jpeg",
-      url: "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop",
+      url: "/img/comprobante.jpg",
     },
-    estado: "Pendiente", // Pendiente | En revisión | Aprobado | Rechazado
+    estado: "Pendiente",
     notas: "",
   },
   {
     id: "C-00042",
     creado_ts: "2025-10-01T09:35:00",
-    nombre: "Jorge Soto",
+    nombre: "Camila Reyes",
     rut: "15.678.123-3",
-    direccion: "Los Robles 221, Villa Y",
-    email: "jorge@example.com",
+    direccion: "El aromo 456",
+    email: "camilareyes@gmail.com",
     comprobante: {
-      name: "deposito_7710.pdf",
-      type: "application/pdf",
-      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      name: "deposito_7710.jpg",
+      type: "image/jpeg",
+      url: "/img/comprobante.jpg",
     },
     estado: "En revisión",
     notas: "Revisar monto",
@@ -55,28 +57,28 @@ const MOCK = [
   {
     id: "C-00043",
     creado_ts: "2025-10-01T10:20:00",
-    nombre: "Fauget Salinas",
+    nombre: "Ana Torres",
     rut: "8.345.121-9",
     direccion: "Av. Central 123",
-    email: "fauget@example.com",
+    email: "torresana@gmail.com",
     comprobante: {
       name: "deposito_5521.jpg",
       type: "image/jpeg",
-      url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+      url: "/img/comprobante.jpg",
     },
     estado: "Pendiente",
     notas: "",
   },
 ];
 
-/* Historial simple */
+/* Historial */
 const MOCK_HISTORY = [
   { id: "C-00041", accion: "Pendiente", ts: "2025-09-30T18:12:00" },
   { id: "C-00042", accion: "En revisión", ts: "2025-10-01T09:35:00" },
 ];
 
 function CertificadosContent() {
-  const [orden, setOrden] = useState("recientes"); // recientes | pendientes
+  const [orden, setOrden] = useState("recientes");
   const [seleccion, setSeleccion] = useState(null);
   const [respuesta, setRespuesta] = useState("");
   const [showHistory, setShowHistory] = useState(false);
@@ -91,8 +93,10 @@ function CertificadosContent() {
       return base.sort((a, b) => new Date(b.creado_ts) - new Date(a.creado_ts));
     }
     if (orden === "pendientes") {
-      return base.sort((a, b) =>
-        (a.estado === "Pendiente" ? -1 : 1) - (b.estado === "Pendiente" ? -1 : 1)
+      return base.sort(
+        (a, b) =>
+          (a.estado === "Pendiente" ? -1 : 1) -
+          (b.estado === "Pendiente" ? -1 : 1)
       );
     }
     return base;
@@ -118,7 +122,8 @@ function CertificadosContent() {
     }
   }, [histOrder]);
 
-  const scrollTo = (ref) => ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollTo = (ref) =>
+    ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const onRevisar = (row) => {
     setSeleccion(row);
@@ -142,7 +147,6 @@ function CertificadosContent() {
   const aprobar = () => {
     if (!seleccion) return;
     alert(`✅ Certificado ${seleccion.id} APROBADO`);
-    // aquí guardarías en backend y empujarías al historial
   };
   const rechazar = () => {
     if (!seleccion) return;
@@ -154,7 +158,8 @@ function CertificadosContent() {
   };
 
   const esPDF = (file) =>
-    file?.type === "application/pdf" || (file?.name || "").toLowerCase().endsWith(".pdf");
+    file?.type === "application/pdf" ||
+    (file?.name || "").toLowerCase().endsWith(".pdf");
   const esIMG = (file) => file?.type?.startsWith("image/");
 
   return (
@@ -229,9 +234,7 @@ function CertificadosContent() {
                     <td>{r.id}</td>
                     <td>{r.nombre}</td>
                     <td>{formatearRut(r.rut)}</td>
-                    <td>
-                      {fmtDate(r.creado_ts)} · {fmtTime(r.creado_ts)}
-                    </td>
+                    <td>{fmtDate(r.creado_ts)}</td>
                     <td>
                       <span
                         className={
@@ -296,14 +299,28 @@ function CertificadosContent() {
                 </span>
               </div>
 
+              {/* ✅ Comprobante con ícono de descarga */}
               <div className="cd__block">
                 <span className="cd__k">Comprobante</span>
                 <div className="cd__file">
                   {esIMG(seleccion.comprobante) && (
-                    <img
-                      src={seleccion.comprobante.url}
-                      alt={seleccion.comprobante.name}
-                    />
+                    <div className="cd__imgWrap">
+                      <a
+                        href={seleccion.comprobante.url}
+                        download={seleccion.comprobante.name || "comprobante"}
+                        className="cd__dl"
+                        aria-label="Descargar comprobante"
+                        title="Descargar comprobante"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1zM5 20a1 1 0 1 1 0-2h14a1 1 0 1 1 0 2H5z" />
+                        </svg>
+                      </a>
+                      <img
+                        src={seleccion.comprobante.url}
+                        alt={seleccion.comprobante.name}
+                      />
+                    </div>
                   )}
                   {esPDF(seleccion.comprobante) && (
                     <embed
@@ -312,16 +329,6 @@ function CertificadosContent() {
                       width="100%"
                       height="240"
                     />
-                  )}
-                  {!esIMG(seleccion.comprobante) && !esPDF(seleccion.comprobante) && (
-                    <a
-                      className="cd__btn cd__btn--ghost"
-                      href={seleccion.comprobante.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Ver archivo
-                    </a>
                   )}
                 </div>
               </div>
@@ -355,66 +362,13 @@ function CertificadosContent() {
             </div>
           )}
         </section>
-
-        {/* HISTORIAL (condicional) */}
-        {showHistory && (
-          <section
-            className="cd__card cd__history is-open"
-            ref={historyRef}
-            id="cd-history"
-          >
-            <div className="cd__historyHead">
-              <h2>Historial</h2>
-              <div className="cd__historyActions">
-                <label className="cd__order">
-                  Ordenar por{" "}
-                  <select
-                    value={histOrder}
-                    onChange={(e) => setHistOrder(e.target.value)}
-                    aria-label="Ordenar historial"
-                  >
-                    <option value="recientes">Más recientes</option>
-                    <option value="antiguos">Más antiguos</option>
-                    <option value="aprobados">Aprobados</option>
-                    <option value="rechazados">Rechazados</option>
-                    <option value="pendientes">Pendientes</option>
-                    <option value="en_revision">En revisión</option>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="cd__btn cd__btn--ghost"
-                  onClick={() => setShowHistory(false)}
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-
-            <ul className="cd__timeline">
-              {histList.map((h, i) => (
-                <li key={i}>
-                  <span className="cd__tWhen">
-                    {fmtDate(h.ts)} · {fmtTime(h.ts)}
-                  </span>
-                  <span className="cd__tDot" />
-                  <span className="cd__tTxt">
-                    <strong>{h.id}</strong>{" "}
-                    {h.accion === "Pendiente" ? "marcado como" : "cambiado a"}{" "}
-                    <em>{h.accion}</em>.
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
       </section>
     </div>
   );
 }
 
 export default function CertificadosDirectiva() {
-  const user = { nombre: "Nombre Directiva", cargo: "Cargo" }; // rellena con datos reales
+  const user = { nombre: "Nombre Directiva", cargo: "Cargo" };
   return (
     <PanelLateralD title="Certificados" user={user} showTopUser={false}>
       <CertificadosContent />

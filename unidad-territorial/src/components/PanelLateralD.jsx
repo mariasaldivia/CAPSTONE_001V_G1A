@@ -115,8 +115,9 @@ export default function PanelLateralD({
             Proyectos Vecinales
           </NavLink>
 
+          {/* 🔁 Ajustado para apuntar a la vista nueva */}
           <NavLink
-            to="/admin/noticias"
+            to="/directiva/noticias"
             className={({ isActive }) =>
               "adm__item" + (isActive ? " adm__item--active" : "")
             }

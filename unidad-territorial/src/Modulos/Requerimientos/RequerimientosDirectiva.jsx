@@ -15,9 +15,7 @@ const MOCK = [
     direccion: "Calle 12 #345, Villa X",
     detalle:
       "Solicito revisión de cámaras por incidentes ocurridos anoche en la calle 12.",
-    adjunto:
-      "https://images.unsplash.com/photo-1509099836639-18ba1795216d?q=80&w=1200&auto=format&fit=crop",
-    creado_hace: "5m",
+        creado_hace: "5m",
   },
   {
     id: "R10235",
@@ -29,9 +27,8 @@ const MOCK = [
     telefono: "+569 8888 8888",
     direccion: "Los Robles 221, Villa Y",
     detalle:
-      "Petición de cambio de escaños en la plaza por desgaste y astillas.",
-    adjunto:
-      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=1200&auto=format&fit=crop",
+      "Petición de mejoras en columpio de la plazita. La cadena se encuentra cortada.",
+    adjunto: "/img/N3_columpios2.png",
     creado_hace: "2h",
   },
   {
@@ -44,8 +41,7 @@ const MOCK = [
     telefono: "+569 7777 7777",
     direccion: "Av. Central 123",
     detalle: "Solicitud de permiso para actividad recreativa comunitaria.",
-    adjunto:
-      "https://images.unsplash.com/photo-1542044801-7ea5c6e69e7a?q=80&w=1200&auto=format&fit=crop",
+    
     creado_hace: "12m",
   },
 ];
@@ -152,7 +148,7 @@ function RequerimientosContent() {
         <div className="rd__headerRow">
           <h1 className="rd__title">Requerimientos</h1>
 
-          {/* Acciones top: Historial + Exportar PDF */}
+        {/* Acciones top: Historial + Exportar PDF */}
           <div className="rd__actionsTop">
             <button
               type="button"
@@ -289,12 +285,21 @@ function RequerimientosContent() {
                 <p className="rd__text">{seleccion.detalle}</p>
               </div>
 
+              {/* 👇 ÚNICO CAMBIO: imagen solo si existe; si no, “Sin adjunto” */}
               <div className="rd__block">
-                <span className="rd__k">Adjunto</span>
-                <div className="rd__img">
-                  <img src={seleccion.adjunto} alt="Adjunto del requerimiento" />
-                </div>
+                <span className="rd__k">Imagen</span>
+                {seleccion.adjunto ? (
+                  <div className="rd__img">
+                    <img
+                      src={seleccion.adjunto}
+                      alt={`Adjunto del requerimiento ${seleccion.id}`}
+                    />
+                  </div>
+                ) : (
+                  <span className="rd__noAdj">Sin Imagen</span>
+                )}
               </div>
+              {/* ☝️ FIN CAMBIO */}
 
               <div className="rd__actions">
                 <button className="rd__btn rd__btn--ok" onClick={aprobar}>
