@@ -56,7 +56,7 @@ export default function Navbar() {
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
     { to: "/requerimientos", label: "Solicitudes" }, // 👈 para los vecinos
-    { to: "/proyectov", label: "Proyectos" }, 
+    { to: "/proyectos", label: "Proyectos" }, 
      { to: "/login", label: "Iniciar sesión" }, 
     { to: "/register", label: "Hazte socio" }, 
   
