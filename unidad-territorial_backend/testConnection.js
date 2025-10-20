@@ -8,6 +8,7 @@ async function testConnection(retries = 5) {
       console.log("Conexión exitosa:", result.rows[0]);
       return;
     } catch (err) {
+      console.error(err); // mostrar el error real
       console.log("DB no lista, reintentando en 3s...");
       await new Promise(r => setTimeout(r, 3000));
     }

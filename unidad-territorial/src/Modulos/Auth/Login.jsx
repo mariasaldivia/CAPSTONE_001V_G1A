@@ -2,11 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../Auth/Auth.css";
 import { FaUser, FaLock } from "react-icons/fa";
-//Usuarios falsos para probar rutas
-const fakeUsers = [
-  { username: "admin", password: "1234", role: "directiva" },
-  { username: "vecino", password: "abcd", role: "vecino" },
-];
 
 function Login({ setUser }) {
   const [username, setUsername] = useState("");
@@ -14,25 +9,41 @@ function Login({ setUser }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-      e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
 
-      const found = fakeUsers.find(
-        (u) => u.username === username && u.password === password
-      );
+    try {
+      const res = await fetch("http://localhost:4000/api/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username: "cecilia", password: "cecilia123" }),
+});
+const data = await res.json();
+console.log(data);
 
-      if (!found) {
-        setError("Usuario o contraseña incorrectos");
+
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.message || "Error en login");
         return;
       }
 
-      // Guardamos usuario (sin contraseña)
-      const userData = { username: found.username, role: found.role };
-      setUser(userData);
-
+          
+console.log(data);
       // Redirigir según rol
-      if (found.role === "directiva") navigate("/dashboard");
-      else navigate("/");
+      if (data.roles.includes("ADMIN") || data.roles.includes("DIRECTIVO")) {
+        navigate("/solicitudes"); // panel directiva/admin
+      } else if (data.roles.includes("SOCIO")) {
+        navigate("/"); // sección socios
+      } else {
+        navigate("/"); // cualquier otro rol
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError("Error de conexión con el servidor");
+    }
   };
 
   return (
@@ -68,12 +79,6 @@ function Login({ setUser }) {
               Ingresar
             </button>
           </form>
-
-          <div className="demo-credentials">
-            <strong>Credenciales de prueba:</strong>
-            <div>Directiva → <code>admin / 1234</code></div>
-            <div>Vecino → <code>vecino / abcd</code></div>
-          </div>
 
           <p className="register-text">
             ¿No tienes cuenta? <a href="/register">Regístrate</a>
