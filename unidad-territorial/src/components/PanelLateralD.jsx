@@ -1,48 +1,139 @@
-// src/components/PanelLateralD.jsx
-import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./PanelLateralD.css";
 
+// ⚙️ Modo depuración (activar si quieres ver logs)
+const DEBUG = false;
+
+/** 🧩 Leer usuario desde almacenamiento (en español) */
+function leerUsuarioSesion() {
+  try {
+    const raw =
+      localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/** 🧩 Convierte texto en formato "Capitalizado" */
+function capitalizar(texto = "") {
+  const str = texto.toString().toLowerCase().trim();
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/** 🧩 Normalizar datos del usuario (nombre + cargo en formato legible) */
+function normalizarUsuario(u) {
+  if (!u || typeof u !== "object") return null;
+
+  // Nombre base
+  const nombre =
+    u.Nombre_Usuario?.toString() ||
+    u.nombre?.toString() ||
+    u.name?.toString() ||
+    u.fullName?.toString() ||
+    "Usuario";
+
+  // Roles y tipo base
+  const tipoBase = (u.Tipo_Usuario || u.tipo_usuario || "").toString().toUpperCase().trim();
+  const roles = Array.isArray(u.Roles)
+    ? u.Roles.map((r) => String(r).toUpperCase().trim())
+    : tipoBase
+    ? [tipoBase]
+    : [];
+
+  // Cargo (solo relevante si es DIRECTIVA)
+  const cargo = (u.Cargo || u.cargo || "").toString();
+
+  // Rol activo guardado en localStorage (si el usuario tiene varios)
+  const rolLocal = (localStorage.getItem("rolActivo") || "").toUpperCase().trim();
+
+  // Rol efectivo
+  let rol = roles.includes(rolLocal)
+    ? rolLocal
+    : tipoBase || roles[0] || "SOCIO";
+
+  // Etiquetas visibles
+  const isAdmin = rol === "ADMIN";
+  const displayName = isAdmin ? "Administrador" : capitalizar(nombre);
+  const displayCargo = isAdmin
+    ? "Administrador"
+    : rol === "DIRECTIVA"
+    ? capitalizar(cargo || "Directiva")
+    : "Socio";
+
+  return {
+    ...u,
+    nombre,
+    tipo: tipoBase,
+    roles,
+    rolActivo: rol,
+    cargo,
+    isAdmin,
+    displayName,
+    displayCargo,
+  };
+}
+
 export default function PanelLateralD({
-  title = "Requerimientos",
-  user = { nombre: "Nombre directiva", cargo: "Cargo" },
+  title = "Panel Directiva",
   showTopUser = false,
   children,
 }) {
   const [isDesktop, setIsDesktop] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // Sincroniza modo (desktop/mobile) y estado del drawer
+  // Leer usuario actual
+  const sessionUser = useMemo(() => leerUsuarioSesion(), []);
+  const info = useMemo(() => normalizarUsuario(sessionUser), [sessionUser]);
+
+  useEffect(() => {
+    if (DEBUG) {
+      console.group("[PanelLateralD Debug]");
+      console.log("Usuario sesión:", sessionUser);
+      console.log("Normalizado:", info);
+      console.groupEnd();
+    }
+  }, [sessionUser, info]);
+
+  // Control de modo (desktop / móvil)
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 1024px)");
     const sync = () => {
       const desktop = mql.matches;
       setIsDesktop(desktop);
-      setMenuOpen(desktop); // desktop: abierto; móvil: cerrado
+      setMenuOpen(desktop);
     };
     sync();
     if (mql.addEventListener) mql.addEventListener("change", sync);
-    else mql.addListener(sync); // Safari antiguo
-
+    else mql.addListener(sync);
     return () => {
       if (mql.removeEventListener) mql.removeEventListener("change", sync);
       else mql.removeListener(sync);
     };
   }, []);
 
-  const toggleMenu = () => {
-    if (isDesktop) return;
-    setMenuOpen((v) => !v);
+  const toggleMenu = () => !isDesktop && setMenuOpen((v) => !v);
+  const closeMenu = () => !isDesktop && setMenuOpen(false);
+
+  /** 🚪 Cerrar sesión */
+  const handleLogout = () => {
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("token");
+    localStorage.removeItem("rolActivo");
+    sessionStorage.removeItem("usuario");
+    if (!isDesktop) setMenuOpen(false);
+    navigate("/login");
   };
 
-  const closeMenu = () => {
-    if (isDesktop) return;
-    setMenuOpen(false);
-  };
+  const displayName = info?.displayName || "Usuario";
+  const displayCargo = info?.displayCargo || "Cargo";
 
   return (
     <div className="adm">
-      {/* ===== Aside ===== */}
+      {/* ===== Sidebar ===== */}
       <aside
         id="adm-aside"
         className={`adm__aside ${menuOpen ? "adm__aside--open" : ""}`}
@@ -52,20 +143,21 @@ export default function PanelLateralD({
           <img
             className="adm__brand-logo"
             src={import.meta.env.BASE_URL + "logo.png"}
-            alt="Logo JVVV"
+            alt="Logo Junta de Vecinos"
           />
-          <div className="adm__brand-user">
-            <div className="adm__brand-name" title={user?.nombre || ""}>
-              {user?.nombre}
-            </div>
-            <div className="adm__brand-role" title={user?.cargo || ""}>
-              {user?.cargo}
-            </div>
+        </div>
+
+        <div className="adm__brand-user">
+          <div className="adm__brand-name" title={displayName}>
+            {displayName}
           </div>
+          <div className="adm__brand-role" title={displayCargo}>
+            {displayCargo}
+          </div>
+          <hr className="adm__divider" />
         </div>
 
         <nav className="adm__menu" onClick={closeMenu}>
-          {/* ✅ Directiva: Requerimientos (ruta existente) */}
           <NavLink
             to="/solicitudes"
             end
@@ -76,7 +168,6 @@ export default function PanelLateralD({
             Requerimientos
           </NavLink>
 
-          {/* 👇 ejemplos estos no tienen ruta */}
           <NavLink
             to="/gestion"
             className={({ isActive }) =>
@@ -95,10 +186,8 @@ export default function PanelLateralD({
             Pagos y Cuotas
           </NavLink>
 
-          {/* ✅ Certificados de la Directiva tiene ruta */}
           <NavLink
             to="/directiva/certificados"
-            end
             className={({ isActive }) =>
               "adm__item" + (isActive ? " adm__item--active" : "")
             }
@@ -115,7 +204,6 @@ export default function PanelLateralD({
             Proyectos Vecinales
           </NavLink>
 
-          {/* 🔁 Ajustado para apuntar a la vista nueva */}
           <NavLink
             to="/directiva/noticias"
             className={({ isActive }) =>
@@ -154,20 +242,19 @@ export default function PanelLateralD({
             Centro de Ayuda
           </NavLink>
 
-          <button type="button" className="adm__item">
+          <button type="button" className="adm__item" onClick={handleLogout}>
             Cerrar sesión
           </button>
         </nav>
       </aside>
 
-      {/* Backdrop móvil */}
+      {/* Fondo móvil */}
       {!isDesktop && menuOpen && (
         <div className="adm__backdrop" onClick={closeMenu} />
       )}
 
       {/* ===== Top bar ===== */}
       <header className="adm__top">
-        {/* Hamburguesa SOLO en móvil */}
         <button
           type="button"
           className={`adm__burger ${menuOpen ? "is-open" : ""}`}
@@ -185,13 +272,12 @@ export default function PanelLateralD({
 
         {showTopUser && (
           <div className="adm__user">
-            <span className="adm__user-name">{user?.nombre}</span>
-            <small className="adm__user-role">{user?.cargo}</small>
+            <span className="adm__user-name">{displayName}</span>
+            <small className="adm__user-role">{displayCargo}</small>
           </div>
         )}
       </header>
 
-      {/* ===== Contenido ===== */}
       <main className="adm__main">{children}</main>
     </div>
   );

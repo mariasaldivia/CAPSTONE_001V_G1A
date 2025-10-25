@@ -1,16 +1,14 @@
-/* Variables de colores y sombra */
 :root{
   --nav-bg: #0f172a;
   --nav-fg: #e5e7eb;
   --nav-accent: #38bdf8;
   --nav-active: #22c55e;
+  --nav-neutral: rgba(255,255,255,.08);
   --shadow-lg: 0 10px 25px rgba(0,0,0,.15);
 }
 
-/* Normalización */
 * { box-sizing: border-box; }
 
-/* Barra de navegación */
 .nav {
   position: sticky;
   top: 0;
@@ -20,50 +18,93 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Contenedor interior de la barra */
 .nav__inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: .75rem 1rem;
+  width: 100%;
+  height: 70px;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: .5rem;
 }
 
-/* Logo + título */
 .nav__brand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: .6rem;
   text-decoration: none;
   color: var(--nav-fg);
 }
-
-/* Texto del título */
+.nav__logo-img {
+  height: 65px;
+  object-fit: contain;
+}
 .nav__title {
   font-weight: 700;
   font-size: 1rem;
 }
 
-/* Enlaces (desktop) */
+/* LINKS */
 .nav__links {
   display: none;
+  align-items: center;
   gap: .75rem;
 }
-
 .nav__link {
   color: var(--nav-fg);
   text-decoration: none;
   padding: .5rem .75rem;
   border-radius: .6rem;
-  transition: transform .15s ease, background .15s ease, color .15s ease;
-  opacity: .95;
+  transition: background .15s ease, color .15s ease;
 }
-.nav__link:hover { transform: translateY(-1px); background: rgba(255,255,255,.06); }
-.nav__link--active { color: var(--nav-active); background: rgba(34,197,94,.12); }
+.nav__link:hover {
+  background: var(--nav-neutral);
+}
+.nav__link--active {
+  color: var(--nav-active);
+  background: rgba(34,197,94,.12);
+}
 
-/* Botón hamburguesa (móvil) */
+/* CHIP USUARIO */
+.nav__user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .4rem .7rem;
+  border-radius: .6rem;
+  border: 1px solid rgba(26, 84, 109, 0.25);
+  background: rgba(65, 144, 177, 0.08);
+  font-weight: 600;
+  color: var(--nav-accent);
+  text-decoration: none;
+}
+.nav__user-chip:hover {
+  background: rgba(56,189,248,.15);
+}
+.nav__user-icon {
+  font-size: 1.1rem;
+  opacity: .85;
+}
+.nav__user-text {
+  text-transform: capitalize;
+}
+
+/* BOTÓN CERRAR SESIÓN (neutral) */
+.nav__btn-logout {
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: var(--nav-fg);
+  padding: .45rem .75rem;
+  border-radius: .6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.nav__btn-logout:hover {
+  background: rgba(255,255,255,.15);
+  transform: translateY(-1px);
+}
+
+/* Hamburguesa */
 .nav__burger {
   display: inline-flex;
   flex-direction: column;
@@ -73,12 +114,13 @@
   cursor: pointer;
   padding: .4rem;
 }
-.nav__burger:focus { outline: 2px solid var(--nav-accent); outline-offset: 2px; }
 .nav__burger-line {
-  width: 26px; height: 2px; background: var(--nav-fg);
+  width: 26px;
+  height: 2px;
+  background: var(--nav-fg);
 }
 
-/* Panel lateral del menú móvil */
+/* Drawer móvil */
 .nav__drawer {
   position: fixed;
   inset: 0 0 0 auto;
@@ -95,24 +137,45 @@
 }
 .nav__drawer--open { translate: 0 0; }
 
-/* Enlaces dentro del panel móvil */
 .nav__drawer-links {
   display: grid;
   gap: .35rem;
-  margin-top: .5rem;
 }
-.nav__drawer-link {
+.nav__drawer-link,
+.nav__drawer-user {
   color: var(--nav-fg);
   text-decoration: none;
   padding: .9rem 1rem;
   border-radius: .75rem;
   background: rgba(255,255,255,.04);
-  transition: background .15s ease, color .15s ease;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
 }
-.nav__drawer-link:hover { background: rgba(255,255,255,.08); }
-.nav__drawer-link--active { color: var(--nav-active); background: rgba(34,197,94,.12); }
+.nav__drawer-link:hover,
+.nav__drawer-user:hover {
+  background: rgba(255,255,255,.08);
+}
+.nav__drawer-link--active {
+  color: var(--nav-active);
+  background: rgba(34,197,94,.12);
+}
 
-/* Fondo oscuro detrás del menú móvil */
+.nav__drawer-btn-logout {
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.08);
+  color: var(--nav-fg);
+  padding: .9rem 1rem;
+  border-radius: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nav__drawer-btn-logout:hover {
+  background: rgba(255,255,255,.15);
+}
+
+/* Backdrop */
 .nav__backdrop {
   position: fixed;
   inset: 0;
@@ -121,61 +184,13 @@
   z-index: 55;
 }
 
-/* Reglas para pantallas grandes (desktop) */
+/* Responsive */
 @media (min-width: 1024px) {
   .nav__links { display: inline-flex; }
   .nav__burger { display: none; }
   .nav__drawer, .nav__backdrop { display: none; }
 }
 
-/* Contenedor del logo y ajustes */
-.nav__inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 .75rem 0 .25rem; 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .5rem;
-}
-
-/* Imagen del logo 
-.nav__logo-img {
-  height: 70px;
-  width: auto;
-  object-fit: contain;
-  border-radius: 8px;
-}*/
-
-/* Ocultar texto en móvil */
 @media (max-width: 640px) {
   .nav__title { display: none; }
-}
-
-/* Ajustes para pegar el logo a la esquina */
-.nav__inner {
-  max-width: none;
-  width: 100%;
-  margin: 0;
-  height: 70px;
-  padding: 0 .75rem 0 2rem; /* arriba, derecha, abajo, izquierda */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .5rem;
-}
-
-/* Logo más grande */
-.nav__logo-img {
-  height: 65px;
-  width: auto;
-  object-fit: contain;
-}
-
-/* Quitar espacio lateral del logo */
-.nav {
-  padding-left: 0;
-}
-.nav__brand {
-  margin-left: 0;
 }

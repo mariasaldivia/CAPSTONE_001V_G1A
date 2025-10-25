@@ -1,38 +1,71 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { FaUserCircle } from "react-icons/fa";
 import "./Navbar.css";
 
-export default function Navbar() {
-  // Estado para saber si el menú móvil está abierto o cerrado
-  const [open, setOpen] = useState(false);
-
-  // Referencias: sirven para detectar clics fuera del menú
-  const panelRef = useRef(null);
-  const btnRef = useRef(null);
-
-  // Saber en qué página estamos
-  const { pathname } = useLocation();
-
-  // 🔴 Si estamos en /solicitudes (panel directiva), no mostramos la Navbar
-  if (pathname.startsWith("/solicitudes")) {
+/** 🔹 Lee el usuario guardado en localStorage */
+function leerUsuarioSesion() {
+  try {
+    const raw = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
     return null;
   }
+}
 
-  // Cada vez que cambiamos de página → cerrar menú móvil
+/** 🔹 Obtiene el nombre visible */
+function obtenerNombreVisible(usuario) {
+  if (!usuario) return "";
+  return (
+    usuario.nombre?.toString() ||
+    usuario.Nombre_Usuario?.toString() ||
+    usuario.name?.toString() ||
+    ""
+  );
+}
+
+export default function Navbar() {
+  const [open, setOpen] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+  const panelRef = useRef(null);
+  const btnRef = useRef(null);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  // Oculta navbar en panel administrativo/directiva
+  if (pathname.startsWith("/solicitudes")) return null;
+
+  /** 🔄 Actualiza usuario desde almacenamiento */
+  const actualizarUsuario = () => setUsuario(leerUsuarioSesion());
+
   useEffect(() => {
+    actualizarUsuario();
     setOpen(false);
   }, [pathname]);
 
-  // Si hacemos clic fuera del menú y el botón → cerrar menú
+  // Detectar cambios de pestaña o almacenamiento
+  useEffect(() => {
+    const onVis = () => document.visibilityState === "visible" && actualizarUsuario();
+    const onStorage = () => actualizarUsuario();
+
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  // Cerrar al hacer clic fuera
   useEffect(() => {
     function onClickOutside(e) {
       if (!open) return;
-      const tgt = e.target;
       if (
         panelRef.current &&
-        !panelRef.current.contains(tgt) &&
+        !panelRef.current.contains(e.target) &&
         btnRef.current &&
-        !btnRef.current.contains(tgt)
+        !btnRef.current.contains(e.target)
       ) {
         setOpen(false);
       }
@@ -41,7 +74,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  // Si ensanchamos la pantalla (desktop), se cierra el menú móvil automáticamente
+  // Cerrar menú si se agranda la pantalla
   useEffect(() => {
     function onResize() {
       if (window.innerWidth >= 1024) setOpen(false);
@@ -50,57 +83,93 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Lista de enlaces del menú (incluí Requerimientos Vecinos)
-  const navItems = [
+  const isLogged = !!usuario;
+  const nombreVisible = obtenerNombreVisible(usuario);
+
+  /** 🔒 Cerrar sesión */
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    setUsuario(null);
+    setOpen(false);
+    navigate("/home");
+  };
+
+  const baseItems = [
     { to: "/home", label: "Inicio" },
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
-    { to: "/requerimientos", label: "Solicitudes" }, // 👈 para los vecinos
-    { to: "/proyectos", label: "Proyectos" }, 
-     { to: "/login", label: "Iniciar sesión" }, 
-    { to: "/register", label: "Hazte socio" }, 
-  
+    { to: "/requerimientos", label: "Solicitudes" },
+    { to: "/proyectos", label: "Proyectos" },
   ];
+
+  // Si hay usuario logeado → mostrar nombre + cerrar sesión
+  // Si no → mostrar "Hazte socio" + "Iniciar sesión"
+  const sessionItems = isLogged
+    ? [
+        { to: "/perfil", label: nombreVisible || "Mi perfil", isUser: true },
+        { type: "button", onClick: handleLogout, label: "Cerrar sesión" },
+      ]
+    : [
+        { to: "/register", label: "Hazte socio" },
+        { to: "/login", label: "Iniciar sesión" },
+      ];
+
+  const navItems = [...baseItems, ...sessionItems];
 
   return (
     <header className="nav">
       <div className="nav__inner">
-        {/* Logo + título de la junta */}
+        {/* LOGO */}
         <NavLink to="/home" className="nav__brand" aria-label="Unidad Territorial - Inicio">
           <img
             src="/logo.png"
             alt="Unidad Territorial"
             className="nav__logo-img"
             loading="eager"
-            fetchpriority="high"
           />
-          <span className="nav__title">Mirador de volcanes IV</span>
+          <span className="nav__title">Mirador de Volcanes IV</span>
         </NavLink>
 
-        {/* Menú para pantallas grandes (desktop) */}
+        {/* MENÚ DESKTOP */}
         <nav className="nav__links" aria-label="Navegación principal">
-          {navItems.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                "nav__link" + (isActive ? " nav__link--active" : "")
-              }
-              end={to === "/"}
-            >
-              {label}
-            </NavLink>
-          ))}
+          {navItems.map((item, idx) =>
+            item.type === "button" ? (
+              <button key={idx} className="nav__btn-logout" onClick={item.onClick}>
+                {item.label}
+              </button>
+            ) : item.isUser ? (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  "nav__user-chip" + (isActive ? " nav__user-chip--active" : "")
+                }
+                title={nombreVisible}
+              >
+                <FaUserCircle className="nav__user-icon" />
+                <span className="nav__user-text">{item.label}</span>
+              </NavLink>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  "nav__link" + (isActive ? " nav__link--active" : "")
+                }
+              >
+                {item.label}
+              </NavLink>
+            )
+          )}
         </nav>
 
-        {/* Botón hamburguesa (para móviles) */}
+        {/* BOTÓN HAMBURGUESA */}
         <button
           ref={btnRef}
           className="nav__burger"
-          aria-label="Abrir menú"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
+          aria-label="Abrir menú"
         >
           <span className="nav__burger-line" />
           <span className="nav__burger-line" />
@@ -108,32 +177,44 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Panel del menú en móviles */}
+      {/* MENÚ MÓVIL */}
       <div
-        id="mobile-menu"
         ref={panelRef}
         className={`nav__drawer ${open ? "nav__drawer--open" : ""}`}
         role="dialog"
-        aria-modal="true"
-        aria-label="Menú"
       >
         <nav className="nav__drawer-links">
-          {navItems.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                "nav__drawer-link" + (isActive ? " nav__drawer-link--active" : "")
-              }
-              end={to === "/"}
-            >
-              {label}
-            </NavLink>
-          ))}
+          {navItems.map((item, idx) =>
+            item.type === "button" ? (
+              <button key={idx} className="nav__drawer-btn-logout" onClick={item.onClick}>
+                {item.label}
+              </button>
+            ) : item.isUser ? (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="nav__drawer-user"
+                onClick={() => setOpen(false)}
+              >
+                <FaUserCircle className="nav__user-icon" />
+                <span className="nav__user-text">{item.label}</span>
+              </NavLink>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  "nav__drawer-link" + (isActive ? " nav__drawer-link--active" : "")
+                }
+              >
+                {item.label}
+              </NavLink>
+            )
+          )}
         </nav>
       </div>
 
-      {/* Fondo oscuro detrás del menú móvil */}
       {open && <div className="nav__backdrop" onClick={() => setOpen(false)} />}
     </header>
   );
