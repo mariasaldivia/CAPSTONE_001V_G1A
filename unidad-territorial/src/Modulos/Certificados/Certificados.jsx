@@ -153,7 +153,7 @@ export default function Certificados() {
         <h1>Para solicitar tu certificado de residencia completa los siguientes datos.</h1>
         <div className="precio">Valor $XXXX</div>
         <p className="nota">
-          Recuerda que debes hacer tu depósito previo a realizar la solicitud.
+          Recuerda que debes hacer tu depósito previo a realizar la solicitud y adjuntar compobante.
         </p>
       </section>
 
