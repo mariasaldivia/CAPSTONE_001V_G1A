@@ -88,3 +88,57 @@ a{color:inherit}
   height: 150px; /* ahora el PDF queda más compacto */
   display: block;
 }
+
+/* Éxito en pantalla */
+.card.success{
+  background: var(--adm-panel);
+  color: var(--adm-text);
+  border: 1px solid var(--adm-soft);
+  border-radius: 14px;
+  padding: 1.2rem;
+  max-width: 900px;
+  margin: 0 auto 1rem;
+  text-align: center;
+}
+.success__icon{ font-size: 2rem; margin-bottom: .4rem; }
+.success__title{ margin: .2rem 0 .4rem; font-size: 1.2rem; }
+.success__desc{ opacity: .9; line-height: 1.5; }
+
+.success__info{
+  margin: .9rem auto .7rem;
+  display: grid;
+  gap: .5rem;
+  text-align: left;
+  max-width: 620px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--adm-soft);
+  border-radius: 12px;
+  padding: .8rem .9rem;
+}
+.success__info .tag{
+  display: inline-block;
+  min-width: 74px;
+  padding: .1rem .5rem;
+  border-radius: 999px;
+  font-size: .85rem;
+  background: rgba(56,189,248,.12);
+  margin-right: .4rem;
+}
+
+.success__actions{
+  margin-top: .8rem;
+  display: flex;
+  justify-content: center;
+}
+.success__actions .btn{
+  border: 0;
+  border-radius: .6rem;
+  padding: .55rem .9rem;
+  font-weight: 600;
+  background: rgba(56,189,248,.9);
+  color: #062235;
+  cursor: pointer;
+}
+.success__actions .btn:hover{
+  filter: brightness(1.05);
+}

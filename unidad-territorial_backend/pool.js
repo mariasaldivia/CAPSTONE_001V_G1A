@@ -1,6 +1,6 @@
 // unidad-territorial_backend/pool.js
 import dotenv from "dotenv";
-dotenv.config(); // 👈 Asegura que .env esté cargado ANTES de leer process.env
+dotenv.config();
 
 import sql from "mssql";
 
@@ -20,24 +20,30 @@ const sqlConfig = {
 
 let poolPromise = null;
 
+/** 🔹 Devuelve siempre un pool listo para usar */
 export async function getPool() {
   if (!poolPromise) {
-    console.log("🔌 MSSQL conectar →",
+    console.log(
+      "🔌 MSSQL conectar →",
       `${sqlConfig.server}:${sqlConfig.port} db=${sqlConfig.database} user=${sqlConfig.user}`
     );
 
-    poolPromise = sql.connect(sqlConfig)
-      .then(pool => {
+    poolPromise = sql
+      .connect(sqlConfig)
+      .then((pool) => {
         console.log("✅ MSSQL pool conectado");
         return pool;
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("❌ Error MSSQL:", err?.message || err);
-        poolPromise = null;     // permitir reintentar en la próxima llamada
+        poolPromise = null; // permite reintentar en el próximo intento
         throw err;
       });
   }
   return poolPromise;
 }
+
+/** 🔹 Alias directo (para usar: `const p = await pool`) */
+export const pool = getPool();
 
 export { sql };

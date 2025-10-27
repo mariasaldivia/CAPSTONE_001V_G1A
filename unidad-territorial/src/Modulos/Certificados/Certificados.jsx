@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Certificados.css";
-import { Link } from "react-router-dom";
+import { CertAPI } from "../../api/certificados"; // 👈 helper API
 
-
-/* Función para dejar el RUT con puntos y guion
-   (solo formatea, no valida) */
+/* Formatea RUT con puntos y guion */
 function formatearRut(input) {
   if (!input) return "";
   let v = input.replace(/\./g, "").replace(/\s+/g, "").toUpperCase();
-  v = v.replace(/[^0-9K]/gi, ""); // deja solo números y K
+  v = v.replace(/[^0-9K]/gi, "");
   if (v.length < 2) return v;
   const cuerpo = v.slice(0, -1);
   const dv = v.slice(-1);
@@ -16,8 +14,7 @@ function formatearRut(input) {
   return `${cuerpoMiles}-${dv}`;
 }
 
-/* Valida el RUT (módulo 11).
-   Devuelve true si el RUT es correcto. */
+/* Valida RUT (módulo 11) */
 function validarRut(rutConFormato) {
   if (!rutConFormato) return false;
   const limpio = rutConFormato.replace(/\./g, "").toUpperCase();
@@ -28,7 +25,6 @@ function validarRut(rutConFormato) {
 
   let suma = 0;
   let mult = 2;
-  // recorre el número de derecha a izquierda multiplicando y sumando
   for (let i = cuerpo.length - 1; i >= 0; i--) {
     suma += parseInt(cuerpo[i], 10) * mult;
     mult = mult === 7 ? 2 : mult + 1;
@@ -38,40 +34,40 @@ function validarRut(rutConFormato) {
   return dv === dvEsperado;
 }
 
-/* Página de Certificados:
-   - NO lleva nav propio (el Navbar global ya está en App.jsx)
-   - Tiene un formulario simple con validación de RUT
-   - Permite subir un comprobante (imagen o PDF) y ver preview */
 export default function Certificados() {
-  // Estado del formulario (lo que el usuario escribe)
+  // Form
   const [form, setForm] = useState({
     nombre: "",
     rut: "",
     direccion: "",
     email: "",
-    comprobante: null, // aquí guardamos el archivo
+    comprobante: null, // file (opcional por ahora)
   });
 
-  // Cosas útiles para mostrar el archivo subido
+  // UI estados
   const [fileName, setFileName] = useState("");
-  const [filePreview, setFilePreview] = useState(null); // URL para mostrar imagen
+  const [filePreview, setFilePreview] = useState(null);
   const [rutValido, setRutValido] = useState(true);
 
-  // Cuando cambia algo del formulario
+  // Mensajes
+  const [done, setDone] = useState(false);
+  const [folio, setFolio] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Manejo de cambios
   const onChange = (e) => {
     const { name, value, files } = e.target;
 
-    // Si cambió el archivo
     if (name === "comprobante") {
       const f = files?.[0] ?? null;
       setForm((s) => ({ ...s, comprobante: f }));
       if (f) {
         setFileName(f.name);
-        // Si es imagen, creo una URL temporal para mostrarla
         if (f.type.startsWith("image/")) {
           setFilePreview(URL.createObjectURL(f));
         } else {
-          setFilePreview(null); // para PDF no usamos <img>
+          setFilePreview(null);
         }
       } else {
         setFileName("");
@@ -80,7 +76,6 @@ export default function Certificados() {
       return;
     }
 
-    // Si cambió el RUT, formateo y valido
     if (name === "rut") {
       const formateado = formatearRut(value);
       setForm((s) => ({ ...s, rut: formateado }));
@@ -88,33 +83,32 @@ export default function Certificados() {
       return;
     }
 
-    // Para el resto de campos (nombre, dirección, email)
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // Botón "Solicitar" se activa solo si todo está OK
+  // Habilitar botón (luego haremos comprobante obligatorio)
   const puedeEnviar =
     form.nombre.trim() &&
     form.rut.trim() &&
     form.direccion.trim() &&
     form.email.trim() &&
     rutValido &&
-    form.comprobante;
+    !loading;
 
-  // Reviso si el archivo es PDF (para mostrar <embed>)
+  // Detecta PDF
   const esPDF = useMemo(() => {
     if (!form.comprobante) return false;
     const type = form.comprobante.type;
     return type === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
   }, [form.comprobante, fileName]);
 
-  // Creo una URL temporal para el PDF (si corresponde)
+  // URL temporal para PDF
   const pdfURL = useMemo(() => {
     if (!form.comprobante || !esPDF) return null;
     return URL.createObjectURL(form.comprobante);
   }, [form.comprobante, esPDF]);
 
-  // Limpio las URLs temporales cuando el componente se desmonte
+  // Liberar URLs al desmontar
   useEffect(() => {
     return () => {
       if (filePreview) URL.revokeObjectURL(filePreview);
@@ -122,176 +116,239 @@ export default function Certificados() {
     };
   }, [filePreview, pdfURL]);
 
-  // Al enviar el formulario
-  const onSubmit = (e) => {
+  // Enviar (sin upload real de archivo por ahora)
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
 
-    // Validaciones rápidas antes de “enviar”
     if (!validarRut(form.rut)) {
       setRutValido(false);
-      alert("El RUT ingresado no es válido.");
       return;
     }
-    if (!form.comprobante) {
-      alert("Debes adjuntar el comprobante de pago.");
+    if (!form.nombre || !form.direccion || !form.email) {
       return;
     }
 
-    // Aquí iría tu request real (fetch/axios con FormData)
-    // Ejemplo:
-    // const fd = new FormData();
-    // Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-    // await fetch("/api/certificados", { method: "POST", body: fd });
+    try {
+      setLoading(true);
 
-    alert("Solicitud enviada correctamente ✨");
+      const metodoPago = form.comprobante ? "Transferencia" : "Fisico";
+
+      const payload = {
+        nombre: form.nombre.trim(),
+        rut: form.rut.trim(),
+        direccion: form.direccion.trim(),
+        email: form.email.trim(),
+        metodoPago,
+        comprobanteUrl: form.comprobante ? "pendiente-upload" : null, // placeholder
+        notas: "Solicitud web (socio)",
+        idSocio: null,
+        idUsuarioSolicita: null,
+      };
+
+      // ✅ el helper devuelve el row directamente
+      const row = await CertAPI.solicitarDesdeWeb(payload);
+
+      setFolio(row?.Folio || null);
+      setDone(true);
+
+      // Limpiar form
+      setForm({ nombre: "", rut: "", direccion: "", email: "", comprobante: null });
+      setFileName("");
+      setFilePreview(null);
+
+      // Scroll arriba para ver el mensaje
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message || "Ocurrió un error al enviar la solicitud.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cerrar pantalla de éxito
+  const cerrarExito = () => {
+    setDone(false);
+    setFolio(null);
   };
 
   return (
     <div className="page">
-      {/* Importante: ya NO hay header/nav aquí */}
+      {/* Intro */}
       <section className="intro">
-        <h1>Para solicitar tu certificado de residencia completa los siguientes datos.</h1>
+        <h1>Solicita tu certificado de residencia</h1>
         <div className="precio">Valor $XXXX</div>
         <p className="nota">
-          Recuerda que debes hacer tu depósito previo a realizar la solicitud y adjuntar compobante.
+          Para solicitar certificado debes depositar previamente y adjuntar comprobante.
         </p>
       </section>
 
-      {/* Dos columnas: (1) formulario (2) datos de depósito */}
-      <main className="grid" >
-        {/* FORMULARIO */}
-        <form className="card form" onSubmit={onSubmit} noValidate id="formulario">
-          {/* Nombre */}
-          <div className="group">
-            <label htmlFor="nombre">Nombre Completo</label>
-            <input
-              id="nombre"
-              name="nombre"
-              value={form.nombre}
-              onChange={onChange}
-              required
-              autoComplete="name"
-            />
+      {/* ÉXITO EN PANTALLA */}
+      {done && (
+        <section className="card success">
+          <div className="success__icon" aria-hidden>✅</div>
+          <h2 className="success__title">Solicitud enviada correctamente</h2>
+          <p className="success__desc">
+            Hemos recibido tu solicitud de certificado de residencia.
+            <br />
+            <strong>Plazo de respuesta:</strong> dentro de 48–72 horas hábiles.
+          </p>
+
+          {folio && (
+            <div className="success__info">
+              <div><span className="tag">Folio</span> <strong>{folio}</strong></div>
+              <div><span className="tag">Estado</span> Pendiente de revisión</div>
+              <div><span className="tag">Contacto</span> Te avisaremos al correo ingresado</div>
+            </div>
+          )}
+
+          <div className="success__actions">
+            <button type="button" className="btn" onClick={cerrarExito}>
+              Cerrar
+            </button>
           </div>
+        </section>
+      )}
 
-          {/* RUT */}
-          <div className="group">
-            <label htmlFor="rut">RUT</label>
-            <input
-              id="rut"
-              name="rut"
-              placeholder="12.345.678-5"
-              value={form.rut}
-              onChange={onChange}
-              className={!rutValido && form.rut ? "input-error" : ""}
-              required
-              inputMode="text"
-              aria-invalid={!rutValido && form.rut ? "true" : "false"}
-              aria-describedby={!rutValido && form.rut ? "rut-error" : undefined}
-            />
-            {!rutValido && form.rut && (
-              <small id="rut-error" style={{ color: "#ffb4b4" }}>
-                RUT inválido
-              </small>
-            )}
-          </div>
+      {/* FORMULARIO + DATOS (se ocultan si está el éxito) */}
+      {!done && (
+        <main className="grid">
+          {/* FORMULARIO */}
+          <form className="card form" onSubmit={onSubmit} noValidate id="formulario">
+            {/* Error inline */}
+            {errorMsg && <div className="form-error">{errorMsg}</div>}
 
-          {/* Dirección */}
-          <div className="group">
-            <label htmlFor="direccion">Dirección</label>
-            <input
-              id="direccion"
-              name="direccion"
-              value={form.direccion}
-              onChange={onChange}
-              required
-              autoComplete="street-address"
-            />
-          </div>
-
-          {/* Email */}
-          <div className="group">
-            <label htmlFor="email">Correo Electrónico</label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={onChange}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          {/* Archivo (comprobante) */}
-          <div className="group">
-            <label>Adjunta comprobante de pago</label>
-
-            {/* Input de archivo “bonito” (texto + clip) */}
-            <label className="file">
+            {/* Nombre */}
+            <div className="group">
+              <label htmlFor="nombre">Nombre Completo</label>
               <input
-                type="file"
-                name="comprobante"
-                accept=".jpg,.jpeg,.png,.pdf"
+                id="nombre"
+                name="nombre"
+                value={form.nombre}
                 onChange={onChange}
                 required
+                autoComplete="name"
               />
-              <span className="clip">📎</span>
-              <span className="fname">{fileName || "Seleccionar archivo..."}</span>
-            </label>
+            </div>
 
-            {/* Si es imagen, muestro miniatura */}
-            {filePreview && !esPDF && (
-              <div className="preview-img">
-                <img src={filePreview} alt="Comprobante" />
-              </div>
-            )}
+            {/* RUT */}
+            <div className="group">
+              <label htmlFor="rut">RUT</label>
+              <input
+                id="rut"
+                name="rut"
+                placeholder="12.345.678-5"
+                value={form.rut}
+                onChange={onChange}
+                className={!rutValido && form.rut ? "input-error" : ""}
+                required
+                inputMode="text"
+                aria-invalid={!rutValido && form.rut ? "true" : "false"}
+                aria-describedby={!rutValido && form.rut ? "rut-error" : undefined}
+              />
+              {!rutValido && form.rut && (
+                <small id="rut-error" style={{ color: "#ffb4b4" }}>
+                  RUT inválido
+                </small>
+              )}
+            </div>
 
-            {/* Si es PDF, lo muestro embebido */}
-            {esPDF && pdfURL && (
-              <div className="preview-pdf">
-                <embed src={pdfURL} type="application/pdf" width="100%" height="200px" />
-              </div>
-            )}
-          </div>
+            {/* Dirección */}
+            <div className="group">
+              <label htmlFor="direccion">Dirección</label>
+              <input
+                id="direccion"
+                name="direccion"
+                value={form.direccion}
+                onChange={onChange}
+                required
+                autoComplete="street-address"
+              />
+            </div>
 
-          {/* Botón para enviar */}
-          <button className="btn" disabled={!puedeEnviar}>
-            Solicitar
-          </button>
-        </form>
+            {/* Email */}
+            <div className="group">
+              <label htmlFor="email">Correo Electrónico</label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={onChange}
+                required
+                autoComplete="email"
+              />
+            </div>
 
-        {/* LADO DERECHO: datos para transferir */}
-        <aside className="card side" id="datos">
-          <div className="side-title">Datos para Depósitos</div>
-          <ul className="list">
-            <li>
-              <strong>Nombre:</strong> Junta de Vecinos Mirador IV
-            </li>
-            <li>
-              <strong>RUT:</strong> 65.432.100-1
-            </li>
-            <li>
-              <strong>Banco:</strong> Banco Ejemplo
-            </li>
-            <li>
-              <strong>Tipo de cuenta:</strong> Cuenta Vista
-            </li>
-            <li>
-              <strong>Nº Cuenta:</strong> 123456789
-            </li>
-            <li>
-              <strong>Correo:</strong> junta@ejemplo.cl
-            </li>
-          </ul>
-          <div className="foot">
-            Contáctanos en{" "}
-            <a href="mailto:juntadevecinosmiradordevolcanescuatro@gmail.com">
-              juntadevecinosmiradordevolcanescuatro@gmail.com
-            </a>
-          </div>
-        </aside>
-      </main>
+            {/* Comprobante (por ahora opcional) */}
+            <div className="group">
+              <label>Adjunta comprobante de pago</label>
+
+              <label className="file">
+                <input
+                  type="file"
+                  name="comprobante"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={onChange}
+                />
+                <span className="clip">📎</span>
+                <span className="fname">{fileName || "Seleccionar archivo..."}</span>
+              </label>
+
+              {/* Preview imagen */}
+              {filePreview && !esPDF && (
+                <div className="preview-img">
+                  <img src={filePreview} alt="Comprobante" />
+                </div>
+              )}
+
+              {/* Preview PDF */}
+              {esPDF && pdfURL && (
+                <div className="preview-pdf">
+                  <embed src={pdfURL} type="application/pdf" width="100%" height="200px" />
+                </div>
+              )}
+            </div>
+
+            {/* Enviar */}
+            <button className="btn" disabled={!puedeEnviar}>
+              {loading ? "Enviando..." : "Solicitar"}
+            </button>
+          </form>
+
+          {/* LADO DERECHO: datos para transferir */}
+          <aside className="card side" id="datos">
+            <div className="side-title">Datos para Depósitos</div>
+            <ul className="list">
+              <li>
+                <strong>Nombre:</strong> Junta de Vecinos Mirador IV
+              </li>
+              <li>
+                <strong>RUT:</strong> 65.432.100-1
+              </li>
+              <li>
+                <strong>Banco:</strong> Banco Ejemplo
+              </li>
+              <li>
+                <strong>Tipo de cuenta:</strong> Cuenta Vista
+              </li>
+              <li>
+                <strong>Nº Cuenta:</strong> 123456789
+              </li>
+              <li>
+                <strong>Correo:</strong> junta@ejemplo.cl
+              </li>
+            </ul>
+            <div className="foot">
+              Contáctanos en{" "}
+              <a href="mailto:juntadevecinosmiradordevolcanescuatro@gmail.com">
+                juntadevecinosmiradordevolcanescuatro@gmail.com
+              </a>
+            </div>
+          </aside>
+        </main>
+      )}
     </div>
   );
 }
