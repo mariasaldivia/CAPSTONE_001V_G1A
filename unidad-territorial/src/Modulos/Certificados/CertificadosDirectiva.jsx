@@ -4,7 +4,9 @@ import PanelLateralD from "../../components/PanelLateralD";
 import { CertAPI } from "../../api/certificados";
 import "./CertificadosDirectiva.css";
 
-/* ===== Helpers ===== */
+/* ======================================================
+   🧩 HELPERS (formatos y utilidades)
+   ====================================================== */
 const fmtDate = (iso) =>
   iso
     ? new Date(iso).toLocaleDateString(undefined, {
@@ -32,7 +34,9 @@ const esIMGurl = (s = "") =>
   s.toLowerCase().endsWith(".png") ||
   s.startsWith("data:image/");
 
-/* ===== Íconos ===== */
+/* ======================================================
+   🎛️ ÍCONOS (SVG inline)
+   ====================================================== */
 const IconoVer = () => (
   <svg viewBox="0 0 24 24" className="cd__icon" aria-hidden="true">
     <path d="M12 5c5 0 9 5 9 7s-4 7-9 7-9-5-9-7 4-7 9-7zm0 2C8 7 4.9 10.5 4.2 12 4.9 13.5 8 17 12 17s7.1-3.5 7.8-5C19.1 10.5 16 7 12 7zm0 2a3 3 0 110 6 3 3 0 010-6z"/>
@@ -49,9 +53,86 @@ const IconoEliminar = () => (
   </svg>
 );
 
+/* ======================================================
+   🧱 MODAL CONFIRMACIÓN (aprobación irreversible)
+   - Mensaje con "ATENCIÓN"
+   - Muestra datos del solicitante (nombre, rut, dirección, correo)
+   - Checkbox opcional "Descargar PDF al confirmar"
+   - Botones Cancelar/Confirmar
+   ====================================================== */
+function ApproveConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  checkbox,
+  setCheckbox,
+  folio,
+  datos, // ← NUEVO: objeto con { nombre, rut, direccion, email }
+}) {
+  if (!open) return null;
+  return (
+    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-approve-title">
+      <div className="cd__modal">
+        <div className="cd__modalHead">
+          <span className="cd__modalAttention">ATENCIÓN</span>
+          <h3 id="cd-approve-title">Confirmar aprobación</h3>
+        </div>
+
+        <div className="cd__modalBody">
+          <p>
+            Estás a punto de <strong>aprobar</strong> la solicitud de certificado
+            {folio ? <> con folio <strong>{folio}</strong></> : null}. Esta acción es
+            <strong> irreversible</strong> y al confirmar se enviará automáticamente el
+            certificado al correo del socio.
+          </p>
+
+          <p style={{ marginTop: 12 }}>
+            <strong>Verifica que los datos del solicitante y dirección sean correctos:</strong>
+          </p>
+
+          {datos && (
+            <div className="cd__modalData">
+              <p><b>Nombre:</b> {datos.nombre || "-"}</p>
+              <p><b>RUT:</b> {datos.rut || "-"}</p>
+              <p><b>Dirección:</b> {datos.direccion || "-"}</p>
+              <p><b>Correo:</b> {datos.email || "-"}</p>
+            </div>
+          )}
+
+          <ul className="cd__modalList">
+            <li>El estado de la solicitud se moverá al historial como <strong>Aprobado</strong>.</li>
+            <li>El certificado será enviado al correo indicado.</li>
+          </ul>
+
+          <label className="cd__checkRow">
+            <input
+              type="checkbox"
+              checked={checkbox}
+              onChange={(e) => setCheckbox(e.target.checked)}
+            />
+            <span>Descargar PDF al confirmar</span>
+          </label>
+        </div>
+
+        <div className="cd__modalActions">
+          <button className="cd__btn cd__btn--ghost" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="cd__btn cd__btn--ok" onClick={onConfirm}>
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ======================================================
+   🧠 CONTENIDO PRINCIPAL (estado, efectos, acciones, render)
+   ====================================================== */
 function CertificadosContent() {
-  /* UI state */
-  const [mode, setMode] = useState("list"); // list | manual
+  /* ----- UI state ----- */
+  const [mode, setMode] = useState("list"); // "list" | "manual"
   const [orden, setOrden] = useState("recientes");
   const [seleccion, setSeleccion] = useState(null);
   const [respuesta, setRespuesta] = useState("");
@@ -61,11 +142,15 @@ function CertificadosContent() {
   const [loadingList, setLoadingList] = useState(false);
   const [loadingHist, setLoadingHist] = useState(false);
 
-  /* Edit context */
-  const [editId, setEditId] = useState(null);        // editar PENDIENTE por ID (principal)
-  const [editFolio, setEditFolio] = useState(null);  // editar HISTORIAL por Folio
+  // Modal confirmación de aprobación
+  const [showApprove, setShowApprove] = useState(false);
+  const [wantDownload, setWantDownload] = useState(false);
 
-  /* Form manual */
+  /* ----- Edit context ----- */
+  const [editId, setEditId] = useState(null);       // editar PENDIENTE por ID (principal)
+  const [editFolio, setEditFolio] = useState(null); // editar HISTORIAL por Folio
+
+  /* ----- Form manual ----- */
   const [manualForm, setManualForm] = useState({
     nombre: "",
     rut: "",
@@ -76,16 +161,18 @@ function CertificadosContent() {
     comprobanteName: "",
   });
 
-  /* Data */
+  /* ----- Data ----- */
   const [pendientes, setPendientes] = useState([]);
   const [historial, setHistorial] = useState([]);
 
-  /* Refs */
+  /* ----- Refs ----- */
   const topRef = useRef(null);
   const detailRef = useRef(null);
   const historyRef = useRef(null);
 
-  /* ===== Init ===== */
+  /* ======================================================
+     🔁 INIT (carga inicial)
+     ====================================================== */
   useEffect(() => {
     (async () => {
       await refreshList();
@@ -118,7 +205,9 @@ function CertificadosContent() {
     }
   }
 
-  /* ===== Derivations ===== */
+  /* ======================================================
+     🧮 DERIVACIONES (ordenamientos/filtrados)
+     ====================================================== */
   const pendientesOrdenados = useMemo(() => {
     const base = [...pendientes];
     if (orden === "recientes") {
@@ -138,7 +227,7 @@ function CertificadosContent() {
       rut: h.RUT || "",
       estado: h.Estado || "",
       ts: h.Fecha_Cambio || h.Fecha_Solicitud || h.ts || "",
-      idCert: h.ID_Cert, // útil si sigue pendiente
+      idCert: h.ID_Cert,
     }));
     const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
     const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
@@ -156,7 +245,9 @@ function CertificadosContent() {
     }
   }, [histOrder, historial]);
 
-  /* ===== Helpers UI ===== */
+  /* ======================================================
+     🧭 HELPERS UI (scroll y navegación)
+     ====================================================== */
   const scrollTo = (ref) =>
     ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -205,6 +296,9 @@ function CertificadosContent() {
     setTimeout(() => scrollTo(topRef), 0);
   };
 
+  /* ======================================================
+     ✍️ FORM MANUAL (onChange)
+     ====================================================== */
   const onManualChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "rut") {
@@ -229,16 +323,37 @@ function CertificadosContent() {
     setManualForm((s) => ({ ...s, [name]: value }));
   };
 
-  /* ===== Acciones de estado (aprobar/rechazar) ===== */
+  /* ======================================================
+     ✅ APROBAR (con modal de confirmación) / ❌ RECHAZAR
+     ====================================================== */
   const aprobar = async () => {
+    if (!seleccion) return;
+    // No ejecuta aún el PATCH; primero muestra modal
+    setWantDownload(false);
+    setShowApprove(true);
+  };
+
+  const confirmarAprobacion = async () => {
     if (!seleccion) return;
     try {
       setBusy(true);
+      setShowApprove(false);
       await CertAPI.cambiarEstado(seleccion.ID_Cert, {
         estado: "Aprobado",
         comentario: respuesta || "Aprobado",
         validadorId: null,
       });
+
+      // Descarga opcional del PDF (endpoint sugerido, no rompe si no existe)
+      if (wantDownload) {
+        const BASE = import.meta.env.VITE_API_BASE || "http://localhost:4010";
+        const urlPDF = `${BASE}/api/certificados/${encodeURIComponent(
+          seleccion.ID_Cert
+        )}/pdf`;
+        // Intenta abrir en nueva pestaña (si 404, simplemente no descarga)
+        window.open(urlPDF, "_blank", "noopener,noreferrer");
+      }
+
       await Promise.all([refreshList(), refreshHist()]);
       setSeleccion(null);
       setRespuesta("");
@@ -272,7 +387,9 @@ function CertificadosContent() {
     }
   };
 
-  /* ===== Guardar (nuevo / editar pendiente / editar historial) ===== */
+  /* ======================================================
+     💾 GUARDAR (nuevo / editar pendiente / editar historial)
+     ====================================================== */
   const saveManual = async (e) => {
     e.preventDefault();
 
@@ -282,19 +399,17 @@ function CertificadosContent() {
       direccion: manualForm.direccion,
       email: manualForm.email,
       metodoPago:
-        manualForm.metodoPago.toLowerCase() === "fisico"
-          ? "Fisico"
-          : "Transferencia",
+        manualForm.metodoPago.toLowerCase() === "fisico" ? "Fisico" : "Transferencia",
       // comprobanteUrl: (si habilitas subida más adelante)
     };
 
     try {
       setBusy(true);
 
-      // Si venimos desde el Historial (se pulsó Editar allí)
+      // Edit desde HISTORIAL (siempre por folio)
       if (editFolio) {
         if (editId) {
-          // Caso PENDIENTE: actualizamos principal + historial
+          // Caso PENDIENTE: actualiza principal + historial
           await Promise.all([
             CertAPI.actualizar(editId, payload),
             CertAPI.actualizarHist(editFolio, payload),
@@ -321,7 +436,7 @@ function CertificadosContent() {
         return;
       }
 
-      // Si se abrió “Ingreso manual” y editId está set (poco común desde aquí)
+      // Edit directo de PENDIENTE
       if (editId) {
         await CertAPI.actualizar(editId, payload);
         await Promise.all([refreshList(), refreshHist()]);
@@ -351,7 +466,9 @@ function CertificadosContent() {
     }
   };
 
-  /* ===== Acciones del historial ===== */
+  /* ======================================================
+     🗂️ HISTORIAL (ver / editar / eliminar)
+     ====================================================== */
   const onHistView = async (folio) => {
     try {
       setBusy(true);
@@ -373,10 +490,8 @@ function CertificadosContent() {
       setBusy(true);
       const row = await CertAPI.obtenerPorFolio(folio);
 
-      // Siempre editaremos el historial por folio
-      setEditFolio(folio);
+      setEditFolio(folio); // edit siempre por folio
 
-      // Si el estado actual es Pendiente, también tenemos ID_Cert en principal
       const estado = String(row?.Estado || "").toLowerCase();
       if (estado === "pendiente") {
         setEditId(row.ID_Cert ?? null);
@@ -422,7 +537,9 @@ function CertificadosContent() {
     }
   };
 
-  /* ===== Otros ===== */
+  /* ======================================================
+     🔧 OTROS (toggle historial / exportar PDF)
+     ====================================================== */
   const toggleHistory = () => {
     setShowHistory((s) => !s);
     setSeleccion(null);
@@ -440,10 +557,12 @@ function CertificadosContent() {
 
   const hasDetail = Boolean(seleccion) && mode === "list";
 
-  /* ===== Render ===== */
+  /* ======================================================
+     🖼️ RENDER
+     ====================================================== */
   return (
     <div className="cd" ref={topRef}>
-      {/* Header */}
+      {/* ----- HEADER ----- */}
       <header className="cd__header">
         <div className="cd__headerRow">
           <h1 className="cd__title">Certificados de Residencia</h1>
@@ -463,8 +582,9 @@ function CertificadosContent() {
         </p>
       </header>
 
-      {/* Zona principal */}
+      {/* ----- ZONA PRINCIPAL ----- */}
       {mode === "manual" ? (
+        /* ===== INGRESO / EDICIÓN MANUAL ===== */
         <section className="cd__card cd__manual">
           <div className="cd__manualHead">
             <h2>{editId || editFolio ? "Editar solicitud" : "Ingreso manual de solicitud"}</h2>
@@ -525,7 +645,7 @@ function CertificadosContent() {
         </section>
       ) : (
         <section className={`cd__gridMain ${hasDetail ? "has-detail" : ""}`}>
-          {/* LISTA PENDIENTES */}
+          {/* ===== LISTA: PENDIENTES ===== */}
           <section className="cd__card cd__list">
             <div className="cd__listHead">
               <h2>Solicitudes (Pendientes)</h2>
@@ -582,7 +702,7 @@ function CertificadosContent() {
             </div>
           </section>
 
-          {/* DETALLE PENDIENTE */}
+          {/* ===== DETALLE: PENDIENTE SELECCIONADO ===== */}
           {hasDetail && (
             <section className="cd__card cd__detail" ref={detailRef} id="cd-detail">
               <div className="cd__detailHead">
@@ -677,7 +797,7 @@ function CertificadosContent() {
         </section>
       )}
 
-      {/* HISTORIAL */}
+      {/* ===== HISTORIAL ===== */}
       {showHistory && (
         <section className="cd__card cd__history" ref={historyRef} id="cd-history">
           <div className="cd__historyHead">
@@ -768,10 +888,29 @@ function CertificadosContent() {
           </div>
         </section>
       )}
+
+      {/* ===== MODAL: Confirmación de Aprobación ===== */}
+      <ApproveConfirmModal
+        open={showApprove}
+        onClose={() => setShowApprove(false)}
+        onConfirm={confirmarAprobacion}
+        checkbox={wantDownload}
+        setCheckbox={setWantDownload}
+        folio={seleccion?.Folio}
+        datos={{
+          nombre: seleccion?.Nombre,
+          rut: formatearRut(seleccion?.RUT || ""),
+          direccion: seleccion?.Direccion,
+          email: seleccion?.Email,
+        }}
+      />
     </div>
   );
 }
 
+/* ======================================================
+   🚪 WRAPPER CON PANEL LATERAL
+   ====================================================== */
 export default function CertificadosDirectiva() {
   const user = { nombre: "Nombre Directiva", cargo: "Cargo" };
   return (

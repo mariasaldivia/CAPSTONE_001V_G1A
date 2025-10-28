@@ -243,11 +243,21 @@ export async function crearCertificado(req, res) {
    PATCH /api/certificados/:id/estado
    ====================================================== */
 
-   export async function cambiarEstado(req, res) {
+/* ======================================================
+   🔄 CAMBIAR ESTADO (Aprobar / Rechazar / EnRevision / Pendiente)
+   - ACTUALIZA la fila de historial (no inserta otra)
+   - ELIMINA de la principal (deja de ser pendiente)
+   PATCH /api/certificados/:id/estado
+   ====================================================== */
+export async function cambiarEstado(req, res) {
   const id = Number(req.params.id);
   const estadoCanon = normEstado(req.body?.estado);
   const comentario = req.body?.comentario ?? null;
   const validadorId = req.body?.validadorId ?? null;
+
+  // 🔹 flags opcionales (stubs paso 1)
+  const generarPDFFlag = req.body?.generarPDF; // puede venir true/false/undefined
+  const sendEmailFlag  = req.body?.sendEmail;  // puede venir true/false/undefined
 
   if (!id) return res.status(400).json({ ok: false, error: "ID_INVALIDO" });
   if (!estadoCanon || !ESTADOS_CANON.has(estadoCanon)) {
@@ -336,7 +346,35 @@ export async function crearCertificado(req, res) {
         .query(`DELETE FROM dbo.CERTIFICADO_RESIDENCIA WHERE ID_Cert = @id;`);
 
       await tx.commit();
-      return res.json({ ok: true, mensaje: "Estado actualizado correctamente" });
+
+      // ✅ AQUI pegamos el bloque del PASO 1 (stubs PDF/email)
+      //    — NO rompe nada; sólo extiende la respuesta al aprobar.
+      const folio = cert.Folio;
+
+      // defaults: si no vienen flags, se asume que al aprobar se generan/envían
+      const generarPDF = generarPDFFlag ?? (estadoCanon === "Aprobado");
+      const sendEmail  = sendEmailFlag  ?? (estadoCanon === "Aprobado");
+
+      // STUBS (implementaremos real en Paso 2)
+      let certificadoUrl = null;
+      let emailSent = false;
+
+      if (estadoCanon === "Aprobado" && generarPDF) {
+        // En el Paso 2: generaremos el PDF y guardaremos a disco/obj storage
+        certificadoUrl = `/uploads/certificados/${folio}.pdf`; // placeholder
+      }
+
+      if (estadoCanon === "Aprobado" && sendEmail) {
+        // En el Paso 2: envío real con Nodemailer/servicio
+        emailSent = true; // simula éxito
+      }
+
+      return res.json({
+        ok: true,
+        mensaje: "Estado actualizado correctamente",
+        certificadoUrl,           // null si no aplica
+        email: { sent: emailSent } // {sent:false} si no aplica
+      });
     } catch (inner) {
       await tx.rollback();
       console.error("cambiarEstado.tx:", inner);
