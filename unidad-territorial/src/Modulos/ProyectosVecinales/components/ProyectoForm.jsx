@@ -1,5 +1,16 @@
 import React, { useState } from "react";
 
+const botonEstilo = {
+  backgroundColor: '#f97316', // --pv-accent (naranja)
+  color: '#ffffff',          // Texto blanco
+  border: 'none',
+  borderRadius: '999px',     // Estilo "píldora"
+  padding: '0.6rem 1.4rem',
+  cursor: 'pointer',
+  fontWeight: '600',
+  fontSize: '0.95rem',
+  transition: 'background-color 0.25s',
+};
 function ProyectoForm({ onSubmit }) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -72,7 +83,7 @@ function ProyectoForm({ onSubmit }) {
       </div>
 
       <div className="rv__actions">
-        <button className="rv__btn" type="submit">
+        <button style={botonEstilo} className="rv__btn" type="submit">
           Crear Proyecto
         </button>
       </div>

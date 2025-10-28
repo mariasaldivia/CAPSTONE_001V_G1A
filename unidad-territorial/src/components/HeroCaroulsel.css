@@ -1,0 +1,127 @@
+/* ==================================== */
+/* HERO CAROUSEL                      */
+/* ==================================== */
+
+/* Contenedor principal de Swiper */
+.hero-swiper {
+  width: 100%;
+  height: 70vh; 
+  min-height: 400px;
+}
+
+.hero-slide {
+  /* Ya no centramos *todo* con flex-direction: column aquí */
+  display: flex; /* Para alinear la imagen y el contenido */
+  justify-content: center;
+  align-items: center;
+  gap: 30px; /* Espacio entre la imagen y el texto */
+  padding: 0 5%;
+  position: relative; /* Si quisieras una capa oscura para todo el slide */
+  text-align: center; /* Por defecto el texto centrado si es un único bloque */
+
+  /* El color de fondo se aplica en línea en el JSX */
+  color: var(--color-blanco); /* El texto siempre blanco */
+}
+
+/* Si quieres una capa oscura, ya no sobre el fondo, sino sobre la imagen si la hay,
+   o un overlay general que no moleste la imagen.
+   Para este diseño, con la imagen y el texto separados, un overlay no es tan crítico
+   a menos que el fondo del slide sea una imagen de fondo (y no solo un color).
+*/
+/* .hero-slide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2); 
+  z-index: 1; 
+} */
+
+
+/* Estilos para la imagen que NO ocupa todo el ancho */
+.hero-slide-image {
+    max-width: 30%;/* La imagen ocupará como máximo el 40% del ancho del slide */
+    height: auto;
+    object-fit: contain; /* Asegura que la imagen se ajuste sin recortarse */
+    z-index: 2; /* Para que esté por encima de cualquier posible overlay */
+    /* Otros estilos como sombra, borde, etc. */
+   /*  border-radius: 8px; 
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Ejemplo */
+}
+
+/* Estilos para el contenedor del texto */
+.hero-content {
+  position: relative;
+  z-index: 2; 
+  max-width: 500px; /* Limita el ancho del texto para mejor lectura */
+  text-align: left; /* Puedes alinear el texto a la izquierda o al centro */
+}
+
+/* --- Tipografía y Botón (se mantienen igual) --- */
+.hero-content h1 {
+  font-size: 3em; 
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+}
+
+.hero-content p {
+  font-size: 1.25em;
+  margin-bottom: 25px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.hero-cta {
+  display: inline-block;
+  background-color: var(--color-acento); 
+  color: var(--color-blanco);
+  padding: 12px 28px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1em;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.hero-cta:hover {
+  background-color: #e86815;
+  transform: translateY(-2px);
+}
+
+/* --- Estilos de Navegación de Swiper (se mantienen igual) --- */
+.hero-swiper .swiper-button-next,
+.hero-swiper .swiper-button-prev {
+  color: var(--color-acento);
+}
+
+/* --- RESPONSIVIDAD --- */
+@media (max-width: 768px) {
+  .hero-swiper {
+    height: 60vh;
+  }
+
+  /* En pantallas pequeñas, la imagen y el texto se apilan verticalmente */
+  .hero-slide {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+  }
+  
+  .hero-slide-image {
+      max-width: 70%; /* La imagen puede ser un poco más grande en móviles */
+  }
+
+  .hero-content h1 {
+    font-size: 2.2em;
+  }
+
+  .hero-content p {
+    font-size: 1.1em;
+  }
+  .hero-content {
+      max-width: 90%; /* Ajustar el ancho del texto para móviles */
+      text-align: center; /* Centrar el texto en móviles */
+  }
+}

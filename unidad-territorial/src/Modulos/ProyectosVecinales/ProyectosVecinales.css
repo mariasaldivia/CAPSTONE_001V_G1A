@@ -1,27 +1,47 @@
+/* Paleta de Contenido Claro (para Proyectos Vecinales)
+   con nombres nuevos para evitar conflictos.
+*/
+:root {
+  --pv-bg: #eff6ff;           /* blue-50 (Fondo de página) */
+  --pv-panel: #ffffff;         /* white (Fondo de tarjeta) */
+  --pv-border: #dbeafe;        /* blue-100 (Bordes) */
+  --pv-text: #1e3a8a;          /* blue-900 (Texto principal) */
+  --pv-text-muted: #1e40af;   /* blue-800 (Texto secundario) */
+  --pv-accent: #f97316;       /* orange-500 (Acento principal) */
+  --pv-accent-hover: #ea580c; /* orange-600 (Hover) */
+  
+  --pv-input-bg: #f8fafc;     /* Fondo de inputs/selects */
+  --pv-overlay: rgba(30, 58, 138, 0.6); /* blue-900 transp. */
+}
+
+
 .rv__table td, .rv__table th {
-  color: #111827; /* texto más oscuro */
+  color: var(--pv-text); /* texto oscuro */
 }
 
 details summary {
   cursor: pointer;
   font-weight: 600;
-  color: #1e40af;
+  color: var(--pv-text-muted);
 }
 details[open] summary {
-  color: #0f172a;
+  color: var(--pv-text);
 }
 .pv-container {
-  background-color: #0f172a;
+  background-color: var(--pv-bg); /* APLICADO: Fondo claro */
   min-height: 100vh;
   padding: 3rem 2rem;
 }
 
 .pv-title {
   text-align: center;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #e2e8f0;
+
+  color: var(--pv-text); /* APLICADO: Texto oscuro */
   margin-bottom: 2.5rem;
+  font-size: clamp(26px, 4.5vw, 36px);
+
+  font-weight: 750;
+  letter-spacing: .2px;
 }
 
 .pv-grid {
@@ -33,9 +53,9 @@ details[open] summary {
 }
 
 .pv-card {
-  background: #fff;
+  background: var(--pv-panel); /* APLICADO: Fondo blanco */
   border-radius: 1.2rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.05); /* Sombra suave */
   padding: 1.5rem 1.8rem;
   transition: all 0.25s ease;
   display: flex;
@@ -45,7 +65,7 @@ details[open] summary {
 
 .pv-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 18px rgba(30, 64, 175, 0.1); /* Sombra suave */
 }
 
 .pv-header {
@@ -56,7 +76,7 @@ details[open] summary {
 
 .pv-nombre {
   font-size: 1.25rem;
-  color: #0f172a;
+  color: var(--pv-text); /* APLICADO: Texto oscuro */
   font-weight: 600;
   margin: 0;
 }
@@ -77,34 +97,34 @@ details[open] summary {
   text-transform: capitalize;
 }
 
-/* 🟢 Abierto */
+/* Abierto (Semántico - se mantiene) */
 .estado-abierto {
   background-color: #dcfce7;
   color: #15803d;
 }
 
-/* 🟡 En revisión */
+/* En revisión (Semántico - se mantiene) */
 .estado-revision {
   background-color: #fef9c3;
   color: #854d0e;
 }
 
-/* ⚫ Finalizado */
+/* Finalizado (Adaptado) */
 .estado-finalizado {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--pv-border); /* APLICADO */
+  color: var(--pv-text-muted); /* APLICADO */
 }
 
 
 .pv-descripcion {
   margin: 0.75rem 0 1rem;
-  color: #475569;
+  color: var(--pv-text-muted); /* APLICADO */
   line-height: 1.5;
 }
 
 .pv-fechas {
   font-size: 0.9rem;
-  color: #334155;
+  color: var(--pv-text-muted); /* APLICADO */
   margin-bottom: 0.8rem;
 }
 
@@ -113,7 +133,7 @@ details[open] summary {
 }
 
 .pv-link {
-  color: #2563eb;
+  color: var(--pv-accent); /* APLICADO: Naranja */
   text-decoration: none;
   font-weight: 500;
 }
@@ -123,7 +143,8 @@ details[open] summary {
 }
 
 .pv-nobases {
-  color: #94a3b8;
+  color: var(--pv-text-muted); /* APLICADO */
+  opacity: 0.8;
   font-style: italic;
 }
 
@@ -132,27 +153,16 @@ details[open] summary {
   justify-content: flex-end;
 }
 
-.pv-btn {
-  background-color: #0f172a;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 0.6rem 1.4rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: background-color 0.25s;
-}
 
 .pv-btn:hover {
-  background-color: #1e293b;
+  background-color: var(--pv-accent-hover); /* APLICADO */
 }
 /* 🔹 MODAL */
 
 .pv-modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
+  background: var(--pv-overlay); /* APLICADO: Overlay azul */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -160,7 +170,7 @@ details[open] summary {
 }
 
 .pv-modal {
-  background: #fff;
+  background: var(--pv-panel); /* APLICADO: Fondo blanco */
   border-radius: 1rem;
   padding: 2rem;
   width: 90%;
@@ -183,13 +193,13 @@ details[open] summary {
 .pv-modalTitle {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--pv-text); /* APLICADO */
   margin-bottom: 0.5rem;
 }
 
 .pv-modalDesc {
   font-size: 0.95rem;
-  color: #475569;
+  color: var(--pv-text-muted); /* APLICADO */
   margin-bottom: 1rem;
 }
 
@@ -198,7 +208,7 @@ details[open] summary {
   flex-direction: column;
   margin-bottom: 1rem;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--pv-text); /* APLICADO */
 }
 
 .pv-form input,
@@ -206,15 +216,16 @@ details[open] summary {
   margin-top: 0.4rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--pv-border); /* APLICADO */
   font-size: 0.95rem;
   transition: border-color 0.2s;
+  background: var(--pv-input-bg); /* APLICADO */
 }
 
 .pv-form input:focus,
 .pv-form textarea:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--pv-accent); /* APLICADO: Foco naranja */
 }
 
 .pv-modalActions {
@@ -234,21 +245,22 @@ details[open] summary {
 }
 
 .pv-cancel {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--pv-input-bg); /* APLICADO: Fondo gris claro */
+  color: var(--pv-text-muted); /* APLICADO */
+  border: 1px solid var(--pv-border);
 }
 
 .pv-cancel:hover {
-  background: #cbd5e1;
+  background: var(--pv-border); /* APLICADO */
 }
 
 .pv-submit {
-  background: #0f172a;
+  background: var(--pv-accent); /* APLICADO: Naranja */
   color: white;
 }
 
 .pv-submit:hover {
-  background: #1e293b;
+  background: var(--pv-accent-hover); /* APLICADO */
 }
 .pv-details {
   margin-top: 0.5rem;
@@ -256,37 +268,38 @@ details[open] summary {
 
 .pv-details summary {
   cursor: pointer;
-  color: #2563eb;
+  color: var(--pv-accent); /* APLICADO: Naranja */
   font-weight: 500;
   list-style: none;
 }
 
 .pv-details summary::-webkit-details-marker {
-  display: none; /* quita el triángulo por defecto */
+  display: none;
 }
 
 .pv-basesText {
   margin-top: 0.4rem;
-  color: #374151;
+  color: var(--pv-text-muted); /* APLICADO */
   font-size: 0.95rem;
   line-height: 1.4;
-  background: #f9fafb;
+  background: var(--pv-input-bg); /* APLICADO */
   border-radius: 8px;
   padding: 0.6rem;
 }
 .pv-msg {
-  color: #6b7280;
+  color: var(--pv-text-muted); /* APLICADO */
   font-size: 0.9rem;
   font-style: italic;
   text-align: center;
   padding: 0.4rem 0.6rem;
-  background-color: #f3f4f6;
+  background-color: var(--pv-input-bg); /* APLICADO */
   border-radius: 8px;
   margin-top: 0.5rem;
 }
 
+/* (Definición duplicada de pv-btn, se aplica el mismo estilo) */
 .pv-btn {
-  background-color: #111827;
+  background-color: var(--pv-accent); /* APLICADO: Naranja */
   color: white;
   font-weight: 600;
   border: none;
@@ -297,7 +310,7 @@ details[open] summary {
 }
 
 .pv-btn:hover {
-  background-color: #1e3a8a;
+  background-color: var(--pv-accent-hover); /* APLICADO */
 }
 /* Contenedor general */
 .historial-container {
@@ -309,17 +322,17 @@ details[open] summary {
 
 /* Tarjeta individual */
 .proyecto-card {
-  background: #ffffff;
+  background: var(--pv-panel); /* APLICADO: Fondo blanco */
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08); /* Sombra suave */
   transition: transform 0.2s ease, box-shadow 0.3s ease;
   border-top: 6px solid transparent;
 }
 
 .proyecto-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.1); /* Sombra suave */
 }
 
 /* Cabecera del proyecto */
@@ -332,16 +345,16 @@ details[open] summary {
 
 .proyecto-header h4 {
   font-size: 1.2rem;
-  color: #1e293b;
+  color: var(--pv-text); /* APLICADO */
   margin: 0;
   font-weight: 600;
 }
 
 .estado-select {
-  border: none;
+  border: 1px solid var(--pv-border); /* APLICADO */
   padding: 0.3rem 0.6rem;
   border-radius: 6px;
-  background: #f1f5f9;
+  background: var(--pv-input-bg); /* APLICADO */
   font-size: 0.9rem;
   cursor: pointer;
 }
@@ -349,18 +362,18 @@ details[open] summary {
 /* Texto */
 .proyecto-descripcion {
   font-size: 0.95rem;
-  color: #475569;
+  color: var(--pv-text-muted); /* APLICADO */
   margin-bottom: 0.8rem;
 }
 
 /* Info */
 .proyecto-info {
   font-size: 0.9rem;
-  color: #334155;
+  color: var(--pv-text-muted); /* APLICADO */
 }
 
 .ver-bases {
-  color: #1d4ed8;
+  color: var(--pv-accent); /* APLICADO: Naranja */
   font-weight: 500;
   text-decoration: none;
 }
@@ -370,11 +383,11 @@ details[open] summary {
 }
 
 .sin-bases {
-  color: #0f172a;
+  color: var(--pv-text-muted); /* APLICADO */
   font-style: italic;
 }
 
-/* Colores de borde según estado */
+/* Colores de borde según estado (Semánticos - se mantienen) */
 .estado-abierto {
   border-top-color: #22c55e;
 }
@@ -387,7 +400,7 @@ details[open] summary {
   border-top-color: #ef4444;
 }
 /* ================================
-   NUEVO DISEÑO FORM + HISTORIAL
+    NUEVO DISEÑO FORM + HISTORIAL
 ================================ */
 
 /* Título pequeño dentro de las cards */
@@ -395,21 +408,21 @@ details[open] summary {
 .pv-subtitle {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--pv-text); /* APLICADO */
   margin-bottom: 1.2rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--pv-border); /* APLICADO */
   padding-bottom: 0.4rem;
 }
 
 /* Card específica del formulario */
 .pv-formCard {
   margin-bottom: 2rem;
-  background: #ffffff;
+  background: var(--pv-panel); /* APLICADO */
 }
 
 /* Card del historial */
 .pv-historialCard {
-  background: #ffffff;
+  background: var(--pv-panel); /* APLICADO */
 }
 
 /* Espaciado entre cards internas */

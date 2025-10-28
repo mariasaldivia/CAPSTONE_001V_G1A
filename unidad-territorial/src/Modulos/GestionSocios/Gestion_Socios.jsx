@@ -82,6 +82,13 @@ const GestionSocios = () => {
     setPostulantes(postulantes.filter((p) => p.rut !== rut));
     setDetalle(null);
   };
+
+  const sociosFiltrados = socios.filter(socio => {
+    const nombreCompleto = `${socio.nombre} ${socio.apellido}`.toLowerCase();
+    const rut = String(socio.rut).toLowerCase();
+    const busqueda = filtro.toLowerCase();
+    return nombreCompleto.includes(busqueda) || rut.includes(busqueda);
+  });
   
 
   return (
@@ -109,7 +116,7 @@ const GestionSocios = () => {
               </tr>
             </thead>
             <tbody>
-              {socios.map((s, i) => (
+              {sociosFiltrados.map((s, i) => (
                 <tr key={i}>
                   <td>{s.nombre} {s.apellido}</td>
                   <td>{s.rut}</td>

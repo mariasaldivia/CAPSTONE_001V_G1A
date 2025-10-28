@@ -1,32 +1,27 @@
-/* .gs-container {
-  padding: 20px;
-  max-width: 1000px;
-  margin: auto;
-  font-family: Arial, sans-serif;
-   background: #111827;
-    border-radius: 12px;
+:root {
+  /* Paleta de Contenido Claro (para Gestión de Socios) */
+  --socio-bg: #eff6ff;     /* blue-50 (Fondo principal claro) */
+  --socio-panel: #ffffff;  /* white (Fondo de tarjeta/panel) */
+  --socio-text: #1e3a8a;   /* blue-900 (Texto principal oscuro) */
+  --socio-text-muted: #1e40af; /* blue-800 (Texto secundario) */
+  --socio-border: #dbeafe;  /* blue-100 (Bordes suaves) */
+  --socio-hover: rgba(30, 64, 175, 0.05); /* Hover suave (blue-800 transp.) */
+  --socio-table-header: #f1f5f9; /* Fondo de cabecera de tabla */
+  --socio-table-row-hover: #f8fafc; /* Fondo de fila de tabla (hover) */
+  --socio-overlay: rgba(30, 58, 138, 0.6); /* blue-900 transp. */
+  
+  /* Scrollbar */
+  --socio-scrollbar-thumb: #cbd5e1;
+  --socio-scrollbar-track: #f1f5f9;
 }
 
-.gs-section{
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-  border-top: 6px solid transparent;
-  margin-top: 1rem;
 
-} */
-/* === ESTILOS GENERALES === */
-
-
-/* otro  */
 .gestion-container {
   display: flex;
   gap: 1.5rem;
-  background-color: #0b1224;
+  background-color: var(--socio-bg); /* APLICADO: Fondo claro */
   padding: 2rem;
-  color: #1a1a1a;
+  color: var(--socio-text); /* APLICADO: Texto oscuro */
   font-family: "Segoe UI", sans-serif;
   position: relative;
   align-items: flex-start;
@@ -45,26 +40,26 @@
   position: absolute;
   right: 2rem;
   top: 2rem;
-  background: #ffffff;
+  background: var(--socio-panel); /* APLICADO */
   border-radius: 16px;
   padding: 1.5rem;
   width: 320px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Sombra suave */
   animation: fadeIn 0.3s ease-in-out;
 }
 
 .detalle-panel h3 {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--socio-text); /* APLICADO */
   margin-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--socio-border); /* APLICADO */
   padding-bottom: 0.3rem;
 }
 
 .detalle-panel p {
   margin: 0.4rem 0;
-  color: #1e293b;
+  color: var(--socio-text-muted); /* APLICADO */
   font-size: 0.9rem;
 }
 
@@ -74,11 +69,11 @@
 }
 
 .panel {
-  background: #ffffff;
+  background: var(--socio-panel); /* APLICADO */
   border-radius: 16px;
   padding: 1.5rem;
   flex: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Sombra suavizada */
   display: flex;
   flex-direction: column;
   max-height: 80vh;
@@ -86,12 +81,16 @@
   animation: fadeIn 0.5s ease;
 }
 
+.panel input{
+  margin-bottom: 20px;
+  padding: 10px;
+}
 .panel h2 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--socio-text); /* APLICADO */
   margin-bottom: 1.2rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--socio-border); /* APLICADO */
   padding-bottom: 0.4rem;
 }
 
@@ -100,8 +99,8 @@
   flex: 1;
   overflow-y: auto;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #f9fafc;
+  border: 1px solid var(--socio-border); /* APLICADO */
+  background: var(--socio-panel); /* APLICADO (en lugar de f9fafc) */
 }
 
 .tabla-socios table {
@@ -114,28 +113,28 @@
   text-align: left;
   padding: 0.8rem;
   font-weight: 600;
-  color: #0f172a;
-  background: #f1f5f9;
-  border-bottom: 2px solid #e2e8f0;
+  color: var(--socio-text); /* APLICADO */
+  background: var(--socio-table-header); /* APLICADO */
+  border-bottom: 2px solid var(--socio-border); /* APLICADO */
   position: sticky;
   top: 0;
 }
 
 .tabla-socios td {
   padding: 0.8rem;
-  color: #1e293b;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--socio-text-muted); /* APLICADO */
+  border-bottom: 1px solid var(--socio-border); /* APLICADO */
 }
 
 .tabla-socios tr:hover {
-  background-color: #f1f5f9;
+  background-color: var(--socio-hover); /* APLICADO */
 }
 
 .tabla-socios::-webkit-scrollbar {
   width: 8px;
 }
 .tabla-socios::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: var(--socio-scrollbar-thumb); /* APLICADO */
   border-radius: 4px;
 }
 
@@ -150,8 +149,8 @@
 }
 
 .postulante-card {
-  background: #f9fafc;
-  border: 1px solid #ddd;
+  background: var(--socio-table-row-hover); /* APLICADO */
+  border: 1px solid var(--socio-border); /* APLICADO */
   border-radius: 10px;
   padding: 0.8rem 1rem;
   display: flex;
@@ -165,7 +164,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--socio-overlay); /* APLICADO */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -174,7 +173,7 @@
 }
 
 .modal-detalle {
-  background: #fff;
+  background: var(--socio-panel); /* APLICADO */
   padding: 2rem;
   border-radius: 16px;
   width: 400px;
@@ -185,16 +184,16 @@
 
 .modal-detalle h3 {
   font-size: 1.4rem;
-  color: #0f172a;
+  color: var(--socio-text); /* APLICADO */
   margin-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--socio-border); /* APLICADO */
   padding-bottom: 0.5rem;
   text-align: center;
 }
 
 .modal-body p {
   margin: 0.5rem 0;
-  color: #1e293b;
+  color: var(--socio-text-muted); /* APLICADO */
   font-size: 0.95rem;
 }
 
@@ -204,6 +203,7 @@
   justify-content: space-between;
 }
 
+/* Botones semánticos (verde/rojo) se mantienen */
 .btn-aceptar {
   background-color: #16a34a;
   color: white;
@@ -232,10 +232,11 @@
   background-color: #b91c1c;
 }
 
+/* Botón de cerrar adaptado al tema claro */
 .btn-cerrar {
-  background-color: #64748b;
-  color: white;
-  border: none;
+  background-color: var(--socio-hover); /* APLICADO */
+  color: var(--socio-text-muted); /* APLICADO */
+  border: 1px solid var(--socio-border); /* APLICADO */
   padding: 0.6rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -253,7 +254,7 @@
 
 .sin-postulantes {
   text-align: center;
-  color: #64748b;
+  color: var(--socio-text-muted); /* APLICADO */
   margin-top: 2rem;
   font-style: italic;
 }
@@ -261,9 +262,9 @@
 .socios-table-container,
 .postulantes-list {
   overflow-y: auto;
-  max-height: 65vh; /* ajusta según tu diseño */
+  max-height: 65vh; 
   scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
+  scrollbar-color: var(--socio-scrollbar-thumb) var(--socio-scrollbar-track); /* APLICADO */
   scroll-behavior: smooth;
   padding-right: 0.5rem;
 }
@@ -276,27 +277,27 @@
 
 .socios-table-container::-webkit-scrollbar-track,
 .postulantes-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--socio-scrollbar-track); /* APLICADO */
   border-radius: 10px;
 }
 
 .socios-table-container::-webkit-scrollbar-thumb,
 .postulantes-list::-webkit-scrollbar-thumb {
-  background-color: #888;
+  background-color: var(--socio-scrollbar-thumb); /* APLICADO */
   border-radius: 10px;
   transition: background 0.3s;
 }
 
 .socios-table-container::-webkit-scrollbar-thumb:hover,
 .postulantes-list::-webkit-scrollbar-thumb:hover {
-  background-color: #555;
+  background-color: #555; /* Se mantiene un gris oscuro para el hover */
 }
 
 /* Sombra sutil al llegar al final o tener más contenido */
 .socios-table-container,
 .postulantes-list {
-  box-shadow: inset 0 6px 6px -6px rgba(0,0,0,0.1),
-              inset 0 -6px 6px -6px rgba(0,0,0,0.1);
+  box-shadow: inset 0 6px 6px -6px rgba(0,0,0,0.05), /* Sombra suavizada */
+              inset 0 -6px 6px -6px rgba(0,0,0,0.05);
   border-radius: 12px;
-  background-color: #fff;
+  background-color: var(--socio-panel); /* APLICADO */
 }

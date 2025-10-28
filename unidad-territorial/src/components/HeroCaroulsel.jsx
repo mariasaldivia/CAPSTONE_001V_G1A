@@ -3,65 +3,80 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation, Autoplay } from "swiper/modules";
 
+// 1. Importa tu nuevo archivo CSS
+import "../components/HeroCaroulsel.css";
+
+// Si usas imágenes locales, impórtalas aquí:
+import slide1Graphic from "/logo.png"; // ¡Asumo que es un PNG con transparencia!
+// import slide2Graphic from "../assets/images/slide2-graphic.png";
+// import slide3Graphic from "../assets/images/slide3-graphic.png";
+
+
 function HeroCarousel() {
   const slides = [
     {
-      title: "Bienvenidos a la Junta de Vecinos Mirador de Volcanes IV",
-      description: "Trabajamos unidos por la seguridad y el desarrollo de nuestra comunidad",
-      
-      background: "linear-gradient(to right, #03005fff, #212fb0ff)",
+      id: 1,
+      title: "Bienvenida a Mirador de Volcanes IV",
+      description: "Construyendo un barrio más seguro y unido para nuestras familias.",
+      cta_text: "Conoce a la Directiva",
+      cta_link: "#directiva",
+      backgroundColor: "var(--color-base-oscuro)", // Color de fondo del slide
+      imageSrc: slide1Graphic, // La imagen que NO ocupará todo el ancho
+      imageAlt: "Comunidad de Mirador de Volcanes IV",
     },
     {
-      title: "Explora nuestras actividades",
-      description: "Eventos y seguridad para tu barrio",
-      background: "linear-gradient(to right, #f7971e, #ffd200)",
+      id: 2,
+      title: "Nuestra Prioridad: Tu Seguridad",
+      description: "Implementamos redes de apoyo y gestionamos soluciones para la tranquilidad de todos.",
+      cta_text: "Ver Proyectos",
+      cta_link: "#proyectos",
+      backgroundColor: "var(--color-secundario)",
+      // imageSrc: slide2Graphic, // Puedes añadir una imagen si quieres
+      imageAlt: "Mapa de seguridad vecinal",
     },
     {
-      title: "Únete a la comunidad",
-      description: "Participa y mejora tu entorno",
-      background: "linear-gradient(to right, #11998e, #38ef7d)",
+      id: 3,
+      title: "Tu Voz Es El Cambio",
+      description: "Súmate a nuestras actividades y fortalezcamos la comunidad.",
+      cta_text: "¡Participa Ahora!",
+      cta_link: "#contacto",
+      backgroundColor: "var(--color-acento)",
+      // imageSrc: slide3Graphic, // Puedes añadir una imagen si quieres
+      imageAlt: "Personas participando en evento comunitario",
     },
   ];
 
   return (
     <Swiper
+      className="hero-swiper"
       modules={[Navigation, Autoplay]}
       navigation
-      autoplay={{ delay: 4000, disableOnInteraction: false }}
+      autoplay={{ delay: 5000, disableOnInteraction: false }}
       loop={true}
-      style={{ width: "100%", height: "80vh" }}
     >
-      {slides.map((slide, index) => (
-        <SwiperSlide key={index}>
-          <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-              height: "100%",
-              background: slide.background,
-              color: "white",
-              textAlign: "center",
-            }}
-          >
+      {slides.map((slide) => (
+        <SwiperSlide 
+          key={slide.id} 
+          className="hero-slide" // Esta clase se mantiene para estilos generales
+          style={{ backgroundColor: slide.backgroundColor }} // El color de fondo del slide
+        >
+          {/* Si hay una imagen, la renderizamos */}
+          {slide.imageSrc && (
+            <img 
+              src={slide.imageSrc} 
+              alt={slide.imageAlt} 
+              className="hero-slide-image" // Clase para estilizar la imagen
+            />
+          )}
+
+          {/* El contenido de texto sigue siendo el mismo */}
+          <div className="hero-content">
             <h1>{slide.title}</h1>
-            <h2>{slide.description}</h2>
-            <button
-              style={{
-                marginTop: "15px",
-                padding: "10px 20px",
-                background: "white",
-                color: "#2193b0",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}
-            >
-              Conócenos
-            </button>
-          </section>
+            <p>{slide.description}</p>
+            <a href={slide.cta_link} className="hero-cta">
+              {slide.cta_text}
+            </a>
+          </div>
         </SwiperSlide>
       ))}
     </Swiper>

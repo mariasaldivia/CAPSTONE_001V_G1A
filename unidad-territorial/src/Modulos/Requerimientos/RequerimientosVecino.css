@@ -1,18 +1,29 @@
-:root{
-  --rv-bg: #0b1224;           /* fondo exterior */
-  --rv-card: #f8fafc;         /* tarjeta clara */
-  --rv-text: #0f172a;         /* texto principal */
-  --rv-soft: #e2e8f0;         /* bordes suaves */
-  --rv-primary: #1f2937;      /* gris oscuro botón */
-  --rv-primary-ink: #ffffff;  /* texto botón */
-  --rv-ring: #60a5fa;         /* foco inputs */
+:root {
+  /* Paleta de Contenido Claro (para este formulario) */
+  --rv-bg: #eff6ff;           /* APLICADO: blue-50 (Fondo de página claro) */
+  --rv-card: #ffffff;         /* APLICADO: white (Tarjeta clara) */
+  --rv-text: #1e3a8a;          /* APLICADO: blue-900 (Texto principal) */
+  --rv-text-muted: #1e40af;   /* APLICADO: blue-800 (para texto secundario) */
+  --rv-soft: #dbeafe;        /* APLICADO: blue-100 (Bordes) */
+  
+  /* Botón principal adaptado al acento naranja */
+  --rv-primary: #f97316;       /* APLICADO: orange-500 (Botón principal) */
+  --rv-primary-ink: #ffffff;  /* APLICADO: white (Texto botón) */
+  
+  /* Focus ring adaptado al acento naranja */
+  --rv-ring: #f97316;         /* APLICADO: orange-500 */
+  --rv-ring-shadow: rgba(249, 115, 22, 0.28); /* Naranja transparente */
+  
+  /* Colores para la barra inferior */
+  --rv-footer-bg: #f1f5f9;     /* Gris claro (como cabecera de tabla) */
+  --rv-footer-border: #dbeafe; /* Borde azul claro */
 }
 
 *{ box-sizing: border-box; }
 
 .rv{
-  min-height: calc(100dvh - 0px); /* navbar+footer se manejan afuera */
-  background: var(--rv-bg);
+  min-height: calc(100dvh - 0px);
+  background: var(--rv-bg); /* APLICADO: Fondo claro */
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -22,17 +33,17 @@
 .rv__card{
   width: 100%;
   max-width: 980px;
-  background: var(--rv-card);
-  border: 1px solid #cbd5e1;
+  background: var(--rv-card); /* APLICADO: Fondo blanco */
+  border: 1px solid var(--rv-soft); /* APLICADO: Borde azul claro */
   border-radius: 18px;
-  box-shadow: 0 15px 40px rgba(0,0,0,.25);
+  box-shadow: 0 15px 40px rgba(30, 64, 175, 0.08); /* Sombra suave */
   overflow: hidden;
 }
 
 .rv__title{
   text-align: center;
   margin: 1.25rem 0 .75rem;
-  color: var(--rv-text);
+  color: var(--rv-text); /* APLICADO: Texto oscuro */
   font-size: 1.4rem;
 }
 
@@ -55,7 +66,7 @@
 .rv__field{ display: grid; gap: .4rem; }
 .rv__field label{
   font-size: .92rem;
-  color: #334155;
+  color: var(--rv-text-muted); /* APLICADO: Texto secundario */
 }
 
 /* inputs */
@@ -63,9 +74,9 @@
 .rv__field select,
 .rv__field textarea{
   width: 100%;
-  border: 1px solid var(--rv-soft);
+  border: 1px solid var(--rv-soft); /* APLICADO */
   background: white;
-  color: var(--rv-text);
+  color: var(--rv-text); /* APLICADO */
   border-radius: 12px;
   padding: .8rem .9rem;
   outline: none;
@@ -74,8 +85,8 @@
 .rv__field input:focus,
 .rv__field select:focus,
 .rv__field textarea:focus{
-  border-color: var(--rv-ring);
-  box-shadow: 0 0 0 3px rgba(96,165,250,.28);
+  border-color: var(--rv-ring); /* APLICADO: Foco naranja */
+  box-shadow: 0 0 0 3px var(--rv-ring-shadow); /* APLICADO */
 }
 
 /* select con chevron */
@@ -93,7 +104,7 @@
   right: .7rem; top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: #475569;
+  color: var(--rv-text-muted); /* APLICADO */
 }
 
 /* file bonito */
@@ -101,7 +112,7 @@
   display: inline-flex;
   align-items: center;
   gap: .5rem;
-  border: 1px solid var(--rv-soft);
+  border: 1px solid var(--rv-soft); /* APLICADO */
   border-radius: 12px;
   padding: .6rem .75rem;
   background: #fff;
@@ -114,7 +125,7 @@
 
 .rv__preview{
   margin-top: .6rem;
-  border: 1px solid var(--rv-soft);
+  border: 1px solid var(--rv-soft); /* APLICADO */
   border-radius: 12px;
   overflow: hidden;
 }
@@ -127,8 +138,8 @@
 /* botón */
 .rv__actions{ display: flex; justify-content: center; padding-top: .5rem; }
 .rv__btn{
-  background: var(--rv-primary);
-  color: var(--rv-primary-ink);
+  background: var(--rv-primary); /* APLICADO: Naranja */
+  color: var(--rv-primary-ink); /* APLICADO: Blanco */
   font-weight: 700;
   letter-spacing: .08em;
   border: 0;
@@ -145,21 +156,18 @@
   display: flex;
   align-items: center;
   gap: .6rem;
-  color: #0f172a;
-  background: #e5e7eb;
+  color: var(--rv-text-muted); /* APLICADO */
+  background: var(--rv-footer-bg); /* APLICADO: Fondo gris claro */
   padding: .8rem 1rem;
   font-size: .9rem;
-  border-top: 1px solid #d1d5db;
+  border-top: 1px solid var(--rv-footer-border); /* APLICADO */
 }
 .rv__mail{
-  color: #0f172a;
+  color: var(--rv-text); /* APLICADO */
   text-decoration: none;
 }
 .rv__mail:hover{ text-decoration: underline; }
 .rv__dot{
-  width: 6px; height: 6px; border-radius: 999px; background: #475569;
+  width: 6px; height: 6px; border-radius: 999px; 
+  background: var(--rv-text-muted); /* APLICADO */
 }
-
-
-
-

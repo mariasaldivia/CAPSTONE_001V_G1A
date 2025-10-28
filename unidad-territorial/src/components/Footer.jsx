@@ -28,11 +28,11 @@ export default function Footer() {
           <p className="ft__text">
             Visita nuestra sede en:
             <br />
-            <strong>Paseo Bulnes 209, Dpto. 34</strong>
+            <strong>Lily Garafulic Yancovic 1787</strong>
           </p>
           <a
             className="ft__link"
-            href="https://maps.google.com/?q=Paseo+Bulnes+209+Santiago+Chile"
+            href="https://maps.app.goo.gl/teHcy9VLQYvRVCan7"
             target="_blank"
             rel="noreferrer"
           >
@@ -42,21 +42,25 @@ export default function Footer() {
 
         {/* Columna 2: Contacto */}
         <div className="ft__col">
-          <h4 className="ft__title">Contacto</h4>
+          <h4 className="ft__title">Contáctanos</h4>
           <ul className="ft__list">
             <li>
               📧{" "}
-              <a href="mailto:contacto@miradorvolcanes.cl" className="ft__link">
-                contacto@miradorvolcanes.cl
+              <a href="mailto:juntadevecinosvolcanescuatro@gmail.com" className="ft__link">
+                juntadevecinosvolcanescuatro@gmail.com
               </a>
             </li>
-            <li>📞 +56 9 0000 0000</li>
+            <li>📞 +56 9 66931546</li>
           </ul>
+        </div>
 
+        {/* Columna 3: Quiénes Somos */}
+        <div className="ft__col">
           {/* Redes sociales */}
-          <div className="ft__social">
+ 
+            <h4 className="ft__title">Siguenos en Instagram </h4>
             <a
-              href="https://instagram.com/tu_cuenta" // 👉 cambia por tu Instagram real
+              href="https://www.instagram.com/mirador.volcanesiv?igsh=MXBnbXZ3czNrbDduaw==" 
               target="_blank"
               rel="noreferrer"
             >
@@ -65,20 +69,11 @@ export default function Footer() {
                 alt="Instagram"
                 className="ft__icon"
               />
+                        
             </a>
+            <p className="ft__text">como mirador.volcanesiv</p>
           </div>
-        </div>
-
-        {/* Columna 3: Quiénes Somos */}
-        <div className="ft__col">
-          <h4 className="ft__title">Quiénes Somos</h4>
-          <p className="ft__text">
-           
-          </p>
-          <Link to="/home#nosotros" className="ft__link">
-            
-          </Link>
-        </div>
+   
       </div>
 
       {/* Pie inferior */}

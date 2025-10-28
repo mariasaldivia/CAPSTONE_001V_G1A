@@ -23,6 +23,7 @@
 /* Encabezado principal con título */
 .news-head {
   margin-bottom: 16px;
+  text-align: center;
 }
 
 /* Título destacado sobre fondo oscuro (del panel de directiva) */
@@ -30,7 +31,7 @@
 .news-head--contrast h1 {
   font-size: clamp(26px, 4.5vw, 36px);
   margin: 6px 0 4px;
-  font-weight: 800;
+  font-weight: 750;
   letter-spacing: .2px;
   color:  var(--ne-text-muted);/* color claro para contraste */
 }

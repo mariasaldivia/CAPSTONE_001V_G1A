@@ -178,7 +178,7 @@ export default function Certificados() {
       {/* Intro */}
       <section className="intro">
         <h1>Solicita tu certificado de residencia</h1>
-        <div className="precio">Valor $XXXX</div>
+        <div className="precio">Valor $2000</div>
         <p className="nota">
           Para solicitar certificado debes depositar previamente y adjuntar comprobante.
         </p>
@@ -337,13 +337,13 @@ export default function Certificados() {
                 <strong>Nº Cuenta:</strong> 123456789
               </li>
               <li>
-                <strong>Correo:</strong> junta@ejemplo.cl
+                <strong>Correo:</strong> juntadevecinosvolcanescuatro@gmail.com
               </li>
             </ul>
             <div className="foot">
               Contáctanos en{" "}
-              <a href="mailto:juntadevecinosmiradordevolcanescuatro@gmail.com">
-                juntadevecinosmiradordevolcanescuatro@gmail.com
+              <a href="mailto:juntadevecinosvolcanescuatro@gmail.com">
+                juntadevecinosvolcanescuatro@gmail.com
               </a>
             </div>
           </aside>
