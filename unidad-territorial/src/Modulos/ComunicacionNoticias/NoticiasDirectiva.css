@@ -1,182 +1,201 @@
-/*  Paleta general de colores y variables reutilizables */
-:root{
-  --ink:#0b0e1d;        
-  --muted:#5b647a;      
-  --border:#e7e9f3;     
-  --brand:#4b3ff2;       
-  --card:#ffffff;       
-  --bg:#f2f4fb;         
+:root {
+  --ne-bg: #eff6ff;           /* blue-50 (Fondo de página, aunque se hereda) */
+  --ne-card: #ffffff;         /* white (Fondo de tarjeta) */
+  --ne-border: #dbeafe;        /* blue-100 (Bordes) */
+  --ne-text: #1e3a8a;          /* blue-900 (Texto principal) */
+  --ne-text-muted: #1e40af;   /* blue-800 (Texto secundario) */
+  --ne-accent: #f97316;       /* orange-500 (Acento principal) */
+  
+  /* Fondos especiales para inputs y barras de herramientas */
+  --ne-input-bg: #f8fafc;     /* Gris muy claro (casi blanco) */
+  --ne-toolbar-bg: #f1f5f9;  /* Gris un poco más oscuro para la barra */
 }
 
 /* Contenedor principal de la vista de noticias */
-.news-page.wide{
-  max-width: 1100px;      
+.news-page.wide {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 22px 26px 38px; 
-  color: var(--ink);
-  background: transparent;
+  padding: 22px 26px 38px;
+  color: var(--ne-text); /* APLICADO */
+  background: transparent; /* Correcto: hereda el fondo --adm-bg (blue-50) del panel */
 }
 
-/* 🏷️ Encabezado principal con título */
-.news-head{
+/* Encabezado principal con título */
+.news-head {
   margin-bottom: 16px;
 }
 
 /* Título destacado sobre fondo oscuro (del panel de directiva) */
-.news-head--contrast h1{
+/* ESTO SE QUEDA IGUAL, ya que está diseñado para el fondo oscuro del panel */
+.news-head--contrast h1 {
   font-size: clamp(26px, 4.5vw, 36px);
   margin: 6px 0 4px;
   font-weight: 800;
   letter-spacing: .2px;
-  color: #fff; /* color claro para contraste */
-  text-shadow: 0 2px 8px rgba(0,0,0,.45); /* sombra para mejor lectura */
+  color:  var(--ne-text-muted);/* color claro para contraste */
 }
 
-/*  Texto de instrucciones bajo el título */
-.news-instructions{
-  color: rgba(255,255,255,.88);
+/* Texto de instrucciones bajo el título (también sobre fondo oscuro) */
+.news-instructions {
+  color: var(--ne-text-muted);
   margin: 0 0 8px;
 }
 
-/*  Tarjeta principal del formulario */
-.news-card{
-  background: var(--card);
-  border: 1px solid var(--border);
+/* Tarjeta principal del formulario (TEMA CLARO) */
+.news-card {
+  background: var(--ne-card); /* APLICADO: Fondo blanco */
+  border: 1px solid var(--ne-border); /* APLICADO: Borde azul claro */
   border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 8px 22px rgba(11,11,205,.06);
+  box-shadow: 0 8px 22px rgba(30, 64, 175, .06); /* Sombra azulada suave */
 }
-.news-card--roomy{ 
-  padding: 18px; 
+.news-card--roomy {
+  padding: 18px;
 }
 
-/*  Grillas para alinear campos (2 o 3 columnas) */
-.grid.two{
+/* Grillas para alinear campos (2 o 3 columnas) */
+.grid.two {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
-.grid.three{
+.grid.three {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr; /* imagen principal más grande */
+  grid-template-columns: 1.5fr 1fr 1fr;
   gap: 16px;
 }
 
 /* diseño adaptable (pantallas medianas y móviles) */
-@media (max-width: 1200px){
-  .grid.three{ grid-template-columns: 1fr 1fr; }
+@media (max-width: 1200px) {
+  .grid.three {
+    grid-template-columns: 1fr 1fr;
+  }
 }
-@media (max-width: 900px){
-  .grid.two{ grid-template-columns: 1fr; }
-  .grid.three{ grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+  .grid.two {
+    grid-template-columns: 1fr;
+  }
+  .grid.three {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Campos del formulario (título, subtítulo, imágenes) */
-.form-field{ 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.form-field label{ font-weight: 700; }
-.form-field input[type="text"]{
+.form-field label {
+  font-weight: 700;
+}
+.form-field input[type="text"] {
   padding: 14px 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ne-border); /* APLICADO */
   border-radius: 12px;
   outline: none;
   font-size: 1rem;
-  background: #fff;
+  background: var(--ne-input-bg); /* APLICADO: Fondo de input */
 }
-.form-field input[type="file"]{
+.form-field input[type="file"] {
   padding: 12px;
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--ne-border); /* APLICADO */
   border-radius: 12px;
-  background: #fbfbff;
+  background: var(--ne-input-bg); /* APLICADO */
 }
 
 /* Vista previa de la imagen principal o secundarias */
-.img-preview{ 
-  margin-top: 6px; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  border:1px solid var(--border);
+.img-preview {
+  margin-top: 6px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--ne-border); /* APLICADO */
 }
-.img-preview img{ 
-  width:100%; 
-  height: 220px; 
-  object-fit: cover; 
-  display:block; 
+.img-preview img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
 }
-.img-preview.tall img{ height: 280px; } /* imagen principal más alta */
+.img-preview.tall img {
+  height: 280px;
+}
 
 /* Textos secundarios y errores */
-.hint{ color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
-.error{ color:#c0342b; }
+.hint {
+  color: var(--ne-text-muted); /* APLICADO */
+  margin-top: 8px;
+  font-size: 0.95rem;
+}
+.error {
+  color: #c0342b; /* Semántico (rojo), se mantiene */
+}
 
 /* Barra de herramientas del editor (negrita, cursiva, etc.) */
-.editor-toolbar{
-  display:flex; 
-  flex-wrap:wrap; 
-  gap:8px;
-  border:1px solid var(--border);
-  padding:10px; 
-  border-radius:12px; 
-  background:#f9f9ff;
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px solid var(--ne-border); /* APLICADO */
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--ne-toolbar-bg); /* APLICADO: Fondo de barra */
 }
-.editor-toolbar button{
-  border:1px solid var(--border);
-  background:#fff; 
-  padding:10px 12px; 
-  border-radius:10px; 
-  cursor:pointer;
-  font-weight:700;
+.editor-toolbar button {
+  border: 1px solid var(--ne-border); /* APLICADO */
+  background: var(--ne-card); /* APLICADO: Blanco */
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
 }
-.editor-toolbar .sep{ 
-  width:1px; 
-  height:28px; 
-  background:var(--border); 
-  margin:0 4px; 
+.editor-toolbar .sep {
+  width: 1px;
+  height: 28px;
+  background: var(--ne-border); /* APLICADO */
+  margin: 0 4px;
 }
 
-/* ✍️ Área editable para redactar la noticia */
-.rich-editor{
+/* Área editable para redactar la noticia */
+.rich-editor {
   margin-top: 12px;
   min-height: 220px;
-  border:1px solid var(--border);
+  border: 1px solid var(--ne-border); /* APLICADO */
   border-radius: 12px;
   padding: 14px 16px;
   line-height: 1.75;
   font-size: 1.02rem;
-  background:#fff;
+  background: var(--ne-card); /* APLICADO: Blanco */
 }
-.rich-editor.large{ 
-  min-height: 300px; /* altura más cómoda para redactar */
+.rich-editor.large {
+  min-height: 300px;
 }
-.rich-editor:empty:before{
+.rich-editor:empty:before {
   content: attr(placeholder);
-  color: var(--muted);
+  color: var(--ne-text-muted); /* APLICADO */
 }
 
-/* 🔘 Sección inferior con los botones */
-.actions{
-  display:flex; 
-  gap:12px; 
-  justify-content:flex-end; 
-  margin-top:18px;
+/* Sección inferior con los botones */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 18px;
 }
 
 /* Botones principales */
-.btn{
-  background: var(--brand);
-  color:#fff; 
-  border:none; 
-  padding:14px 20px; 
-  border-radius:12px; 
-  cursor:pointer;
-  font-weight:800; 
-  letter-spacing:.2px;
+.btn {
+  background: var(--ne-accent); /* APLICADO: Naranja */
+  color: #fff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
-.btn.ghost{
-  background:#fff; 
-  color:var(--ink); 
-  border:1px solid var(--border);
+.btn.ghost {
+  background: var(--ne-card); /* APLICADO: Blanco */
+  color: var(--ne-text); /* APLICADO: Texto oscuro */
+  border: 1px solid var(--ne-border); /* APLICADO: Borde azul claro */
 }

@@ -1,10 +1,13 @@
 :root{
-  --nav-bg: #0f172a;
-  --nav-fg: #e5e7eb;
+  /* Mapeo de la paleta de colores */
+  --nav-bg: #1e40af;     /* blue-800 (Fondo principal del header) */
+  --nav-fg: #ffffff;     /* white (Texto principal) */
   --nav-accent: #38bdf8;
-  --nav-active: #22c55e;
-  --nav-neutral: rgba(255,255,255,.08);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,.15);
+  --nav-active: #22c55e;  /* orange-500 (Color del enlace activo) */
+  
+  /* Neutrales (estos funcionan bien) */
+  --nav-neutral: rgba(255, 255, 255, .08); /* hover sutil sobre fondo azul */
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, .15);
 }
 
 * { box-sizing: border-box; }
@@ -61,24 +64,27 @@
 }
 .nav__link--active {
   color: var(--nav-active);
-  background: rgba(34,197,94,.12);
+  /* Fondo transparente basado en orange-500 (#f97316) */
+  background: rgba(22, 219, 249, 0.15); 
 }
 
-/* CHIP USUARIO */
+/* CHIP USUARIO (Actualizado a naranja) */
 .nav__user-chip {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
   padding: .4rem .7rem;
   border-radius: .6rem;
-  border: 1px solid rgba(26, 84, 109, 0.25);
-  background: rgba(65, 144, 177, 0.08);
+  /* Borde y fondo basados en orange-500 */
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  background: rgba(249, 115, 22, 0.1);
   font-weight: 600;
   color: var(--nav-accent);
   text-decoration: none;
 }
 .nav__user-chip:hover {
-  background: rgba(56,189,248,.15);
+  /* Hover naranja más intenso */
+  background: rgba(249, 115, 22, 0.2);
 }
 .nav__user-icon {
   font-size: 1.1rem;
@@ -90,8 +96,8 @@
 
 /* BOTÓN CERRAR SESIÓN (neutral) */
 .nav__btn-logout {
-  border: 1px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: var(--nav-neutral); /* usa el neutral */
   color: var(--nav-fg);
   padding: .45rem .75rem;
   border-radius: .6rem;
@@ -100,7 +106,7 @@
   transition: background .15s ease, transform .1s ease;
 }
 .nav__btn-logout:hover {
-  background: rgba(255,255,255,.15);
+  background: rgba(255, 255, 255, .15);
   transform: translateY(-1px);
 }
 
@@ -120,7 +126,7 @@
   background: var(--nav-fg);
 }
 
-/* Drawer móvil */
+/* Drawer móvil (usando blue-900 para un leve contraste) */
 .nav__drawer {
   position: fixed;
   inset: 0 0 0 auto;
@@ -128,7 +134,7 @@
   max-width: 360px;
   translate: 100% 0;
   transition: translate .25s ease;
-  background: #0b1224;
+  background: #1e3a8a; /* blue-900 (el del footer original) */
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -147,24 +153,25 @@
   text-decoration: none;
   padding: .9rem 1rem;
   border-radius: .75rem;
-  background: rgba(255,255,255,.04);
+  background: rgba(255, 255, 255, .04);
   display: flex;
   align-items: center;
   gap: .6rem;
 }
 .nav__drawer-link:hover,
 .nav__drawer-user:hover {
-  background: rgba(255,255,255,.08);
+  background: rgba(255, 255, 255, .08);
 }
 .nav__drawer-link--active {
   color: var(--nav-active);
-  background: rgba(34,197,94,.12);
+  /* Fondo transparente basado en orange-500 */
+  background: rgba(249, 115, 22, 0.15);
 }
 
 .nav__drawer-btn-logout {
   text-align: center;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .08);
   color: var(--nav-fg);
   padding: .9rem 1rem;
   border-radius: .9rem;
@@ -172,14 +179,15 @@
   cursor: pointer;
 }
 .nav__drawer-btn-logout:hover {
-  background: rgba(255,255,255,.15);
+  background: rgba(255, 255, 255, .15);
 }
 
-/* Backdrop */
+/* Backdrop (usando blue-900 transparente) */
 .nav__backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2,6,23,.6);
+  /* Fondo transparente basado en blue-900 (#1e3a8a) */
+  background: rgba(30, 58, 138, 0.6); 
   backdrop-filter: blur(2px);
   z-index: 55;
 }

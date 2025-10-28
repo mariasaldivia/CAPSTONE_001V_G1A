@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0e1d;
+  background: #DBEAFE; /* blue-50 */
   font-family: 'Segoe UI', sans-serif;
   padding: 40px;
 }
@@ -12,9 +12,9 @@
 /* Tarjetas (Login y Registro) */
 .auth-card,
 .auth-form {
-  background: #0A0F2C;
-  border: 1px solid #1C2758;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  background: #ffffff; /* white */
+  border: 1px solid #dbeafe; /* blue-100 */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05); /* Sombra suavizada */
   padding: 40px 50px;
   border-radius: 15px;
   max-width: 95%; /* nunca más ancho que el viewport */
@@ -27,7 +27,7 @@
 /* Título Login*/
 .auth-card h2{
   margin-bottom: 20px;
-  color: #e9ecff;
+  color: #1e3a8a; /* blue-900 */
   font-size: 24px;
   text-align: center;
 }
@@ -35,11 +35,11 @@
 .form-intro {
   text-align: center;
   margin-bottom: 25px;
-  color: #b9c3e0;
+  color: #1e40af; /* blue-800 */
   font-size: 16px;
   line-height: 1.5;
 }
-.form-intro strong { color: #0ea5e9; }
+.form-intro strong { color: #f97316; /* orange-500 */ }
 
 /* Campos */
 .input-group {
@@ -49,27 +49,27 @@
 }
 .input-group label {
   margin-bottom: 6px;
-  color: #dfe7ff;
+  color: #1e40af; /* blue-800 */
   font-size: 14px;
 }
 .input-group input {
-width: 100%;
+  width: 100%;
   padding: 12px;
-  border: 1px solid #1C2758;
+  border: 1px solid #dbeafe; /* blue-100 */
   border-radius: 8px;
   outline: none;
-  background-color: #0A0F2C;
-  color: #898989;
+  background-color: #ffffff; /* white */
+  color: #1e3a8a; /* blue-900 (para el texto ingresado) */
   transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s, color 0.3s;
 }
 .input-group input:hover {
-  border-color: #38bdf8;
+  border-color: #1e40af; /* blue-800 */
 }
 .input-group input:focus {
-  border-color: rgb(255, 255, 255);
-  box-shadow: 0 0 8px rgba(33, 147, 176, 0.3);
-  background-color: #eff0f9;
-  color: black;
+  border-color: #f97316; /* orange-500 */
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.3); /* Sombra naranja */
+  background-color: #eff6ff; /* blue-50 */
+  color: #1e3a8a; /* blue-900 */
 }
 
 /* Filas con dos inputs */
@@ -91,7 +91,7 @@ width: 100%;
   top: 50%;
   left: 12px;
   transform: translateY(-50%);
-  color: #dbdbdb;
+  color: #1e40af; /* blue-800 */
   font-size: 16px;
   pointer-events: none;
 }
@@ -99,8 +99,8 @@ width: 100%;
 .btn-auth {
   width: 100%;
   padding: 12px;
-  background: #0ea5e9;
-  color: white;
+  background: #f97316; /* orange-500 */
+  color: #ffffff; /* white */
   border: none;
   border-radius: 8px;
   font-size: 16px;
@@ -108,12 +108,17 @@ width: 100%;
   transition: 0.3s;
   margin-top: 10px;
 }
-.btn-auth:hover {  background: #006a9f; /* azul más profundo */}
-.btn-auth:active {  transform: scale(0.98); }
+.btn-auth:hover { 
+  background: #ea580c; /* orange-600 */
+}
+.btn-auth:active { 
+  transform: scale(0.98); 
+}
 
 /* Mensajes */
 .error-text {
-  color: rgb(114, 11, 11);
+  /* Se mantiene el rojo semántico, ya que la paleta no incluye un color de error */
+  color: rgb(114, 11, 11); 
   margin: 10px 0;
   font-size: 14px;
 }
@@ -122,19 +127,19 @@ width: 100%;
   margin-top: 25px;
   padding-top: 10px;
   font-size: 13px;
-  color: #ffffff;
+  color: #1e40af; /* blue-800 */
   text-align: center;
-  border-top: 1px solid #1C2758;
+  border-top: 1px solid #dbeafe; /* blue-100 */
 }
 
 .register-text {
   margin-top: 15px;
   font-size: 14px;
-  color: #b9b8b8;
+  color: #1e40af; /* blue-800 */
 }
 
 .register-text a {
-  color: #ffffff;
+  color: #1e3a8a; /* blue-900 */
   text-decoration: none;
   font-weight: bold;
 }

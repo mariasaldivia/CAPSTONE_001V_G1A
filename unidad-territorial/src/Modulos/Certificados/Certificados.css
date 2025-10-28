@@ -1,24 +1,73 @@
-:root{
-  --bg:#0b0e1d; --card:#101633; --border:#28305b;
-  --ink:#e9ecff; --muted:#aeb6da; --brand:#3b82f6; --pill:#0ea5e9;
+:root {
+  /* Paleta de la Junta de Vecinos */
+  --bg: #eff6ff;     /* blue-50 (Fondo de página) */
+  --card: #ffffff;   /* white (Fondo de tarjetas) */
+  --border: #dbeafe;  /* blue-100 (Bordes suaves) */
+  --ink: #1e3a8a;     /* blue-900 (Texto principal oscuro) */
+  --muted: #1e40af;    /* blue-800 (Texto secundario) */
+  --brand: #f97316;    /* orange-500 (Acento principal) */
+  --brand-hover: #ea580c; /* orange-600 (Acento hover) */
+  --pill: #f97316;     /* orange-500 */
 }
 
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;background:radial-gradient(1200px 300px at 50% -50%, #2b2f55 0%, #0b0e1d 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,system-ui,Segoe UI,Roboto}
+body{
+  margin: 0;
+  /* Gradiente radial eliminado, se usa fondo sólido */
+  background: var(--bg); 
+  color: var(--ink); 
+  font-family: ui-sans-serif, system-ui, Segoe UI, Roboto;
+}
 a{color:inherit}
 
 .page{max-width:1100px;margin:0 auto;padding:18px}
 
-.topbar{display:flex;justify-content:space-between;align-items:center;background:#0e1433cc;border:1px solid var(--border);backdrop-filter:blur(6px);border-radius:16px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.topbar{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Fondo de tarjeta (blanco) con transparencia */
+  background: rgba(255, 255, 255, 0.8); 
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .05); /* Sombra suavizada */
+}
 .brand{display:flex;gap:8px;align-items:center;font-weight:900;letter-spacing:.5px; text-decoration: none;}
-.brand span{display:inline-flex;width:36px;height:36px;border-radius:50%;background:#111944;align-items:center;justify-content:center;border:1px solid var(--border)}
+.brand span{
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg); /* blue-50 */
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
 .nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.link{padding:8px 12px;border-radius:999px;border:1px solid transparent;color:#d8dcff}
-.link:hover{border-color:var(--border);background:#0f1539}
-.pill{padding:8px 14px;border-radius:999px;background:linear-gradient(180deg,var(--pill),#0ea0e0);color:white;font-weight:700;text-decoration:none}
+.link{
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--muted); /* blue-800 */
+}
+.link:hover{
+  border-color: var(--border);
+  background: var(--bg); /* blue-50 */
+}
+.pill{
+  padding: 8px 14px;
+  border-radius: 999px;
+  /* Gradiente naranja */
+  background: linear-gradient(180deg, var(--brand), var(--brand-hover)); 
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
 
-.intro{text-align:center;margin:18px 0; color:white;}
+.intro{text-align:center;margin:18px 0; color: var(--ink); /* blue-900 */}
 .intro h1{margin:0;font-size:20px}
 .precio{margin-top:6px;font-weight:800}
 .nota{color:var(--muted);margin-top:6px}
@@ -26,39 +75,79 @@ a{color:inherit}
 .grid{display:grid;grid-template-columns: 1.3fr .7fr;gap:16px;margin-top:12px;}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
 
-.card{background:linear-gradient(180deg,#12183b,#0f1230);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.card{
+  background: var(--card); /* Fondo blanco sólido */
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .05); /* Sombra suavizada */
+}
 
 .form .row{display:grid;grid-template-columns:1fr;gap:12px}
 .form .row.two{grid-template-columns:1fr 1fr}
 @media (max-width:700px){.form .row.two{grid-template-columns:1fr}}
 
 .group label{display:block;color:var(--muted);font-size:13px;margin:2px 2px 6px}
-.group input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#dfe1ee;color:#040000;outline:none}
-.group input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.25)}
+.group input{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f8fafc; /* Ligeramente más gris que el fondo */
+  color: var(--ink); /* Texto oscuro */
+  outline: none;
+}
+.group input:focus{
+  border-color: var(--brand); /* Foco naranja */
+  /* Sombra naranja */
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25); 
+}
 
+/* Reglas innecesarias en el tema claro */
 #formulario,
 #datos{
-  background-color: #0f1539;
-  color: white;
+  background-color: transparent;
+  color: inherit;
 }
 
 
-.file{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px dashed var(--border);border-radius:12px;background:#0b1030;color:#d6daff;cursor:pointer}
+.file{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg); /* blue-50 */
+  color: var(--muted); /* blue-800 */
+  cursor: pointer;
+}
 .file input{display:none}
 .file .clip{font-size:18px}
 .file .fname{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.btn{margin-top:12px;width:100%;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(180deg,var(--brand),#2563eb);color:white;font-weight:800;cursor:pointer}
+.btn{
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  /* Gradiente naranja */
+  background: linear-gradient(180deg, var(--brand), var(--brand-hover)); 
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
 .btn:disabled{opacity:.6;cursor:not-allowed}
 
-.legal{color:#b9c1ea;font-size:12px;text-align:center;margin-top:8px}
+.legal{color:var(--muted);font-size:12px;text-align:center;margin-top:8px}
 
 .side{position:relative}
 .side-title{font-weight:900;margin-bottom:10px}
 .list{list-style:none;margin:0;padding:0}
-.list li{padding:8px 0;border-bottom:1px dashed #2a3060}
+.list li{padding:8px 0;border-bottom:1px dashed var(--border)}
 .list li:last-child{border-bottom:none}
-.foot{margin-top:12px;color:#cfe2ff;font-size:13px}
+.foot{margin-top:12px;color:var(--muted);font-size:13px}
 
 
 /* 📷 Preview reducido para imágenes */
@@ -67,7 +156,7 @@ a{color:inherit}
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  max-width: 120px; /* ancho máximo más pequeño */
+  max-width: 120px; 
 }
 .preview-img img {
   width: 100%;
@@ -80,20 +169,20 @@ a{color:inherit}
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  max-width: 200px; /* ancho limitado para que no ocupe todo */
-  max-height: 150px; /* altura fija */
+  max-width: 200px; 
+  max-height: 150px; 
 }
 .preview-pdf embed {
   width: 100%;
-  height: 150px; /* ahora el PDF queda más compacto */
+  height: 150px; 
   display: block;
 }
 
-/* Éxito en pantalla */
+/* Éxito en pantalla (mapeado a la nueva paleta) */
 .card.success{
-  background: var(--adm-panel);
-  color: var(--adm-text);
-  border: 1px solid var(--adm-soft);
+  background: #dbeafe; /* blue-100 */
+  color: #1e3a8a; /* blue-900 */
+  border: 1px solid #1e40af; /* blue-800 */
   border-radius: 14px;
   padding: 1.2rem;
   max-width: 900px;
@@ -110,8 +199,8 @@ a{color:inherit}
   gap: .5rem;
   text-align: left;
   max-width: 620px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid var(--adm-soft);
+  background: rgba(255, 255, 255, .5); /* Blanco transparente sobre blue-100 */
+  border: 1px solid #1e40af; /* blue-800 */
   border-radius: 12px;
   padding: .8rem .9rem;
 }
@@ -121,7 +210,8 @@ a{color:inherit}
   padding: .1rem .5rem;
   border-radius: 999px;
   font-size: .85rem;
-  background: rgba(56,189,248,.12);
+  background: rgba(249, 115, 22, 0.15); /* Acento naranja transp. */
+  color: #1e3a8a; /* blue-900 */
   margin-right: .4rem;
 }
 
@@ -135,8 +225,8 @@ a{color:inherit}
   border-radius: .6rem;
   padding: .55rem .9rem;
   font-weight: 600;
-  background: rgba(56,189,248,.9);
-  color: #062235;
+  background: var(--brand); /* Naranja sólido */
+  color: white; /* Texto blanco */
   cursor: pointer;
 }
 .success__actions .btn:hover{
