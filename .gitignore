@@ -45,3 +45,8 @@ Thumbs.db
 
 # --- DEPLOY O DOCKER ---
 docker-compose.override.yml
+
+.env
+*.bak
+*.mdf
+*.ldf
