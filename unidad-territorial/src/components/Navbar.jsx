@@ -99,7 +99,7 @@ export default function Navbar() {
     { to: "/home", label: "Inicio" },
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
-    { to: "/requerimientos", label: "Solicitudes" },
+  //  { to: "/requerimientos", label: "Solicitudes" },
     { to: "/proyectos", label: "Proyectos" },
   ];
 

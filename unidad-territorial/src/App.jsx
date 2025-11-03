@@ -19,6 +19,8 @@ import NoticiasDirectiva from "./Modulos/ComunicacionNoticias/NoticiasDirectiva.
 /* Auth */
 import Login from "./Modulos/Auth/Login.jsx";
 import Register from "./Modulos/Auth/Register.jsx";
+// Perfil del usaurio registrado
+import Perfil from "./Modulos/Perfil/Perfil.jsx";
 
 export default function App() {
   return (
@@ -51,6 +53,8 @@ function AppInner() {
         <Route path="/proyectos" element={<ProyectosVecinalesVecino />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route path="/perfil" element={<Perfil />} />
 
         {/* Directiva */}
         <Route path="/solicitudes" element={<RequerimientosDirectiva />} />

@@ -1,0 +1,267 @@
+
+/* Perfil.css (Versión Limpia) */
+
+:root {
+    --color-base-oscuro:#1e3a8a;
+    --color-secundario: #1e40af;
+    --color-acento: #f97316;
+    --color-fondo-claro: #eff6ff;
+    --color-blanco: #FFFFFF;
+}
+
+.perfil-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: var(--color-fondo-claro);
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    color: var(--color-base-oscuro);
+}
+
+.perfil-container.no-user {
+    text-align: center;
+    padding: 50px;
+}
+
+/* TÍTULO (Versión correcta y única) */
+.perfil-titulo {
+    text-align: center;
+    color: var(--color-base-oscuro);
+    margin-bottom: 30px;
+    font-size: 2.2em;
+    font-weight: bold;
+    border-bottom: 2px solid var(--color-secundario);
+    padding-bottom: 15px;
+}
+
+/* --- TARJETA DE PERFIL (Con fondo de logo) --- */
+.perfil-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 30px;
+    background-color: var(--color-blanco);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    position: relative; /* Necesario para ::before */
+    overflow: hidden; /* Necesario para ::before */
+}
+
+/* --- FONDO DE LOGO (Marca de agua) --- */
+.perfil-card::before {
+    content: "";
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-image: url('/logo.png'); 
+
+    width: 140px;
+    height: 140px;
+    
+ /* -> Añadido para asegurar que tenga dimensiones */
+    background-size: contain; /* -> Cambiado para mejor ajuste */
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.4; 
+    z-index: 0; 
+}
+
+@media (min-width: 768px) { 
+.perfil-card {
+        /* CAMBIO IMPORTANTE: Usamos Grid para todo el card en desktop */
+        display: grid;
+        /* Definimos 2 columnas: 
+           - La primera para el avatar (y el logo)
+           - La segunda para la información del usuario */
+        grid-template-columns: auto 1fr; /* 'auto' para avatar, '1fr' para la info */
+        align-items: start; /* Alinea los elementos en la parte superior del grid */
+        gap: 40px; /* Espacio entre el avatar y la info */
+    }
+}
+
+/* --- AVATAR (con z-index) --- */
+.perfil-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: var(--color-secundario);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3.5em;
+    color: var(--color-blanco);
+    font-weight: bold;
+    border: 4px solid var(--color-acento);
+    flex-shrink: 0; 
+    position: relative; /* Para estar sobre el ::before */
+    z-index: 1;       /* Para estar sobre el ::before */
+  
+}
+
+.perfil-info {
+    flex-grow: 1; 
+    width: 100%; 
+    position: relative; /* Para estar sobre el ::before */
+    z-index: 1;       /* Para estar sobre el ::before */
+
+    /* CAMBIOS IMPORTANTES: Convertimos .perfil-info en un grid para sus hijos (.perfil-grupo) */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columnas de igual ancho para los grupos */
+    gap: 20px 30px; /* Espacio vertical y horizontal entre los grupos */
+}
+
+@media (max-width: 767px) {
+    /* En móvil, queremos que .perfil-info vuelva a ser una sola columna */
+    .perfil-info {
+        grid-template-columns: 1fr; /* Una sola columna para los grupos en móvil */
+    }
+}
+
+
+.perfil-grupo {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--color-fondo-claro);
+    /* CAMBIO: Para asegurar que el borde se vea bien con el grid */
+    display: flex;
+    flex-direction: column;
+}
+
+.perfil-grupo:last-child {
+   /* margin-bottom: 0;*/
+    border-bottom: none;
+}
+/* CAMBIO: Para que el borde inferior del último grupo en cada columna no se vea si no debe */
+@media (min-width: 768px) {
+    .perfil-grupo:nth-last-child(-n + 2) { /* Selecciona los últimos 2 grupos (o menos) */
+        border-bottom: none; /* Quita el borde si son los últimos de la rejilla de 2 columnas */
+        padding-bottom: 0;
+    }
+}
+
+.perfil-label {
+    display: block;
+    font-size: 0.9em;
+    color: #6b7280;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.perfil-valor {
+    font-size: 1.1em;
+    color: var(--color-base-oscuro);
+    background-color: var(--color-fondo-claro);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-fondo-claro);
+}
+
+a {
+    color: var(--color-acento);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- SECCIONES (Requerimientos/Solicitudes) --- */
+.perfil-seccion {
+    background-color: var(--color-blanco);
+    border-radius: 10px;
+    padding: 20px 25px;
+    margin-top: 30px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.perfil-seccion-titulo {
+    color: var(--color-base-oscuro);
+    font-size: 1.5em;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.perfil-lista-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.perfil-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 15px 5px;
+    border-bottom: 1px solid var(--color-fondo-claro);
+}
+
+.perfil-item:last-child {
+    border-bottom: none;
+}
+
+@media (min-width: 768px) { 
+    .perfil-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+.perfil-item-texto {
+    font-size: 1em;
+    color: #333;
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+.perfil-item-estado {
+    font-size: 0.9em;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 15px;
+    color: var(--color-blanco);
+    min-width: 100px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* --- Colores de los Estados --- */
+.perfil-item-estado.estado-aceptado {
+    background-color: #22c55e;
+}
+
+.perfil-item-estado.estado-rechazado {
+    background-color: #ef4444;
+}
+
+.perfil-item-estado.estado-info {
+    background-color:  #eab308;
+}
+/* Puedes añadir más estilos para botones de edición, etc. */
+
+.perfil-btn-editar {
+    background-color: var(--color-acento);
+    color: var(--color-blanco);
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 30px;
+
+    grid-column: 1 / -1;
+    justify-self: end;
+}
+
+.perfil-btn-editar:hover {
+    background-color: #e0630b; 
+}

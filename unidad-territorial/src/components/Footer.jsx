@@ -71,7 +71,7 @@ export default function Footer() {
               />
                         
             </a>
-            <p className="ft__text">como mirador.volcanesiv</p>
+            <p className="ft__text">@mirador.volcanesiv</p>
           </div>
    
       </div>
