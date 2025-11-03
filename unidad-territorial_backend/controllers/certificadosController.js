@@ -126,6 +126,7 @@ export async function obtenerPorFolio(req, res) {
    🕓 HISTORIAL (1 fila por solicitud)
    GET /api/certificados/_historial/lista/all?estado=Aprobado
    ====================================================== */
+// controllers/certificadosController.js
 export async function listarHistorial(req, res) {
   const estadoRaw = req.query.estado || null;
   const estado = estadoRaw ? normEstado(estadoRaw) : null;
@@ -138,6 +139,7 @@ export async function listarHistorial(req, res) {
     const { recordset } = await request.query(`
       SELECT
         ID_Hist, ID_Cert, Folio, Nombre, RUT,
+        Direccion, Email, Metodo_Pago, Comprobante_URL,
         Estado, Comentario, Validador_FK, Fecha_Cambio
       FROM dbo.HISTORIAL_CERTIFICADO
       ${estado ? "WHERE Estado = @estado" : ""}
@@ -150,6 +152,7 @@ export async function listarHistorial(req, res) {
     res.status(500).json({ ok: false, error: "DB_ERROR_HIST" });
   }
 }
+
 
 /* ======================================================
    ➕ CREAR (socio web o manual)
