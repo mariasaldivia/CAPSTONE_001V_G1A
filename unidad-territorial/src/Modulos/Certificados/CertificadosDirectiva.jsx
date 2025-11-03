@@ -27,6 +27,38 @@ function formatearRut(input) {
   return `${cuerpoMiles}-${dv}`;
 }
 
+/* ======= Validación RUT (módulo 11) ======= */
+function limpiarRut(r) {
+  return String(r || "")
+    .toUpperCase()
+    .replace(/[^0-9K]/g, "");
+}
+function calcularDV(numStr) {
+  let M = 0,
+    S = 1;
+  for (let i = numStr.length - 1; i >= 0; i--) {
+    S = (S + Number(numStr[i]) * (9 - (M % 6))) % 11;
+    M++;
+  }
+  return S ? String(S - 1) : "K";
+}
+function validarRut(rutConFormato) {
+  const limpio = limpiarRut(rutConFormato);
+  if (!/^[0-9]+[0-9K]$/.test(limpio)) return false;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  if (cuerpo.length < 7) return false;
+  const dvCalc = calcularDV(cuerpo);
+  return dvCalc === dv;
+}
+function normalizarRut(rutConFormato) {
+  const limpio = limpiarRut(rutConFormato);
+  if (limpio.length < 2) return limpio;
+  const cuerpo = limpiarRut(limpio.slice(0, -1)).replace(/^0+/, "");
+  const dv = limpio.slice(-1);
+  return `${cuerpo}-${dv}`;
+}
+
 const esPDFurl = (s = "") => s.toLowerCase().endsWith(".pdf");
 const esIMGurl = (s = "") =>
   s.toLowerCase().endsWith(".jpg") ||
@@ -43,6 +75,22 @@ function resolveComprobanteUrl(u) {
       String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")) ||
     "http://localhost:4010";
   return `${BASE}${u.startsWith("/") ? u : `/${u}`}`;
+}
+
+/* ======================================================
+   🔎 Helper robusto para detectar "Ingreso manual"
+   ====================================================== */
+function isManualFromRow(row) {
+  if (
+    row?.Ingreso_Manual === true ||
+    row?.Ingreso_Manual === 1 ||
+    row?.Manual === true ||
+    row?.Manual === 1
+  ) {
+    return true;
+  }
+  const txt = `${row?.Comentario || ""} ${row?.Notas || ""}`.toLowerCase();
+  return /ingreso\s*manual/.test(txt);
 }
 
 /* ======================================================
@@ -135,6 +183,50 @@ function ApproveConfirmModal({
 }
 
 /* ======================================================
+   🧱 MODAL CONFIRMACIÓN — INGRESO MANUAL (pre-guardar)
+   ====================================================== */
+function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
+  if (!open) return null;
+  return (
+    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-save-title">
+      <div className="cd__modal">
+        <div className="cd__modalHead">
+          <span className="cd__modalAttention">ATENCIÓN</span>
+          <h3 id="cd-save-title">Confirmar ingreso</h3>
+        </div>
+
+        <div className="cd__modalBody">
+          <p>
+            Antes de guardar, <strong>valida que los datos estén correctos</strong>.
+            Este ingreso manual quedará registrado y se <b>aprobará de inmediato</b>
+            (pasará al historial).
+          </p>
+
+          {datos && (
+            <div className="cd__modalData">
+              <p><b>Nombre:</b> {datos.nombre || "-"} </p>
+              <p><b>RUT:</b> {datos.rut || "-"}</p>
+              <p><b>Dirección:</b> {datos.direccion || "-"}</p>
+              <p><b>Correo:</b> {datos.email || "-"}</p>
+              <p><b>Método de pago:</b> {datos.metodoPago || "-"}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="cd__modalActions">
+          <button className="cd__btn cd__btn--ghost" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button className="cd__btn cd__btn--ok" onClick={onAccept}>
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ======================================================
    🧠 CONTENIDO PRINCIPAL
    ====================================================== */
 function CertificadosContent() {
@@ -153,6 +245,10 @@ function CertificadosContent() {
   const [showApprove, setShowApprove] = useState(false);
   const [wantDownload, setWantDownload] = useState(false);
 
+  // Modal confirmación de guardado (ingreso manual)
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState(null);
+
   /* ----- Edit context ----- */
   const [editId, setEditId] = useState(null);
   const [editFolio, setEditFolio] = useState(null);
@@ -167,6 +263,7 @@ function CertificadosContent() {
     comprobante: null,
     comprobanteName: "",
   });
+  const [rutError, setRutError] = useState("");
 
   /* ----- Data ----- */
   const [pendientes, setPendientes] = useState([]);
@@ -228,14 +325,20 @@ function CertificadosContent() {
   }, [orden, pendientes]);
 
   const histList = useMemo(() => {
-    const rows = (historial || []).map((h) => ({
-      folio: h.Folio || h.ID_Cert || "-",
-      nombre: h.Nombre || "",
-      rut: h.RUT || "",
-      estado: h.Estado || "",
-      ts: h.Fecha_Cambio || h.Fecha_Solicitud || h.ts || "",
-      idCert: h.ID_Cert,
-    }));
+    const rows = (historial || []).map((h) => {
+      const manual = isManualFromRow(h);
+      return {
+        folio: h.Folio || h.ID_Cert || "-",
+        nombre: h.Nombre || "",
+        rut: h.RUT || "",
+        estado: h.Estado || "",
+        comentario: h.Comentario || "",
+        notas: h.Notas || "",
+        isManual: manual,
+        ts: h.Fecha_Cambio || h.Fecha_Solicitud || h.ts || "",
+        idCert: h.ID_Cert,
+      };
+    });
     const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
     const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
     switch (histOrder) {
@@ -275,6 +378,7 @@ function CertificadosContent() {
     setEditId(null);
     setEditFolio(null);
     setMode("manual");
+    setRutError("");
     setManualForm({
       nombre: "",
       rut: "",
@@ -291,6 +395,7 @@ function CertificadosContent() {
     setMode("list");
     setEditId(null);
     setEditFolio(null);
+    setRutError("");
     setManualForm({
       nombre: "",
       rut: "",
@@ -309,7 +414,15 @@ function CertificadosContent() {
   const onManualChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "rut") {
-      return setManualForm((s) => ({ ...s, rut: formatearRut(value) }));
+      const f = formatearRut(value);
+      setManualForm((s) => ({ ...s, rut: f }));
+      if (f.length >= 3) {
+        if (!validarRut(f)) setRutError("RUT inválido. Verifica dígito verificador.");
+        else setRutError("");
+      } else {
+        setRutError("");
+      }
+      return;
     }
     if (name === "metodoPago") {
       return setManualForm((s) => ({
@@ -394,17 +507,52 @@ function CertificadosContent() {
   /* ======================================================
      💾 GUARDAR
      ====================================================== */
+  const doSaveManualNew = async (payload) => {
+    const creado = await CertAPI.solicitarDesdeWeb(payload); // { ID_Cert, Folio, ... }
+    const nuevoId = creado?.ID_Cert;
+
+    if (nuevoId && manualForm.comprobante) {
+      await CertAPI.subirComprobante(nuevoId, manualForm.comprobante);
+    }
+
+    await CertAPI.cambiarEstado(nuevoId, {
+      estado: "Aprobado",
+      comentario: "Aprobado (ingreso manual)",
+      validadorId: null,
+    });
+
+    await Promise.all([refreshList(), refreshHist()]);
+    setMode("list");
+    setManualForm({
+      nombre: "",
+      rut: "",
+      direccion: "",
+      email: "",
+      metodoPago: "transferencia",
+      comprobante: null,
+      comprobanteName: "",
+    });
+
+    alert("✅ Ingreso manual registrado y aprobado (pasó al historial).");
+  };
+
   const saveManual = async (e) => {
     e.preventDefault();
 
+    const rutOk = validarRut(manualForm.rut);
+    if (!rutOk) {
+      setRutError("RUT inválido. Verifica dígito verificador.");
+      return;
+    }
+
     const payload = {
       nombre: manualForm.nombre,
-      rut: manualForm.rut,
+      rut: normalizarRut(manualForm.rut),
       direccion: manualForm.direccion,
       email: manualForm.email,
       metodoPago:
         manualForm.metodoPago.toLowerCase() === "fisico" ? "Fisico" : "Transferencia",
-      // comprobanteUrl: (si habilitas subida más adelante)
+      notas: "Ingreso manual por directiva",
     };
 
     try {
@@ -455,14 +603,33 @@ function CertificadosContent() {
         return;
       }
 
-      alert("Guardado manual (solo UI). Conectaremos el POST real luego.");
-      cancelManual();
+      setPendingPayload(payload);
+      setShowSaveConfirm(true);
     } catch (err) {
       console.error(err);
-      alert("No se pudo guardar.");
+      alert("No se pudo guardar el ingreso manual.");
     } finally {
       setBusy(false);
     }
+  };
+
+  const confirmSaveAccept = async () => {
+    if (!pendingPayload) return setShowSaveConfirm(false);
+    try {
+      setBusy(true);
+      setShowSaveConfirm(false);
+      await doSaveManualNew(pendingPayload);
+    } catch (e) {
+      console.error(e);
+      alert("No se pudo completar el ingreso manual.");
+    } finally {
+      setBusy(false);
+      setPendingPayload(null);
+    }
+  };
+  const confirmSaveCancel = () => {
+    setShowSaveConfirm(false);
+    setPendingPayload(null);
   };
 
   /* ======================================================
@@ -510,6 +677,7 @@ function CertificadosContent() {
       });
 
       setMode("manual");
+      setRutError("");
       setTimeout(() => scrollTo(topRef), 0);
     } catch (e) {
       alert("No se pudo abrir para editar.");
@@ -522,29 +690,17 @@ function CertificadosContent() {
   const onHistDelete = async (folio) => {
     if (!confirm(`¿Eliminar la solicitud ${folio}? Esta acción no se puede deshacer.`)) return;
 
-    // 🔧 FIX: eliminación por FOLIO en ambas tablas + actualización optimista en UI
     try {
       setBusy(true);
-
-      // 1) Optimista: saca la fila del historial al tiro
       setHistorial((prev) => (prev || []).filter((h) => (h.Folio || h.ID_Cert) !== folio));
-      // Y si existe en la lista de pendientes con ese mismo folio, también sácalo
       setPendientes((prev) => (prev || []).filter((p) => p.Folio !== folio));
-
-      // 2) Llamar a endpoint que elimine por FOLIO en ambas tablas
       await CertAPI.eliminarPorFolio(folio);
-
-      // 3) Re-sincroniza desde el backend para quedar consistentes
       await Promise.all([refreshList(), refreshHist()]);
-
-      // 4) Limpia selección si mirabas el detalle de ese folio
       if (seleccion?.Folio === folio) setSeleccion(null);
-
       alert("🗑️ Eliminado.");
     } catch (e) {
       console.error(e);
       alert("No se pudo eliminar.");
-      // Si falló, recargamos para revertir la eliminación optimista
       await Promise.all([refreshList(), refreshHist()]);
     } finally {
       setBusy(false);
@@ -570,6 +726,16 @@ function CertificadosContent() {
   };
 
   const hasDetail = Boolean(seleccion) && mode === "list";
+
+  // Helpers para el detalle
+  const isFinal = !!seleccion && ["Aprobado", "Rechazado"].includes(String(seleccion.Estado || "").trim());
+  const isManual =
+    !!seleccion &&
+    (
+      seleccion.Ingreso_Manual === true ||
+      seleccion.Manual === true ||
+      /ingreso\s*manual/i.test(`${seleccion?.Notas || ""} ${seleccion?.Comentario || ""}`)
+    );
 
   /* ======================================================
      🖼️ RENDER
@@ -598,7 +764,6 @@ function CertificadosContent() {
 
       {/* ----- ZONA PRINCIPAL ----- */}
       {mode === "manual" ? (
-        /* ===== INGRESO / EDICIÓN MANUAL ===== */
         <section className="cd__card cd__manual">
           <div className="cd__manualHead">
             <h2>{editId || editFolio ? "Editar solicitud" : "Ingreso manual de solicitud"}</h2>
@@ -611,18 +776,30 @@ function CertificadosContent() {
                 <span>Nombre</span>
                 <input name="nombre" value={manualForm.nombre} onChange={onManualChange} required />
               </label>
+
               <label className="cd__group">
                 <span>RUT</span>
-                <input name="rut" value={manualForm.rut} onChange={onManualChange} placeholder="12.345.678-5" required />
+                <input
+                  name="rut"
+                  value={manualForm.rut}
+                  onChange={onManualChange}
+                  placeholder="12.345.678-5"
+                  required
+                  aria-invalid={!!rutError}
+                />
+                {rutError && <small className="cd__error">{rutError}</small>}
               </label>
+
               <label className="cd__group">
                 <span>Correo</span>
                 <input type="email" name="email" value={manualForm.email} onChange={onManualChange} required />
               </label>
+
               <label className="cd__group cd__group--full">
                 <span>Dirección</span>
                 <input name="direccion" value={manualForm.direccion} onChange={onManualChange} required />
               </label>
+
               <label className="cd__group">
                 <span>Método de pago</span>
                 <select name="metodoPago" value={manualForm.metodoPago} onChange={onManualChange}>
@@ -631,13 +808,12 @@ function CertificadosContent() {
                 </select>
               </label>
 
-              {/* Campo de archivo también cuando es "fisico" (opcional) */}
               {(manualForm.metodoPago === "transferencia" || manualForm.metodoPago === "fisico") && (
                 <label className="cd__group cd__group--full">
                   <span>
                     {manualForm.metodoPago === "transferencia"
                       ? "Comprobante (jpg, png, pdf)"
-                      : "Comprobante presencial (opcional: boleta en jpg/png/pdf)"}
+                      : "Comprobante presencial (opcional boleta)"}
                   </span>
                   <input
                     type="file"
@@ -721,7 +897,7 @@ function CertificadosContent() {
             </div>
           </section>
 
-          {/* ===== DETALLE: PENDIENTE SELECCIONADO ===== */}
+          {/* ===== DETALLE: PENDIENTE/HISTORIAL SELECCIONADO ===== */}
           {hasDetail && (
             <section className="cd__card cd__detail" ref={detailRef} id="cd-detail">
               <div className="cd__detailHead">
@@ -759,9 +935,28 @@ function CertificadosContent() {
                 <div className="cd__kv">
                   <span className="cd__k">Estado</span>
                   <span className="cd__v">
-                    <span className="cd__badge is-review">{seleccion.Estado}</span>
+                    <span
+                      className={
+                        "cd__badge " +
+                        (seleccion.Estado === "Pendiente"
+                          ? "is-pending"
+                          : seleccion.Estado === "Aprobado"
+                          ? "is-ok"
+                          : "is-bad")
+                      }
+                    >
+                      {seleccion.Estado}
+                    </span>
                   </span>
                 </div>
+
+                {/* Origen en texto plano (sin color) cuando es ingreso manual */}
+                {isManual && (
+                  <div className="cd__kv">
+                    <span className="cd__k">Origen</span>
+                    <span className="cd__v">Ingreso manual</span>
+                  </div>
+                )}
 
                 {seleccion.Comprobante_URL && (
                   <div className="cd__block">
@@ -791,21 +986,23 @@ function CertificadosContent() {
                   </div>
                 )}
 
-                <div className="cd__actionsRow">
-                  <button className="cd__btn cd__btn--ok" onClick={aprobar} disabled={busy}>
-                    Aprobar
-                  </button>
-                  <button className="cd__btn cd__btn--danger" onClick={rechazar} disabled={busy}>
-                    Rechazar
-                  </button>
-                  <button
-                    className="cd__btn cd__btn--warn"
-                    onClick={() => alert(`📨 Pedir más info a ${seleccion.Email}`)}
-                    disabled={busy}
-                  >
-                    Pedir más info
-                  </button>
-                </div>
+                {!isFinal && (
+                  <div className="cd__actionsRow">
+                    <button className="cd__btn cd__btn--ok" onClick={aprobar} disabled={busy}>
+                      Aprobar
+                    </button>
+                    <button className="cd__btn cd__btn--danger" onClick={rechazar} disabled={busy}>
+                      Rechazar
+                    </button>
+                    <button
+                      className="cd__btn cd__btn--warn"
+                      onClick={() => alert(`📨 Pedir más info a ${seleccion.Email}`)}
+                      disabled={busy}
+                    >
+                      Pedir más info
+                    </button>
+                  </div>
+                )}
 
                 <div className="cd__resp">
                   <label htmlFor="resp">Comentario para el vecino</label>
@@ -928,6 +1125,20 @@ function CertificadosContent() {
           rut: formatearRut(seleccion?.RUT || ""),
           direccion: seleccion?.Direccion,
           email: seleccion?.Email,
+        }}
+      />
+
+      {/* ===== MODAL: Confirmación de Ingreso Manual ===== */}
+      <SaveConfirmModal
+        open={showSaveConfirm}
+        onCancel={confirmSaveCancel}
+        onAccept={confirmSaveAccept}
+        datos={{
+          nombre: pendingPayload?.nombre,
+          rut: formatearRut(pendingPayload?.rut || ""),
+          direccion: pendingPayload?.direccion,
+          email: pendingPayload?.email,
+          metodoPago: pendingPayload?.metodoPago,
         }}
       />
     </div>
