@@ -436,6 +436,76 @@ export async function eliminarCertificado(req, res) {
     res.status(500).json({ ok: false, error: "DB_ERROR_ELIMINAR" });
   }
 }
+/* ======================================================
+   🗑️ ELIMINAR POR FOLIO (borra historial y principal)
+   DELETE /api/certificados/folio/:folio
+   ====================================================== */
+export async function eliminarPorFolio(req, res) {
+  const folio = String(req.params.folio || "").trim();
+  if (!folio) return res.status(400).json({ ok: false, error: "FOLIO_REQUERIDO" });
+
+  try {
+    const pool = await getPool();
+    const tx = new sql.Transaction(pool);
+    await tx.begin();
+
+    try {
+      // 1) (Opcional) obtener ID_Cert asociado al folio en la principal
+      const cur = await new sql.Request(tx)
+        .input("folio", sql.VarChar(20), folio)
+        .query(`
+          SELECT TOP 1 ID_Cert
+          FROM dbo.CERTIFICADO_RESIDENCIA
+          WHERE Folio = @folio;
+        `);
+
+      const idCert = cur.recordset?.[0]?.ID_Cert ?? null;
+
+      // 2) Borrar HISTORIAL por FOLIO (y por ID_Cert si existe)
+      const reqHist = new sql.Request(tx)
+        .input("folio", sql.VarChar(20), folio);
+
+      if (idCert) reqHist.input("id", sql.Int, idCert);
+
+      const delHist = await reqHist.query(`
+        DELETE FROM dbo.HISTORIAL_CERTIFICADO
+        WHERE Folio = @folio
+        ${idCert ? " OR ID_Cert = @id" : ""};
+      `);
+
+      // 3) Borrar PRINCIPAL por FOLIO (y por ID_Cert si existe)
+      const reqMain = new sql.Request(tx)
+        .input("folio", sql.VarChar(20), folio);
+
+      if (idCert) reqMain.input("id", sql.Int, idCert);
+
+      const delMain = await reqMain.query(`
+        DELETE FROM dbo.CERTIFICADO_RESIDENCIA
+        WHERE Folio = @folio
+        ${idCert ? " OR ID_Cert = @id" : ""};
+      `);
+
+      await tx.commit();
+
+      // filas afectadas
+      const removedHist = delHist.rowsAffected?.reduce((a, b) => a + b, 0) || 0;
+      const removedMain = delMain.rowsAffected?.reduce((a, b) => a + b, 0) || 0;
+
+      return res.json({
+        ok: true,
+        data: { folio, idCert, removedHist, removedMain }
+      });
+    } catch (inner) {
+      await tx.rollback();
+      console.error("eliminarPorFolio.tx:", inner);
+      return res.status(500).json({ ok: false, error: "DB_TX_ERROR" });
+    }
+  } catch (e) {
+    console.error("eliminarPorFolio:", e);
+    return res.status(500).json({ ok: false, error: "DB_ERROR_ELIMINAR_FOLIO" });
+  }
+}
+
 
 /* ======================================================
    ✏️ ACTUALIZAR HISTORIAL por FOLIO (última versión)

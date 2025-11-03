@@ -1,4 +1,4 @@
-// src/pages/directiva/CertificadosDirectiva.jsx 
+// src/pages/directiva/CertificadosDirectiva.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
 import { CertAPI } from "../../api/certificados";
@@ -66,10 +66,6 @@ const IconoEliminar = () => (
 
 /* ======================================================
    🧱 MODAL CONFIRMACIÓN (aprobación irreversible)
-   - Mensaje con "ATENCIÓN"
-   - Muestra datos del solicitante (nombre, rut, dirección, correo)
-   - Checkbox opcional "Descargar PDF al confirmar"
-   - Botones Cancelar/Confirmar
    ====================================================== */
 function ApproveConfirmModal({
   open,
@@ -78,7 +74,7 @@ function ApproveConfirmModal({
   checkbox,
   setCheckbox,
   folio,
-  datos, // ← NUEVO: objeto con { nombre, rut, direccion, email }
+  datos,
 }) {
   if (!open) return null;
   return (
@@ -139,7 +135,7 @@ function ApproveConfirmModal({
 }
 
 /* ======================================================
-   🧠 CONTENIDO PRINCIPAL (estado, efectos, acciones, render)
+   🧠 CONTENIDO PRINCIPAL
    ====================================================== */
 function CertificadosContent() {
   /* ----- UI state ----- */
@@ -158,8 +154,8 @@ function CertificadosContent() {
   const [wantDownload, setWantDownload] = useState(false);
 
   /* ----- Edit context ----- */
-  const [editId, setEditId] = useState(null);       // editar PENDIENTE por ID (principal)
-  const [editFolio, setEditFolio] = useState(null); // editar HISTORIAL por Folio
+  const [editId, setEditId] = useState(null);
+  const [editFolio, setEditFolio] = useState(null);
 
   /* ----- Form manual ----- */
   const [manualForm, setManualForm] = useState({
@@ -182,7 +178,7 @@ function CertificadosContent() {
   const historyRef = useRef(null);
 
   /* ======================================================
-     🔁 INIT (carga inicial)
+     🔁 INIT
      ====================================================== */
   useEffect(() => {
     (async () => {
@@ -217,7 +213,7 @@ function CertificadosContent() {
   }
 
   /* ======================================================
-     🧮 DERIVACIONES (ordenamientos/filtrados)
+     🧮 DERIVACIONES
      ====================================================== */
   const pendientesOrdenados = useMemo(() => {
     const base = [...pendientes];
@@ -257,7 +253,7 @@ function CertificadosContent() {
   }, [histOrder, historial]);
 
   /* ======================================================
-     🧭 HELPERS UI (scroll y navegación)
+     🧭 HELPERS UI
      ====================================================== */
   const scrollTo = (ref) =>
     ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -335,11 +331,10 @@ function CertificadosContent() {
   };
 
   /* ======================================================
-     ✅ APROBAR (con modal de confirmación) / ❌ RECHAZAR
+     ✅ APROBAR / ❌ RECHAZAR
      ====================================================== */
   const aprobar = async () => {
     if (!seleccion) return;
-    // No ejecuta aún el PATCH; primero muestra modal
     setWantDownload(false);
     setShowApprove(true);
   };
@@ -355,13 +350,11 @@ function CertificadosContent() {
         validadorId: null,
       });
 
-      // Descarga opcional del PDF (endpoint sugerido, no rompe si no existe)
       if (wantDownload) {
         const BASE = import.meta.env.VITE_API_BASE || "http://localhost:4010";
         const urlPDF = `${BASE}/api/certificados/${encodeURIComponent(
           seleccion.ID_Cert
         )}/pdf`;
-        // Intenta abrir en nueva pestaña (si 404, simplemente no descarga)
         window.open(urlPDF, "_blank", "noopener,noreferrer");
       }
 
@@ -399,7 +392,7 @@ function CertificadosContent() {
   };
 
   /* ======================================================
-     💾 GUARDAR (nuevo / editar pendiente / editar historial)
+     💾 GUARDAR
      ====================================================== */
   const saveManual = async (e) => {
     e.preventDefault();
@@ -417,16 +410,13 @@ function CertificadosContent() {
     try {
       setBusy(true);
 
-      // Edit desde HISTORIAL (siempre por folio)
       if (editFolio) {
         if (editId) {
-          // Caso PENDIENTE: actualiza principal + historial
           await Promise.all([
             CertAPI.actualizar(editId, payload),
             CertAPI.actualizarHist(editFolio, payload),
           ]);
         } else {
-          // Caso APROBADO/RECHAZADO: solo historial
           await CertAPI.actualizarHist(editFolio, payload);
         }
 
@@ -447,7 +437,6 @@ function CertificadosContent() {
         return;
       }
 
-      // Edit directo de PENDIENTE
       if (editId) {
         await CertAPI.actualizar(editId, payload);
         await Promise.all([refreshList(), refreshHist()]);
@@ -466,7 +455,6 @@ function CertificadosContent() {
         return;
       }
 
-      // Crear nuevo (cuando conectes el POST real)
       alert("Guardado manual (solo UI). Conectaremos el POST real luego.");
       cancelManual();
     } catch (err) {
@@ -478,7 +466,7 @@ function CertificadosContent() {
   };
 
   /* ======================================================
-     🗂️ HISTORIAL (ver / editar / eliminar)
+     🗂️ HISTORIAL
      ====================================================== */
   const onHistView = async (folio) => {
     try {
@@ -501,7 +489,7 @@ function CertificadosContent() {
       setBusy(true);
       const row = await CertAPI.obtenerPorFolio(folio);
 
-      setEditFolio(folio); // edit siempre por folio
+      setEditFolio(folio);
 
       const estado = String(row?.Estado || "").toLowerCase();
       if (estado === "pendiente") {
@@ -533,23 +521,38 @@ function CertificadosContent() {
 
   const onHistDelete = async (folio) => {
     if (!confirm(`¿Eliminar la solicitud ${folio}? Esta acción no se puede deshacer.`)) return;
+
+    // 🔧 FIX: eliminación por FOLIO en ambas tablas + actualización optimista en UI
     try {
       setBusy(true);
-      const row = await CertAPI.obtenerPorFolio(folio); // recupera ID_Cert si está en principal
-      await CertAPI.eliminar(row.ID_Cert);
+
+      // 1) Optimista: saca la fila del historial al tiro
+      setHistorial((prev) => (prev || []).filter((h) => (h.Folio || h.ID_Cert) !== folio));
+      // Y si existe en la lista de pendientes con ese mismo folio, también sácalo
+      setPendientes((prev) => (prev || []).filter((p) => p.Folio !== folio));
+
+      // 2) Llamar a endpoint que elimine por FOLIO en ambas tablas
+      await CertAPI.eliminarPorFolio(folio);
+
+      // 3) Re-sincroniza desde el backend para quedar consistentes
       await Promise.all([refreshList(), refreshHist()]);
+
+      // 4) Limpia selección si mirabas el detalle de ese folio
       if (seleccion?.Folio === folio) setSeleccion(null);
+
       alert("🗑️ Eliminado.");
     } catch (e) {
-      alert("No se pudo eliminar.");
       console.error(e);
+      alert("No se pudo eliminar.");
+      // Si falló, recargamos para revertir la eliminación optimista
+      await Promise.all([refreshList(), refreshHist()]);
     } finally {
       setBusy(false);
     }
   };
 
   /* ======================================================
-     🔧 OTROS (toggle historial / exportar PDF)
+     🔧 OTROS
      ====================================================== */
   const toggleHistory = () => {
     setShowHistory((s) => !s);
@@ -624,13 +627,18 @@ function CertificadosContent() {
                 <span>Método de pago</span>
                 <select name="metodoPago" value={manualForm.metodoPago} onChange={onManualChange}>
                   <option value="transferencia">Transferencia</option>
-                  <option value="fisico">Pago físico presencial</option>
+                  <option value="fisico">Pago presencial</option>
                 </select>
               </label>
 
-              {manualForm.metodoPago === "transferencia" && (
+              {/* Campo de archivo también cuando es "fisico" (opcional) */}
+              {(manualForm.metodoPago === "transferencia" || manualForm.metodoPago === "fisico") && (
                 <label className="cd__group cd__group--full">
-                  <span>Comprobante (jpg, png, pdf)</span>
+                  <span>
+                    {manualForm.metodoPago === "transferencia"
+                      ? "Comprobante (jpg, png, pdf)"
+                      : "Comprobante presencial (opcional: boleta en jpg/png/pdf)"}
+                  </span>
                   <input
                     type="file"
                     name="comprobante"

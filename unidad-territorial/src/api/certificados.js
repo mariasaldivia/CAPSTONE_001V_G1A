@@ -3,15 +3,29 @@ const BASE =
   (import.meta.env?.VITE_API_BASE && String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")) ||
   "http://localhost:4010";
 
-const JSON_HDRS = { "Content-Type": "application/json" };
+const JSON_HDRS = { "Content-Type": "application/json", Accept: "application/json" };
+const NO_CACHE_HDRS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+const DEFAULT_TIMEOUT = 15000; // 15s
 
+// ------------------------------
+// Helpers
+// ------------------------------
+function url(p) {
+  return `${BASE}${p.startsWith("/") ? p : `/${p}`}`;
+}
+
+// Normaliza y lanza errores legibles desde el backend
 async function jsonOrThrow(res) {
-  const txt = await res.text(); // lee texto crudo (para capturar errores del backend)
+  const txt = await res.text(); // crudo para capturar mensajes del backend
   let data = {};
   try {
     data = txt ? JSON.parse(txt) : {};
   } catch {
-    // si no es JSON, lo dejamos como texto para el mensaje
+    // si no es JSON, dejamos txt como posible mensaje
   }
 
   if (!res.ok || data?.ok === false) {
@@ -21,92 +35,172 @@ async function jsonOrThrow(res) {
       (typeof data === "string" && data) ||
       txt ||
       `HTTP ${res.status}`;
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = res.status;
+    err.raw = txt;
+    throw err;
   }
 
-  // si viene { ok:true, data: ... } devolvemos "data"; si no, el objeto completo
+  // Soporta payloads { ok:true, data: ... } o JSON plano
   return data?.data ?? data;
 }
 
-function url(p) {
-  return `${BASE}${p.startsWith("/") ? p : `/${p}`}`;
+// Timeout con AbortController
+function fetchWithTimeout(input, init = {}, timeoutMs = DEFAULT_TIMEOUT) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeoutMs);
+  const merged = { ...init, signal: ctrl.signal };
+  return fetch(input, merged).finally(() => clearTimeout(id));
 }
 
+// Wrapper de request con opciones comunes
+async function request(
+  path,
+  {
+    method = "GET",
+    headers = {},
+    body,
+    timeoutMs = DEFAULT_TIMEOUT,
+    noCache = false,
+    useForm = false, // true para FormData (no enviar JSON_HDRS)
+    credentials = "include", // incluir cookies de sesión si existieran
+  } = {}
+) {
+  const hdrs = new Headers();
+
+  // Cache-Control opcional
+  if (noCache) {
+    for (const [k, v] of Object.entries(NO_CACHE_HDRS)) hdrs.set(k, v);
+  }
+
+  // Content-Type JSON si no es form-data
+  if (!useForm && method !== "GET" && method !== "HEAD") {
+    for (const [k, v] of Object.entries(JSON_HDRS)) hdrs.set(k, v);
+  } else {
+    hdrs.set("Accept", "application/json");
+  }
+
+  // Headers personalizados del caller tienen prioridad
+  for (const [k, v] of Object.entries(headers || {})) hdrs.set(k, v);
+
+  const init = { method, headers: hdrs, credentials };
+
+  if (body !== undefined) init.body = useForm ? body : JSON.stringify(body);
+
+  // Rompe caches intermedios en GET con noCache agregando query _ts
+  const finalPath =
+    noCache && (method === "GET" || method === "HEAD")
+      ? `${path}${path.includes("?") ? "&" : "?"}_ts=${Date.now()}`
+      : path;
+
+  const res = await fetchWithTimeout(url(finalPath), init, timeoutMs);
+  return jsonOrThrow(res);
+}
+
+// ------------------------------
+// API pública
+// ------------------------------
 export const CertAPI = {
   /** 🔹 Crear solicitud desde formulario web o ingreso manual */
   async solicitarDesdeWeb(payload) {
-    const r = await fetch(url("/api/certificados"), {
+    return request("/api/certificados", {
       method: "POST",
-      headers: JSON_HDRS,
-      body: JSON.stringify(payload),
+      body: payload,
     });
-    return jsonOrThrow(r);
   },
 
   /** 🔹 Subir comprobante (archivo) para un certificado recién creado */
   async subirComprobante(idCert, file) {
     const fd = new FormData();
     fd.append("file", file); // el backend espera el campo "file"
-    const r = await fetch(url(`/api/certificados/${idCert}/comprobante`), {
+
+    return request(`/api/certificados/${idCert}/comprobante`, {
       method: "POST",
-      body: fd, // ⚠️ NO poner Content-Type; el navegador lo arma con boundary
+      useForm: true, // ⚠️ NO pongas Content-Type manual
+      body: fd,
     });
-    return jsonOrThrow(r);
   },
 
   /** 🔹 Listar certificados pendientes (Directiva) */
   async listarPendientes() {
-    const r = await fetch(url("/api/certificados?estado=Pendiente"));
-    return jsonOrThrow(r);
+    return request("/api/certificados?estado=Pendiente", { noCache: true });
   },
 
   /** 🔹 Historial completo (pendientes + resueltos) */
   async historial() {
-    const r = await fetch(url("/api/certificados/_historial/lista/all"));
-    return jsonOrThrow(r);
+    return request("/api/certificados/_historial/lista/all", { noCache: true });
   },
 
   /** 🔹 Cambiar estado de un certificado */
   async cambiarEstado(idCert, body) {
-    const r = await fetch(url(`/api/certificados/${idCert}/estado`), {
+    return request(`/api/certificados/${idCert}/estado`, {
       method: "PATCH",
-      headers: JSON_HDRS,
-      body: JSON.stringify(body),
+      body,
     });
-    return jsonOrThrow(r);
   },
 
   /** 🔹 Buscar certificado por folio (para botón “Ver”) */
   async obtenerPorFolio(folio) {
-    const r = await fetch(url(`/api/certificados/folio/${encodeURIComponent(folio)}`));
-    return jsonOrThrow(r);
+    return request(`/api/certificados/folio/${encodeURIComponent(folio)}`, {
+      noCache: true,
+    });
   },
 
   /** 🔹 Actualizar certificado (tabla principal, edita “Pendiente” por ID) */
   async actualizar(idCert, body) {
-    const r = await fetch(url(`/api/certificados/${idCert}`), {
+    return request(`/api/certificados/${idCert}`, {
       method: "PATCH",
-      headers: JSON_HDRS,
-      body: JSON.stringify(body),
+      body,
     });
-    return jsonOrThrow(r);
   },
 
   /** 🔹 Actualizar HISTORIAL por folio (última versión del folio) */
   async actualizarHist(folio, body) {
-    const r = await fetch(url(`/api/certificados/_historial/${encodeURIComponent(folio)}`), {
+    return request(`/api/certificados/_historial/${encodeURIComponent(folio)}`, {
       method: "PATCH",
-      headers: JSON_HDRS,
-      body: JSON.stringify(body),
+      body,
     });
-    return jsonOrThrow(r);
   },
 
-  /** 🔹 Eliminar certificado (borra historial y/o principal) */
+  /** 🔹 Eliminar por ID (cuando tienes ID_Cert) */
   async eliminar(idCert) {
-    const r = await fetch(url(`/api/certificados/${idCert}`), {
+    return request(`/api/certificados/${idCert}`, { method: "DELETE" });
+  },
+
+  /** 🔹 Eliminar por FOLIO (borra historial y principal) */
+  async eliminarPorFolio(folio) {
+    return request(`/api/certificados/folio/${encodeURIComponent(folio)}`, {
       method: "DELETE",
     });
-    return jsonOrThrow(r);
+  },
+
+  /**
+   * 🔹 Eliminar por FOLIO con fallback por ID
+   * - 1) Intenta DELETE /folio/:folio
+   * - 2) Si falla, hace GET /folio/:folio, toma ID_Cert y elimina por ID
+   * - 3) Reintenta con noCache para evitar respuestas cacheadas
+   */
+  async eliminarSeguro(folio) {
+    try {
+      // intento directo por folio
+      return await request(`/api/certificados/folio/${encodeURIComponent(folio)}`, {
+        method: "DELETE",
+      });
+    } catch (e1) {
+      // fallback: obtener ID_Cert (sin cache) y borrar por ID
+      const det = await request(`/api/certificados/folio/${encodeURIComponent(folio)}`, {
+        noCache: true,
+      });
+      const id = det?.ID_Cert;
+      if (!id) {
+        // si no hay ID, reintenta delete por folio con noCache
+        return await request(`/api/certificados/folio/${encodeURIComponent(folio)}`, {
+          method: "DELETE",
+          noCache: true,
+        });
+      }
+      // elimina por ID
+      return await request(`/api/certificados/${id}`, { method: "DELETE" });
+    }
   },
 };

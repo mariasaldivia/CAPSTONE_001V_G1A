@@ -10,36 +10,49 @@ const r = Router();
    Ordenadas de más específicas a más generales
    ====================================================== */
 
-// 🧾 Subir comprobante (imagen o PDF) asociado a un certificado
-// Endpoint: POST /api/certificados/:id/comprobante
-// Body: form-data { file, folio (opcional) }
+// 🧾 Subir comprobante (imagen o PDF)
 r.post("/:id/comprobante", uploadComprobantes.single("file"), C.subirComprobante);
 
 // 🕓 Historial completo (pendientes + resueltas)
 r.get("/_historial/lista/all", C.listarHistorial);
 
-// ✏️ NUEVO: editar la última versión de un folio en el historial
+// ✏️ Editar la última versión de un folio en el historial
 r.patch("/_historial/:folio", C.actualizarHistorial);
 
-// 🔍 Obtener certificado por Folio (para botón "Ver" en historial)
+/* ======================================================
+   🔹 RUTAS POR FOLIO — deben ir antes que las de ID
+   ====================================================== */
+
+// 🔍 Obtener certificado por folio
 r.get("/folio/:folio", C.obtenerPorFolio);
 
-// ✏️ Editar certificado (para botón "Editar" en historial)
+// 🗑️ Eliminar certificado o historial por folio (clave para resolver tu problema)
+r.delete("/folio/:folio", C.eliminarPorFolio);
+
+/* ======================================================
+   🔹 RUTAS POR ID (deben ir después de las de folio)
+   ====================================================== */
+
+// 🔄 Cambiar estado de un certificado
+r.patch("/:id/estado", C.cambiarEstado);
+
+// ✏️ Actualizar certificado (tabla principal)
 r.patch("/:id", C.actualizarCertificado);
 
-// 🗑️ Eliminar certificado (para botón "Eliminar" en historial)
+// 📘 Obtener certificado por ID
+r.get("/:id", C.obtenerCertificado);
+
+// 🗑️ Eliminar por ID
 r.delete("/:id", C.eliminarCertificado);
+
+/* ======================================================
+   🔹 RUTAS GENERALES (al final)
+   ====================================================== */
 
 // 📜 Listar certificados (por estado) — ej: ?estado=Pendiente
 r.get("/", C.listarCertificados);
 
 // ➕ Crear certificado (socio web o ingreso manual)
 r.post("/", C.crearCertificado);
-
-// 🔄 Cambiar estado (Aprobado, Rechazado, etc.)
-r.patch("/:id/estado", C.cambiarEstado);
-
-// 📘 Obtener certificado por ID (detalles)
-r.get("/:id", C.obtenerCertificado);
 
 export default r;
