@@ -41,7 +41,7 @@ export default function Certificados() {
     rut: "",
     direccion: "",
     email: "",
-    comprobante: null, // file (opcional por ahora)
+    comprobante: null, // file (opcional, si no sube se toma "Fisico")
   });
 
   // UI estados
@@ -54,6 +54,7 @@ export default function Certificados() {
   const [folio, setFolio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [uploadWarn, setUploadWarn] = useState(""); // ⚠️ aviso si falla el upload
 
   // Manejo de cambios
   const onChange = (e) => {
@@ -86,12 +87,13 @@ export default function Certificados() {
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // Habilitar botón (luego haremos comprobante obligatorio)
+  // Habilitar botón (👉 ahora el comprobante es obligatorio)
   const puedeEnviar =
     form.nombre.trim() &&
     form.rut.trim() &&
     form.direccion.trim() &&
     form.email.trim() &&
+    !!form.comprobante &&
     rutValido &&
     !loading;
 
@@ -116,16 +118,17 @@ export default function Certificados() {
     };
   }, [filePreview, pdfURL]);
 
-  // Enviar (sin upload real de archivo por ahora)
+  // Enviar: 1) crear solicitud  2) si hay archivo → subir comprobante
   const onSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setUploadWarn("");
 
     if (!validarRut(form.rut)) {
       setRutValido(false);
       return;
     }
-    if (!form.nombre || !form.direccion || !form.email) {
+    if (!form.nombre || !form.direccion || !form.email || !form.comprobante) {
       return;
     }
 
@@ -140,16 +143,34 @@ export default function Certificados() {
         direccion: form.direccion.trim(),
         email: form.email.trim(),
         metodoPago,
-        comprobanteUrl: form.comprobante ? "pendiente-upload" : null, // placeholder
+        // 👇 ya no enviamos una URL falsa; el archivo se sube en un segundo paso
+        comprobanteUrl: form.comprobante ? null : null,
         notas: "Solicitud web (socio)",
         idSocio: null,
         idUsuarioSolicita: null,
       };
 
-      // ✅ el helper devuelve el row directamente
+      // 1) Crear solicitud
       const row = await CertAPI.solicitarDesdeWeb(payload);
 
+      // Obtén ID_Cert (defensivo por si cambia el nombre)
+      const idCert =
+        row?.ID_Cert ?? row?.id ?? row?.Id ?? row?.idCert ?? null;
+
       setFolio(row?.Folio || null);
+
+      // 2) Subir comprobante (obligatorio)
+      if (idCert && form.comprobante) {
+        try {
+          await CertAPI.subirComprobante(idCert, form.comprobante);
+        } catch (upErr) {
+          console.error(upErr);
+          setUploadWarn(
+            "Tu solicitud fue recibida, pero no pudimos subir el comprobante. Puedes reintentar más tarde."
+          );
+        }
+      }
+
       setDone(true);
 
       // Limpiar form
@@ -171,6 +192,7 @@ export default function Certificados() {
   const cerrarExito = () => {
     setDone(false);
     setFolio(null);
+    setUploadWarn("");
   };
 
   return (
@@ -203,6 +225,9 @@ export default function Certificados() {
             </div>
           )}
 
+          {/* Aviso si falló la subida del comprobante */}
+          {uploadWarn && <div className="form-error" style={{ marginTop: 12 }}>{uploadWarn}</div>}
+
           <div className="success__actions">
             <button type="button" className="btn" onClick={cerrarExito}>
               Cerrar
@@ -221,7 +246,7 @@ export default function Certificados() {
 
             {/* Nombre */}
             <div className="group">
-              <label htmlFor="nombre">Nombre Completo</label>
+              <label htmlFor="nombre">Nombre Completo*</label>
               <input
                 id="nombre"
                 name="nombre"
@@ -234,7 +259,7 @@ export default function Certificados() {
 
             {/* RUT */}
             <div className="group">
-              <label htmlFor="rut">RUT</label>
+              <label htmlFor="rut">RUT*</label>
               <input
                 id="rut"
                 name="rut"
@@ -256,7 +281,7 @@ export default function Certificados() {
 
             {/* Dirección */}
             <div className="group">
-              <label htmlFor="direccion">Dirección</label>
+              <label htmlFor="direccion">Dirección*</label>
               <input
                 id="direccion"
                 name="direccion"
@@ -269,7 +294,7 @@ export default function Certificados() {
 
             {/* Email */}
             <div className="group">
-              <label htmlFor="email">Correo Electrónico</label>
+              <label htmlFor="email">Correo Electrónico*</label>
               <input
                 id="email"
                 type="email"
@@ -281,9 +306,9 @@ export default function Certificados() {
               />
             </div>
 
-            {/* Comprobante (por ahora opcional) */}
+            {/* Comprobante (👉 obligatorio) */}
             <div className="group">
-              <label>Adjunta comprobante de pago</label>
+              <label>Adjunta comprobante de pago*</label>
 
               <label className="file">
                 <input
@@ -291,6 +316,7 @@ export default function Certificados() {
                   name="comprobante"
                   accept=".jpg,.jpeg,.png,.pdf"
                   onChange={onChange}
+                  required
                 />
                 <span className="clip">📎</span>
                 <span className="fname">{fileName || "Seleccionar archivo..."}</span>

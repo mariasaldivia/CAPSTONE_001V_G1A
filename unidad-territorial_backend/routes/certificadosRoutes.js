@@ -1,5 +1,7 @@
+// routes/certificadosRoutes.js
 import { Router } from "express";
 import * as C from "../controllers/certificadosController.js";
+import { uploadComprobantes } from "../middleware/uploadComprobantes.js"; // 👈 middleware de subida
 
 const r = Router();
 
@@ -7,6 +9,11 @@ const r = Router();
    📋 RUTAS CERTIFICADOS
    Ordenadas de más específicas a más generales
    ====================================================== */
+
+// 🧾 Subir comprobante (imagen o PDF) asociado a un certificado
+// Endpoint: POST /api/certificados/:id/comprobante
+// Body: form-data { file, folio (opcional) }
+r.post("/:id/comprobante", uploadComprobantes.single("file"), C.subirComprobante);
 
 // 🕓 Historial completo (pendientes + resueltas)
 r.get("/_historial/lista/all", C.listarHistorial);

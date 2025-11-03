@@ -1,3 +1,4 @@
+// controllers/certificadosController.js
 import sql from "mssql";
 import { getPool } from "../pool.js";
 
@@ -171,9 +172,7 @@ export async function crearCertificado(req, res) {
     if (!METODOS.has(metodoPago)) {
       return res.status(400).json({ ok: false, error: "METODO_INVALIDO" });
     }
-    if (metodoPago === "Transferencia" && !comprobanteUrl) {
-      return res.status(400).json({ ok: false, error: "FALTA_COMPROBANTE" });
-    }
+    // ⚠️ En modo 2 pasos NO exigimos comprobante aquí.
 
     const pool = await getPool();
     const tx = new sql.Transaction(pool);
@@ -238,15 +237,6 @@ export async function crearCertificado(req, res) {
 
 /* ======================================================
    🔄 CAMBIAR ESTADO (Aprobar / Rechazar / EnRevision / Pendiente)
-   - ACTUALIZA la fila de historial (no inserta otra)
-   - ELIMINA de la principal (deja de ser pendiente)
-   PATCH /api/certificados/:id/estado
-   ====================================================== */
-
-/* ======================================================
-   🔄 CAMBIAR ESTADO (Aprobar / Rechazar / EnRevision / Pendiente)
-   - ACTUALIZA la fila de historial (no inserta otra)
-   - ELIMINA de la principal (deja de ser pendiente)
    PATCH /api/certificados/:id/estado
    ====================================================== */
 export async function cambiarEstado(req, res) {
@@ -256,8 +246,8 @@ export async function cambiarEstado(req, res) {
   const validadorId = req.body?.validadorId ?? null;
 
   // 🔹 flags opcionales (stubs paso 1)
-  const generarPDFFlag = req.body?.generarPDF; // puede venir true/false/undefined
-  const sendEmailFlag  = req.body?.sendEmail;  // puede venir true/false/undefined
+  const generarPDFFlag = req.body?.generarPDF; // true/false/undefined
+  const sendEmailFlag  = req.body?.sendEmail;  // true/false/undefined
 
   if (!id) return res.status(400).json({ ok: false, error: "ID_INVALIDO" });
   if (!estadoCanon || !ESTADOS_CANON.has(estadoCanon)) {
@@ -270,7 +260,7 @@ export async function cambiarEstado(req, res) {
     await tx.begin();
 
     try {
-      // 1️⃣ Obtener datos actuales del certificado antes de eliminarlo
+      // 1️⃣ Obtener datos actuales
       const { recordset } = await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`
@@ -286,13 +276,12 @@ export async function cambiarEstado(req, res) {
 
       const cert = recordset[0];
 
-      // 2️⃣ Actualizar si existe en historial; si no, insertarlo
+      // 2️⃣ Actualizar historial (upsert de última fila)
       const existingHist = await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`SELECT TOP 1 ID_Hist FROM dbo.HISTORIAL_CERTIFICADO WHERE ID_Cert = @id;`);
 
       if (existingHist.recordset.length) {
-        // 🟢 Actualiza la fila existente
         await new sql.Request(tx)
           .input("id", sql.Int, id)
           .input("estado", sql.VarChar(12), estadoCanon)
@@ -319,7 +308,6 @@ export async function cambiarEstado(req, res) {
             WHERE ID_Cert = @id;
           `);
       } else {
-        // 🟡 No existía: lo crea con estado actualizado
         await new sql.Request(tx)
           .input("id", sql.Int, id)
           .input("estado", sql.VarChar(12), estadoCanon)
@@ -340,40 +328,33 @@ export async function cambiarEstado(req, res) {
           `);
       }
 
-      // 3️⃣ Eliminar solo de la tabla de pendientes
+      // 3️⃣ Eliminar de la tabla de pendientes
       await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`DELETE FROM dbo.CERTIFICADO_RESIDENCIA WHERE ID_Cert = @id;`);
 
       await tx.commit();
 
-      // ✅ AQUI pegamos el bloque del PASO 1 (stubs PDF/email)
-      //    — NO rompe nada; sólo extiende la respuesta al aprobar.
+      // ✅ Respuesta con stubs
       const folio = cert.Folio;
-
-      // defaults: si no vienen flags, se asume que al aprobar se generan/envían
       const generarPDF = generarPDFFlag ?? (estadoCanon === "Aprobado");
       const sendEmail  = sendEmailFlag  ?? (estadoCanon === "Aprobado");
 
-      // STUBS (implementaremos real en Paso 2)
       let certificadoUrl = null;
       let emailSent = false;
 
       if (estadoCanon === "Aprobado" && generarPDF) {
-        // En el Paso 2: generaremos el PDF y guardaremos a disco/obj storage
         certificadoUrl = `/uploads/certificados/${folio}.pdf`; // placeholder
       }
-
       if (estadoCanon === "Aprobado" && sendEmail) {
-        // En el Paso 2: envío real con Nodemailer/servicio
         emailSent = true; // simula éxito
       }
 
       return res.json({
         ok: true,
         mensaje: "Estado actualizado correctamente",
-        certificadoUrl,           // null si no aplica
-        email: { sent: emailSent } // {sent:false} si no aplica
+        certificadoUrl,
+        email: { sent: emailSent }
       });
     } catch (inner) {
       await tx.rollback();
@@ -386,27 +367,23 @@ export async function cambiarEstado(req, res) {
   }
 }
 
-
-
 /* ======================================================
    ✏️ ACTUALIZAR CAMPOS (editar mientras es pendiente)
    PATCH /api/certificados/:id
    ====================================================== */
-
-// PATCH /api/certificados/:id
-export const actualizarCertificado = async (req, res) => {
+export async function actualizarCertificado(req, res) {
   const { id } = req.params;
   const { nombre, rut, direccion, email, metodoPago } = req.body;
 
   try {
     const pool = await getPool();
     await pool.request()
-      .input("ID_Cert", id)
-      .input("Nombre", nombre)
-      .input("RUT", rut)
-      .input("Direccion", direccion)
-      .input("Email", email)
-      .input("Metodo_Pago", metodoPago)
+      .input("ID_Cert", sql.Int, Number(id))
+      .input("Nombre", sql.NVarChar(120), nombre)
+      .input("RUT", sql.VarChar(12), rut)
+      .input("Direccion", sql.NVarChar(200), direccion)
+      .input("Email", sql.NVarChar(160), email)
+      .input("Metodo_Pago", sql.VarChar(20), metodoPago)
       .query(`
         UPDATE CERTIFICADO_RESIDENCIA
         SET Nombre=@Nombre, RUT=@RUT, Direccion=@Direccion,
@@ -414,14 +391,12 @@ export const actualizarCertificado = async (req, res) => {
         WHERE ID_Cert=@ID_Cert
       `);
 
-    return res.json({ ok: true, data: { id, nombre, rut, direccion, email, metodoPago } });
+    return res.json({ ok: true, data: { id: Number(id), nombre, rut, direccion, email, metodoPago } });
   } catch (e) {
     console.error("❌ Error actualizarCertificado:", e);
     res.status(500).json({ ok: false, error: "Error al actualizar certificado" });
   }
-};
-
-
+}
 
 /* ======================================================
    🗑️ ELIMINAR
@@ -461,7 +436,11 @@ export async function eliminarCertificado(req, res) {
     res.status(500).json({ ok: false, error: "DB_ERROR_ELIMINAR" });
   }
 }
-// ➕ NUEVO: actualizar historial por FOLIO (última versión)
+
+/* ======================================================
+   ✏️ ACTUALIZAR HISTORIAL por FOLIO (última versión)
+   PATCH /api/certificados/_historial/:folio
+   ====================================================== */
 export async function actualizarHistorial(req, res) {
   const folio = String(req.params.folio || '').trim();
   if (!folio) return res.status(400).json({ ok: false, error: "FOLIO_REQUERIDO" });
@@ -518,5 +497,80 @@ export async function actualizarHistorial(req, res) {
   } catch (e) {
     console.error("actualizarHistorial:", e);
     return res.status(500).json({ ok: false, error: "DB_ERROR_ACT_HIST" });
+  }
+}
+
+/* ======================================================
+   ⬆️ SUBIR COMPROBANTE (imagen/pdf) y guardar URL
+   POST /api/certificados/:id/comprobante
+   Body: form-data { file, folio (opcional) }
+   - Requiere middleware uploadComprobantes.single("file")
+   ====================================================== */
+export async function subirComprobante(req, res) {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ ok: false, error: "ID_INVALIDO" });
+
+  const file = req.file;
+  if (!file) return res.status(400).json({ ok: false, error: "FILE_REQUIRED" });
+
+  // Construye URL pública (gracias a app.use('/uploads', ...))
+  const publicUrl = `/uploads/comprobantes/${file.filename}`;
+
+  try {
+    const pool = await getPool();
+    const tx = new sql.Transaction(pool);
+    await tx.begin();
+
+    try {
+      // Verifica que el certificado exista
+      const cur = await new sql.Request(tx)
+        .input("id", sql.Int, id)
+        .query(`
+          SELECT TOP 1 * FROM dbo.CERTIFICADO_RESIDENCIA WHERE ID_Cert = @id;
+        `);
+
+      if (!cur.recordset.length) {
+        await tx.rollback();
+        return res.status(404).json({ ok: false, error: "CERT_NO_ENCONTRADO" });
+      }
+
+      // Actualiza principal
+      await new sql.Request(tx)
+        .input("id", sql.Int, id)
+        .input("url", sql.NVarChar(400), publicUrl)
+        .query(`
+          UPDATE dbo.CERTIFICADO_RESIDENCIA
+          SET Comprobante_URL = @url
+          WHERE ID_Cert = @id;
+        `);
+
+      // Actualiza última versión en historial
+      await new sql.Request(tx)
+        .input("id", sql.Int, id)
+        .input("url", sql.NVarChar(400), publicUrl)
+        .query(`
+          UPDATE h
+             SET Comprobante_URL = @url,
+                 Fecha_Cambio = SYSDATETIME()
+          FROM dbo.HISTORIAL_CERTIFICADO h
+          WHERE h.ID_Cert = @id
+            AND h.ID_Hist = (
+              SELECT TOP 1 ID_Hist
+              FROM dbo.HISTORIAL_CERTIFICADO
+              WHERE ID_Cert = @id
+              ORDER BY Fecha_Cambio DESC, ID_Hist DESC
+            );
+        `);
+
+      await tx.commit();
+      return res.json({ ok: true, data: { id, comprobanteUrl: publicUrl } });
+    } catch (inner) {
+      await tx.rollback();
+      console.error("subirComprobante.tx:", inner);
+      return res.status(500).json({ ok: false, error: "DB_TX_ERROR" });
+    }
+  } catch (e) {
+    console.error("subirComprobante:", e);
+    return res.status(500).json({ ok: false, error: "DB_ERROR_UPLOAD" });
   }
 }

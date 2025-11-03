@@ -1,4 +1,4 @@
-// src/pages/directiva/CertificadosDirectiva.jsx
+// src/pages/directiva/CertificadosDirectiva.jsx 
 import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
 import { CertAPI } from "../../api/certificados";
@@ -33,6 +33,17 @@ const esIMGurl = (s = "") =>
   s.toLowerCase().endsWith(".jpeg") ||
   s.toLowerCase().endsWith(".png") ||
   s.startsWith("data:image/");
+
+// ✅ Resolver URL absoluta para archivos servidos por el backend
+function resolveComprobanteUrl(u) {
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u; // ya es absoluta
+  const BASE =
+    (import.meta.env?.VITE_API_BASE &&
+      String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")) ||
+    "http://localhost:4010";
+  return `${BASE}${u.startsWith("/") ? u : `/${u}`}`;
+}
 
 /* ======================================================
    🎛️ ÍCONOS (SVG inline)
@@ -748,19 +759,26 @@ function CertificadosContent() {
                   <div className="cd__block">
                     <span className="cd__k">Comprobante</span>
                     <div className="cd__file">
-                      {esIMGurl(seleccion.Comprobante_URL) && (
-                        <div className="cd__imgWrap">
-                          <a href={seleccion.Comprobante_URL} download className="cd__dl" title="Descargar">
-                            <svg viewBox="0 0 24 24">
-                              <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1zM5 20a1 1 0 1 1 0-2h14a1 1 0 1 1 0 2H5z" />
-                            </svg>
-                          </a>
-                          <img src={seleccion.Comprobante_URL} alt="Comprobante" />
-                        </div>
-                      )}
-                      {esPDFurl(seleccion.Comprobante_URL) && (
-                        <embed src={seleccion.Comprobante_URL} type="application/pdf" width="100%" height="360" />
-                      )}
+                      {(() => {
+                        const abs = resolveComprobanteUrl(seleccion.Comprobante_URL);
+                        return (
+                          <>
+                            {esIMGurl(abs) && (
+                              <div className="cd__imgWrap">
+                                <a href={abs} download className="cd__dl" title="Descargar">
+                                  <svg viewBox="0 0 24 24">
+                                    <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1zM5 20a1 1 0 1 1 0-2h14a1 1 0 1 1 0 2H5z" />
+                                  </svg>
+                                </a>
+                                <img src={abs} alt="Comprobante" />
+                              </div>
+                            )}
+                            {esPDFurl(abs) && (
+                              <embed src={abs} type="application/pdf" width="100%" height="360" />
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
