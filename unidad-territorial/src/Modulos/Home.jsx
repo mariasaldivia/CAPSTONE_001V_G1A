@@ -1,8 +1,45 @@
+import React, { useState } from "react";
 import HeroCarousel from "../components/HeroCaroulsel";
 import "../Modulos/Home.css"
 
 // Props { user, setUser } eliminadas porque no se usaban
 function Home() {
+    // Estado para controlar qué pregunta está abierta
+  const [activeIndex, setActiveIndex] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+
+  const toggleFAQ = (index) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      question: "¿Cómo puedo hacerme socio/a?",
+      answer:
+        "Puedes registrarte en línea haciendo clic en el botón “Hazte socio” o acercarte directamente a nuestra sede.",
+    },
+    {
+      question: "¿Dónde se realizan las reuniones?",
+      answer:
+        "Generalmente en la sede de la Junta de Vecinos, ubicada en Mirador de Volcanes IV. Publicamos los horarios en nuestras redes sociales.",
+    },
+    {
+      question: "¿Puedo participar aunque no viva en el sector?",
+      answer:
+        "Nuestras actividades principales están orientadas a los vecinos del sector, pero siempre estamos abiertas a colaboraciones comunitarias.",
+    },
+    {
+      question: "¿Cómo puedo comunicar un problema o sugerencia?",
+      answer:
+        "Puedes escribirnos mediante el formulario de contacto o asistir a las asambleas mensuales.",
+    },
+    {
+      question: "¿Qué beneficios tiene ser socio/a?",
+      answer:
+        "Podrás participar en votaciones, acceder a actividades exclusivas y contribuir al desarrollo de nuestra comunidad.",
+    },
+  ];
+
   return (
     // Etiqueta <main> para mejor semántica
     <main>
@@ -42,8 +79,9 @@ function Home() {
             </div>
             
             <div className="miembro-card cta-card">
-                <p className="cta-message">¿Quieres sumarte a nuestro equipo de trabajo?</p>
-                <a href="#participa" className="cta-button-directiva">¡Sé parte del cambio!</a>
+                <p className="cta-message">¿Quieres sumarte a nuestro equipo?</p>
+                <h3 className="cta-message">¡Sé parte del cambio!</h3>
+                <a href="/register" className="cta-button-directiva">Hazte socio</a>
             </div>
           </div>
         </div>
@@ -91,6 +129,82 @@ function Home() {
             </div>
         </div>
     </section>
+      <section id="destacada">
+        <h2>Unidos por Nuestra Comunidad y Familia</h2>
+        <p>
+          Nuestro compromiso se basa en tres pilares fundamentales que nos
+          permiten crecer juntos.
+        </p>
+        <div className="feature-grid">
+          <div className="feature-item">
+            <h3>Vínculos Familiares</h3>
+            <p>
+              Organizamos eventos y actividades para que las familias se
+              conecten y fortalezcan el tejido social de nuestro barrio.
+            </p>
+          </div>
+          <div className="feature-item">
+            <h3>Seguridad Vecinal</h3>
+            <p>
+              Implementamos redes de apoyo y coordinaciones efectivas para la
+              tranquilidad de todos los hogares.
+            </p>
+          </div>
+          <div className="feature-item">
+            <h3>Visibilidad y Gestión</h3>
+            <p>
+              Trabajamos para llevar la voz de los vecinos a las autoridades y
+              conseguir mejoras concretas para Mirador de Volcanes IV.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 🔽 SECCIÓN DE PREGUNTAS FRECUENTES */}
+      <section id="faq">
+        <h2>Preguntas Frecuentes</h2>
+
+        {!showAll ? (
+          <button
+            className="faq-toggle-button"
+            onClick={() => setShowAll(true)}
+          >
+            Ver más preguntas ↓
+          </button>
+        ) : (
+          <>
+            <div className="faq-list">
+              {faqs.map((faq, index) => (
+                <div
+                  key={index}
+                  className={`faq-item ${
+                    activeIndex === index ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="faq-question"
+                    onClick={() => toggleFAQ(index)}
+                  >
+                    <span>{faq.question}</span>
+                    <span className="faq-icon">
+                      {activeIndex === index ? "−" : "+"}
+                    </span>
+                  </button>
+                  <div className="faq-answer">
+                    <p>{faq.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className="faq-toggle-button cerrar"
+              onClick={() => setShowAll(false)}
+            >
+              Ocultar preguntas ↑
+            </button>
+          </>
+        )}
+      </section>
 
     </main>
   );
