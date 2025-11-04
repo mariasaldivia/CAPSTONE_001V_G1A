@@ -95,16 +95,16 @@ export default function Navbar() {
     navigate("/home");
   };
 
+  /** 🌐 Links base visibles para todos */
   const baseItems = [
     { to: "/home", label: "Inicio" },
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
-  //  { to: "/requerimientos", label: "Solicitudes" },
+    { to: "/requerimientos", label: "Buzón Vecinal" }, // 👈 NUEVO
     { to: "/proyectos", label: "Proyectos" },
   ];
 
-  // Si hay usuario logeado → mostrar nombre + cerrar sesión
-  // Si no → mostrar "Hazte socio" + "Iniciar sesión"
+  /** 👤 Links de sesión */
   const sessionItems = isLogged
     ? [
         { to: "/perfil", label: nombreVisible || "Mi perfil", isUser: true },
