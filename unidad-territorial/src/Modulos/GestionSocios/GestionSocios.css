@@ -29,11 +29,11 @@
 
 /* --- Panel de socios más ancho --- */
 .panel:first-child {
-  flex: 1.7; /* Más ancho */
+  flex: 1.7¿; /* Más ancho */
 }
 
 .panel:last-child {
-  flex: 1; /* Más angosto */
+  flex: 0.5; /* Más angosto */
 }
 /* PANEL DE DETALLE */
 .detalle-panel {
@@ -101,13 +101,22 @@
   border-radius: 12px;
   border: 1px solid var(--socio-border); /* APLICADO */
   background: var(--socio-panel); /* APLICADO (en lugar de f9fafc) */
+  table-layout: fixed;
+  width: 100%;
 }
-
 .tabla-socios table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
+
+.tabla-socios table th:nth-child(2),
+.tabla-socios table td:nth-child(2) {
+  width: 160px; /* puedes ajustar este valor */
+  min-width: 140px;
+  text-align: center;
+}
+
 
 .tabla-socios th {
   text-align: left;

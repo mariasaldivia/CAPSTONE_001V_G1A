@@ -6,14 +6,15 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import path from "path";           // 👈 necesario para servir archivos
+import path from "path";
 import { getPool } from "./pool.js";
 
 // ================================
 // 🧩 Rutas
 // ================================
 import authRoutes from "./routes/authRoutes.js";
-import certificadosRoutes from "./routes/certificadosRoutes.js"; // 👈 Certificados
+import certificadosRoutes from "./routes/certificadosRoutes.js";
+import sociosRoutes from "./routes/sociosRoutes.js"; // <-- Se importa la ruta de socios
 
 // ================================
 // 🚀 Inicialización de servidor
@@ -27,11 +28,7 @@ const ORIGIN = process.env.FRONT_ORIGIN || "http://localhost:5173";
 // ================================
 app.use(cors({ origin: ORIGIN, credentials: true }));
 app.use(express.json());
-
-// 👇 NUEVO: Servir archivos estáticos (comprobantes, PDFs, etc.)
 app.use("/uploads", express.static(path.resolve("uploads")));
-// Esto permite acceder a los archivos con:
-// http://localhost:4010/uploads/comprobantes/archivo.jpg
 
 // ================================
 // 🩺 Health Checks
@@ -54,7 +51,8 @@ app.get("/health/db", async (_req, res) => {
 // 📦 Rutas API
 // ================================
 app.use("/api/auth", authRoutes);
-app.use("/api/certificados", certificadosRoutes); // 👈 nueva ruta registrada
+app.use("/api/certificados", certificadosRoutes);
+app.use("/api/socios", sociosRoutes); // <-- Se usa la ruta de socios
 
 // ================================
 // ⚠️ Manejo de rutas no encontradas
