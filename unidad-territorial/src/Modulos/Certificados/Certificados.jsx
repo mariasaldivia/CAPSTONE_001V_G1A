@@ -348,19 +348,19 @@ export default function Certificados() {
             <div className="side-title">Datos para Depósitos</div>
             <ul className="list">
               <li>
-                <strong>Nombre:</strong> Junta de Vecinos Mirador IV
+                <strong>Nombre:</strong> Junta de Vecinos Mirador Cuatro
               </li>
               <li>
-                <strong>RUT:</strong> 65.432.100-1
+                <strong>RUT:</strong> 65.205.436-6  65205436-6
               </li>
               <li>
-                <strong>Banco:</strong> Banco Ejemplo
+                <strong>Banco:</strong> Banco Estado
               </li>
               <li>
                 <strong>Tipo de cuenta:</strong> Cuenta Vista
               </li>
               <li>
-                <strong>Nº Cuenta:</strong> 123456789
+                <strong>Nº Cuenta:</strong> 82470202650
               </li>
               <li>
                 <strong>Correo:</strong> juntadevecinosvolcanescuatro@gmail.com

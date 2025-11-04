@@ -1,5 +1,73 @@
 import { useState } from "react";
 import "../Auth/Auth.css";
+import { validarRutChileno, formatearRut } from "../../utils/rutUtils";
+import { validateName, validateEmail, isOnlyNumbers,formatOnlyNumbers, validatePhone, validateStreet, validatePassword, isNotFutureDate } from "../../utils/validators";
+
+function getFieldError(name, value, password) {
+  let errorMsg = "";
+
+  switch (name) {
+    case "name":
+    case "lastname":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validateName(value))
+        errorMsg = "Solo se permiten letras";
+      break;
+
+    case "street":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validateStreet(value))
+        errorMsg = "Formato inválido (letras, números o guiones)";
+      break;
+
+    case "number":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!isOnlyNumbers(value))
+        errorMsg = "Solo números";
+      break;
+
+    case "phone":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validatePhone(value))
+        errorMsg = "Debe ser un número de 9 dígitos e iniciar con 9";
+      break;
+      
+    case "birthdate":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!isNotFutureDate(value))
+        errorMsg = "La fecha de nacimiento no puede ser futura";
+      break;
+
+    case "email":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validateEmail(value))
+        errorMsg = "Correo electrónico no válido";
+      break;
+
+    case "password":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validatePassword(value))
+        errorMsg = "Debe tener 8+ caracteres, una mayúscula, una minúscula y un número";
+      break;
+
+    case "confirmPassword":
+      if (!value) errorMsg = "Este campo es requerido";
+      // Compara con el argumento 'password'
+      else if (value !== password)
+        errorMsg = "Las contraseñas no coinciden";
+      break;
+
+    case "rut":
+      if (!value) errorMsg = "Este campo es requerido";
+      else if (!validarRutChileno(value))
+        errorMsg = "RUT inválido";
+      break;
+
+    default:
+      break;
+  }
+  return errorMsg;
+}
 
 function RegisterForm() {
   {/* Variable de estado form con los campos del formulario
@@ -19,134 +87,51 @@ function RegisterForm() {
   // Guarda los mensajes de error
   const [errors, setErrors] = useState({});
 
-  // Manejo de cambios
-  const handleChange = (e) => {
-    // Obtiene el name y el value de la variable del formulario
+const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
 
-    // Validaciones en tiempo real
-    validateField(name, value);
-  };
-  // Validaciones individuales por campo
-  const validateField = (name, value) => {
-    let errorMsg = "";
-
-    switch (name) {
-      case "name":
-      case "lastname":
-        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value))
-          errorMsg = "Solo se permiten letras";
-        break;
-
-      case "street":
-        if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.#-]+$/.test(value))
-          errorMsg = "Formato inválido (letras, números o guiones)";
-        break;
-
-      case "number":
-        if (!/^\d+$/.test(value)) errorMsg = "Solo números";
-        break;
-
-      case "phone":
-        if (!/^\d{9,}$/.test(value))
-          errorMsg = "Debe tener al menos 9 dígitos numéricos";
-        break;
-      case "birthdate":
-        const birth = new Date(value);
-        const today = new Date();
-        if (birth >= today) 
-          errorMsg = "La fecha de nacimiento no puede ser futura";
-        break;
-
-      case "email":
-        if (
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-        )
-          errorMsg = "Correo electrónico no válido";
-        break;
-
-      case "password":
-        if (
-          !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value)
-        )
-          errorMsg =
-            "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
-        break;
-
-      case "confirmPassword":
-        if (value !== form.password) errorMsg = "Las contraseñas no coinciden";
-        break;
-
-      case "rut":
-        if (!validateRut(value)) errorMsg = "RUT inválido";
-        break;
-
-      default:
-        break;
+    let finalValue = value;
+    
+    // Formateadores (igual que antes)
+    if (name === "rut") {
+      finalValue = formatearRut(value);
+    } else if (name === "number" || name === "phone") {
+      finalValue = formatOnlyNumbers(value);
     }
+    
+    // Actualiza el estado del formulario
+    const newForm = { ...form, [name]: finalValue };
+    setForm(newForm);
 
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
-  };
+    // Valida el campo que cambió (y 'confirmPassword' si 'password' cambia)
+    const error = getFieldError(name, finalValue, newForm.password);
+    setErrors((prev) => ({ ...prev, [name]: error }));
 
-  // Validación RUT chileno
-  const validateRut = (rut) => {
-    if (!rut) return false;
-
-    // Limpia el formato: elimina puntos y guion, pasa a mayúsculas
-    const rutClean = rut.replace(/\./g, "").replace("-", "").toUpperCase();
-    // Debe tener al menos 8 caracteres
-    if (rutClean.length < 8) return false;
-    // Separa cuerpo y dígito verificador
-    const rutBody = rutClean.slice(0, -1);
-    const dv = rutClean.slice(-1);
-    // Cálculo del dígito verificador esperado
-    let suma = 0;
-    let multiplicador = 2;
-
-    for (let i = rutBody.length - 1; i >= 0; i--) {
-      suma += parseInt(rutBody[i]) * multiplicador;
-      multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    if (name === "password") {
+      const confirmError = getFieldError("confirmPassword", newForm.confirmPassword, finalValue);
+      setErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
     }
-
-    const dvEsperado = 11 - (suma % 11);
-    let dvFinal = dvEsperado === 11 ? "0" : dvEsperado === 10 ? "K" : dvEsperado.toString();
-
-    return dvFinal === dv;
   };
-
-  // --- Limpieza y separación del RUT ---
-const parseRut = (rut) => {
-  if (!rut) return null;
-
-  // Elimina puntos, pasa a mayúsculas y asegura formato
-  const rutClean = rut.replace(/\./g, "").toUpperCase();
-
-  // Separa cuerpo y dígito verificador (mantiene el guion si lo tenía)
-  const [body, dv] = rutClean.split("-");
-
-  // Si no tiene guion, lo extrae manualmente
-  const rutBody = body || rutClean.slice(0, -1);
-  const rutDv = dv || rutClean.slice(-1);
-
-  // Devuelve objeto con datos útiles
-  return {
-    rutBody: rutBody,
-    dv: rutDv,
-    rutLimpio: `${rutBody}-${rutDv}`
-  };
-};
-
-
-  // Enviar formulario
-  const handleSubmit = (e) => {
+const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Valida todo antes de enviar
-    Object.entries(form).forEach(([name, value]) => validateField(name, value));
+    const newErrors = {};
+    let formIsValid = true;
 
-    // Verifica si hay errores
-    if (Object.values(errors).some((err) => err)) {
+    // 1. Recorre el formulario y valida CADA campo usando la función pura
+    for (const [name, value] of Object.entries(form)) {
+      const error = getFieldError(name, value, form.password);
+      if (error) {
+        formIsValid = false;
+        newErrors[name] = error;
+      }
+    }
+
+    // 2. Actualiza el estado de errores (para mostrar todos al usuario)
+    setErrors(newErrors);
+
+    // 3. Comprueba la variable LOCAL (síncrona), no el estado
+    if (!formIsValid) {
       alert("Por favor corrige los errores antes de continuar.");
       return;
     }
@@ -157,7 +142,7 @@ const parseRut = (rut) => {
 
   return (
     <div className="auth-container">
-      <form onSubmit={handleSubmit} className="auth-form">
+      <form onSubmit={handleSubmit} className="auth-form" noValidate>
         <div className="form-intro">
           <h2>Únete a la Comunidad</h2>
           <p>
@@ -178,7 +163,6 @@ const parseRut = (rut) => {
               placeholder="Ej: Juan José"
               value={form.name}
               onChange={handleChange}
-              required
             />
             {errors.name && <small style={{ color: "red" }}>{errors.name}</small>}
           </div>
@@ -192,7 +176,6 @@ const parseRut = (rut) => {
               placeholder="Ej: Rodriguez Vera"
               value={form.lastname}
               onChange={handleChange}
-              required
             />
             {errors.lastname && <small style={{ color: "red" }}>{errors.lastname}</small>}
           </div>
@@ -207,10 +190,9 @@ const parseRut = (rut) => {
               name="rut"
               id="rut"
               placeholder="Ej: 12.345.678-9"
+              maxLength={12}
               value={form.rut}
               onChange={handleChange}
-              onBlur={() => validateRut("rut",form.rut)}  // validación al salir del input
-              required
             />
             {errors.rut && <small style={{ color: "red" }}>{errors.rut}</small>}
           </div>
@@ -223,7 +205,6 @@ const parseRut = (rut) => {
               id="birthdate"
               value={form.birthdate}
               onChange={handleChange}
-              required
               max={new Date().toISOString().split("T")[0]} // no permite fechas futuras
             />
             {errors.birthdate && <small style={{ color: "red" }}>{errors.birthdate}</small>}
@@ -241,7 +222,6 @@ const parseRut = (rut) => {
               placeholder="Ej: Los Olivos"
               value={form.street}
               onChange={handleChange}
-              required
             />
             {errors.street && <small style={{ color: "red" }}>{errors.street}</small>}
           </div>
@@ -251,10 +231,10 @@ const parseRut = (rut) => {
               type="text"
               name="number"
               id="number"
-              placeholder="Ej: 123"
+              placeholder="Ej: 1234"
               value={form.number}
               onChange={handleChange}
-              required
+              maxLength={4}
             />
             {errors.number && <small style={{ color: "red" }}>{errors.number}</small>}
           </div>
@@ -270,7 +250,6 @@ const parseRut = (rut) => {
             placeholder="Ej: maria@email.com"
             value={form.email}
             onChange={handleChange}
-            required
           />
           {errors.email && <small style={{ color: "red" }}>{errors.email}</small>}
         </div>
@@ -281,10 +260,10 @@ const parseRut = (rut) => {
             type="tel"
             name="phone"
             id="phone"
-            placeholder="Ej: +56 9 1234 5678"
+            placeholder="Ej: 9 12345678"
             value={form.phone}
             onChange={handleChange}
-            required
+            maxLength={9}
           />
           {errors.phone && <small style={{ color: "red" }}>{errors.phone}</small>}
         </div>
@@ -301,7 +280,6 @@ const parseRut = (rut) => {
               placeholder="********"
               value={form.password}
               onChange={handleChange}
-              required
             />
             {errors.password && <small style={{ color: "red" }}>{errors.password}</small>}
           </div>
@@ -315,7 +293,6 @@ const parseRut = (rut) => {
               placeholder="********"
               value={form.confirmPassword}
               onChange={handleChange}
-              required
             />
             {errors.confirmPassword && (
               <small style={{ color: "red" }}>{errors.confirmPassword}</small>
