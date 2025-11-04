@@ -69,23 +69,26 @@ function getFieldError(name, value, password) {
   return errorMsg;
 }
 
+const initialFormState = {
+  name: "",
+  lastname: "",
+  rut: "",
+  birthdate: "",
+  street: "",
+  number: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+};
 function RegisterForm() {
-  {/* Variable de estado form con los campos del formulario
-    y utiliza setForm para actualizarlo, guarda lo que se escribe en el input */}
-  const [form, setForm] = useState({
-    name: "",
-    lastname: "",
-    rut: "",
-    birthdate:"",
-    street: "",
-    number: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [form, setForm] = useState(initialFormState);
   // Guarda los mensajes de error
   const [errors, setErrors] = useState({});
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [apiSuccess, setApiSuccess] = useState("");
 
 const handleChange = (e) => {
     const { name, value } = e.target;
@@ -112,9 +115,12 @@ const handleChange = (e) => {
       setErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
     }
   };
-const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-
+    // Limpiamos errores de API anteriores
+    setApiError("");
+    setApiSuccess("");
+    //Validar campos
     const newErrors = {};
     let formIsValid = true;
 
@@ -135,8 +141,46 @@ const handleSubmit = (e) => {
       alert("Por favor corrige los errores antes de continuar.");
       return;
     }
+    // 2. Inicia la carga
+    setIsLoading(true);
 
-    console.log("✅ Datos válidos enviados:", form);
+    // 3. Quitamos 'confirmPassword' antes de enviar al backend
+    const { confirmPassword, ...formData } = form;
+
+    try {
+      // 4. Hacemos la llamada a la API (backend)
+      // Asegúrate de que esta URL base esté en tu .env.VITE_API_URL
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010/api";
+      
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData), // Enviamos los datos sin 'confirmPassword'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Si el servidor responde con error (400, 409, 500)
+        throw new Error(data.message || "Error al registrar la cuenta.");
+      }
+
+      // 5. ¡Éxito!
+      setApiSuccess(data.message); // Muestra "¡Registro exitoso!..."
+      setForm(initialFormState); // Limpia el formulario
+      setErrors({}); // Limpia los errores de validación
+
+    } catch (error) {
+      // 6. Error (error de red o de la API)
+      setApiError(error.message || "No se pudo conectar con el servidor.");
+    } finally {
+      // 7. Termina la carga (en éxito o error)
+      setIsLoading(false);
+    }
+
+
   };
 
 
@@ -163,6 +207,7 @@ const handleSubmit = (e) => {
               placeholder="Ej: Juan José"
               value={form.name}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.name && <small style={{ color: "red" }}>{errors.name}</small>}
           </div>
@@ -176,6 +221,7 @@ const handleSubmit = (e) => {
               placeholder="Ej: Rodriguez Vera"
               value={form.lastname}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.lastname && <small style={{ color: "red" }}>{errors.lastname}</small>}
           </div>
@@ -193,6 +239,7 @@ const handleSubmit = (e) => {
               maxLength={12}
               value={form.rut}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.rut && <small style={{ color: "red" }}>{errors.rut}</small>}
           </div>
@@ -206,6 +253,7 @@ const handleSubmit = (e) => {
               value={form.birthdate}
               onChange={handleChange}
               max={new Date().toISOString().split("T")[0]} // no permite fechas futuras
+              disabled={isLoading}
             />
             {errors.birthdate && <small style={{ color: "red" }}>{errors.birthdate}</small>}
           </div>
@@ -222,6 +270,7 @@ const handleSubmit = (e) => {
               placeholder="Ej: Los Olivos"
               value={form.street}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.street && <small style={{ color: "red" }}>{errors.street}</small>}
           </div>
@@ -235,6 +284,7 @@ const handleSubmit = (e) => {
               value={form.number}
               onChange={handleChange}
               maxLength={4}
+              disabled={isLoading}
             />
             {errors.number && <small style={{ color: "red" }}>{errors.number}</small>}
           </div>
@@ -250,6 +300,7 @@ const handleSubmit = (e) => {
             placeholder="Ej: maria@email.com"
             value={form.email}
             onChange={handleChange}
+            disabled={isLoading}
           />
           {errors.email && <small style={{ color: "red" }}>{errors.email}</small>}
         </div>
@@ -264,6 +315,7 @@ const handleSubmit = (e) => {
             value={form.phone}
             onChange={handleChange}
             maxLength={9}
+            disabled={isLoading}
           />
           {errors.phone && <small style={{ color: "red" }}>{errors.phone}</small>}
         </div>
@@ -280,6 +332,7 @@ const handleSubmit = (e) => {
               placeholder="********"
               value={form.password}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.password && <small style={{ color: "red" }}>{errors.password}</small>}
           </div>
@@ -293,13 +346,29 @@ const handleSubmit = (e) => {
               placeholder="********"
               value={form.confirmPassword}
               onChange={handleChange}
+              disabled={isLoading}
             />
             {errors.confirmPassword && (
               <small style={{ color: "red" }}>{errors.confirmPassword}</small>
             )}
           </div>
         </div>
-        <button type="submit" className="btn-auth">Crear cuenta</button>
+{/* --- 👇 5. AÑADIMOS MENSAJES DE ÉXITO Y ERROR --- */}
+        {apiError && (
+          <div style={{ color: "red", marginTop: "1rem", textAlign: "center", fontWeight: "bold" }}>
+            {apiError}
+          </div>
+        )}
+        {apiSuccess && (
+          <div style={{ color: "green", marginTop: "1rem", textAlign: "center", fontWeight: "bold" }}>
+            {apiSuccess}
+          </div>
+        )}
+
+        {/* --- 👇 6. ACTUALIZAMOS EL BOTÓN --- */}
+        <button type="submit" className="btn-auth" disabled={isLoading}>
+          {isLoading ? "Creando cuenta..." : "Crear cuenta"}
+        </button>
       </form>
     </div>
   );
