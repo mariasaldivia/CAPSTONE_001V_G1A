@@ -15,6 +15,8 @@ import { getPool } from "./pool.js";
 import authRoutes from "./routes/authRoutes.js";
 import certificadosRoutes from "./routes/certificadosRoutes.js";
 import sociosRoutes from "./routes/sociosRoutes.js"; // <-- Se importa la ruta de socios
+import noticiasRoutes from "./routes/noticiasRoutes.js";
+
 
 // ================================
 // 🚀 Inicialización de servidor
@@ -53,6 +55,8 @@ app.get("/health/db", async (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/certificados", certificadosRoutes);
 app.use("/api/socios", sociosRoutes); // <-- Se usa la ruta de socios
+app.use("/api/noticias", noticiasRoutes);
+
 
 // ================================
 // ⚠️ Manejo de rutas no encontradas

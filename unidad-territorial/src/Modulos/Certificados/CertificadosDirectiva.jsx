@@ -807,7 +807,7 @@ function CertificadosContent() {
       {showHistory && (
         <section className="cd__card cd__history" ref={historyRef} id="cd-history">
           <div className="cd__historyHead">
-            <h2>Historial de Certificados de Residencia solicitados</h2>
+            <h2>Historial de Certificados solicitados</h2>
             <label className="cd__order">
               Filtrar{" "}
               <select value={histOrder} onChange={(e) => setHistOrder(e.target.value)}>
