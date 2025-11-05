@@ -6,21 +6,17 @@ import { getPool } from "../pool.js";
    Helpers
    ========================= */
 const ok = (res, data = {}, code = 200) => res.status(code).json({ ok: true, data });
-const fail = (res, error = "ERROR", code = 500) =>
-  res.status(code).json({ ok: false, error });
-
+const fail = (res, error = "ERROR", code = 500) => res.status(code).json({ ok: false, error });
 const now = () => new Date();
 
 /** Genera folio tipo R000001 con relleno a 6 */
 const buildFolio = async (pool) => {
-  const q = await pool
-    .request()
-    .query(`
-      SELECT TOP 1 FOLIO
-      FROM dbo.HISTORIAL_REQUERIMIENTOS
-      WHERE ISNUMERIC(REPLACE(FOLIO,'R','')) = 1
-      ORDER BY TRY_CONVERT(INT, REPLACE(FOLIO,'R','')) DESC
-    `);
+  const q = await pool.request().query(`
+    SELECT TOP 1 FOLIO
+    FROM dbo.HISTORIAL_REQUERIMIENTOS
+    WHERE ISNUMERIC(REPLACE(FOLIO,'R','')) = 1
+    ORDER BY TRY_CONVERT(INT, REPLACE(FOLIO,'R','')) DESC
+  `);
 
   const last = q.recordset?.[0]?.FOLIO || "R000000";
   const n = parseInt(String(last).replace(/^R/i, ""), 10) || 0;
@@ -31,13 +27,24 @@ const buildFolio = async (pool) => {
 /** Construye URL pública para un archivo subido */
 const publicUrlFor = (filePath) => {
   const base =
-    (process.env.FRONT_ORIGIN?.replace(/\/+$/, "")) ||
-    (process.env.APP_BASE_URL?.replace(/\/+$/, "")) ||
     (process.env.API_PUBLIC_URL?.replace(/\/+$/, "")) ||
+    (process.env.APP_BASE_URL?.replace(/\/+$/, "")) ||
     `http://localhost:${process.env.PORT || 4010}`;
   const rel = `/uploads/requerimientos/${path.basename(filePath)}`;
   return `${base}${rel}`;
 };
+
+/* =========================================================
+   Normalización de RUT (para JOIN sin puntos ni guión)
+   ========================================================= */
+const RUT_EQ = `
+  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
+  REPLACE(REPLACE(UPPER(R.PERFIL_RUT),'.',''),'-','')
+`;
+const RUT_EQ_H = `
+  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
+  REPLACE(REPLACE(UPPER(H.PERFIL_RUT),'.',''),'-','')
+`;
 
 /* =========================
    Crear requerimiento
@@ -45,12 +52,12 @@ const publicUrlFor = (filePath) => {
 export const crearRequerimiento = async (req, res) => {
   const {
     socioNombre,
-    rut_socio, // PERFIL_RUT
+    rut_socio,     // PERFIL_RUT
     email,
-    telefono, // no se persiste (no hay columna)
-    tipo,     // ASUNTO
+    telefono,      // puede venir vacío
+    tipo,          // ASUNTO
     direccion,
-    comentarios, // → DESCRIPCION
+    comentarios,   // → DESCRIPCION
   } = req.body;
 
   if (!socioNombre || !rut_socio || !tipo || !direccion) {
@@ -69,13 +76,24 @@ export const crearRequerimiento = async (req, res) => {
     let imagenUrl = null;
     if (req.file) imagenUrl = publicUrlFor(req.file.path);
 
-    // Inserta en principal
-    await pool
-      .request()
+    // ── NUEVO: si no viene teléfono, buscar en SOCIOS por RUT normalizado
+    const telFromSocioRs = await pool.request()
+      .input("rutSocio", rut_socio)
+      .query(`
+        SELECT TOP 1 s.Telefono
+        FROM dbo.SOCIOS s
+        WHERE REPLACE(REPLACE(UPPER(s.RUT),'.',''),'-','')
+           = REPLACE(REPLACE(UPPER(@rutSocio),'.',''),'-','')
+      `);
+    const telefonoFinal = (telefono && String(telefono).trim()) || telFromSocioRs.recordset?.[0]?.Telefono || null;
+
+    // Inserta en principal (incluye TELEFONO)
+    await pool.request()
       .input("folio", folio)
       .input("rut", rut_socio)
       .input("nombre", socioNombre)
       .input("mail", email || null)
+      .input("tel", telefonoFinal)
       .input("asunto", asunto)
       .input("direccion", direccion || null)
       .input("desc", descripcion)
@@ -85,20 +103,20 @@ export const crearRequerimiento = async (req, res) => {
       .input("img", imagenUrl)
       .query(`
         INSERT INTO dbo.REQUERIMIENTOS
-          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, ASUNTO,
-           DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL)
+          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, TELEFONO,
+           ASUNTO, DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL)
         VALUES
-          (@folio, @rut, @nombre, @mail, @asunto,
-           @direccion, @desc, @estado, @actor, @created, @img)
+          (@folio, @rut, @nombre, @mail, @tel,
+           @asunto, @direccion, @desc, @estado, @actor, @created, @img)
       `);
 
-    // Inserta en historial
-    await pool
-      .request()
+    // Inserta en historial (incluye TELEFONO)
+    await pool.request()
       .input("folio", folio)
       .input("rut", rut_socio)
       .input("nombre", socioNombre)
       .input("mail", email || null)
+      .input("tel", telefonoFinal)
       .input("asunto", asunto)
       .input("direccion", direccion || null)
       .input("desc", descripcion)
@@ -109,11 +127,11 @@ export const crearRequerimiento = async (req, res) => {
       .input("img", imagenUrl)
       .query(`
         INSERT INTO dbo.HISTORIAL_REQUERIMIENTOS
-          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, ASUNTO,
-           DIRECCION, DESCRIPCION, ESTADO, CREATED_AT, UPDATED_AT, VALIDADOR_NOMBRE, IMAGEN_URL)
+          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, TELEFONO,
+           ASUNTO, DIRECCION, DESCRIPCION, ESTADO, CREATED_AT, UPDATED_AT, VALIDADOR_NOMBRE, IMAGEN_URL)
         VALUES
-          (@folio, @rut, @nombre, @mail, @asunto,
-           @direccion, @desc, @estado, @created, @updated, @validador, @img)
+          (@folio, @rut, @nombre, @mail, @tel,
+           @asunto, @direccion, @desc, @estado, @created, @updated, @validador, @img)
       `);
 
     return ok(res, { Folio: folio, Imagen_URL: imagenUrl, Adjunto_URL: imagenUrl });
@@ -124,19 +142,25 @@ export const crearRequerimiento = async (req, res) => {
 };
 
 /* =========================
-   Listar requerimientos (opcional ?estado=Pendiente)
+   Listar requerimientos (?estado)
+   – con JOIN a SOCIOS para TELEFONO y fallback de correo
    ========================= */
 export const listarRequerimientos = async (req, res) => {
   const { estado } = req.query;
   try {
     const pool = await getPool();
     let sql = `
-      SELECT ID, FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE,
-             ASUNTO, DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL
-      FROM dbo.REQUERIMIENTOS
+      SELECT
+        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
+        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
+        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
+        R.CREATED_AT, R.IMAGEN_URL,
+        S.Telefono AS TELEFONO
+      FROM dbo.REQUERIMIENTOS R
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
     `;
-    if (estado) sql += " WHERE ESTADO = @estado";
-    sql += " ORDER BY CREATED_AT DESC, ID DESC";
+    if (estado) sql += " WHERE R.ESTADO = @estado";
+    sql += " ORDER BY R.CREATED_AT DESC, R.ID DESC";
 
     const rq = pool.request();
     if (estado) rq.input("estado", estado);
@@ -150,21 +174,23 @@ export const listarRequerimientos = async (req, res) => {
 };
 
 /* =========================
-   Obtener requerimiento por ID
+   Obtener requerimiento por ID – con JOIN a SOCIOS
    ========================= */
 export const obtenerRequerimiento = async (req, res) => {
   const { id } = req.params;
   try {
     const pool = await getPool();
-    const rs = await pool
-      .request()
-      .input("id", id)
-      .query(`
-        SELECT ID, FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE,
-               ASUNTO, DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL
-        FROM dbo.REQUERIMIENTOS
-        WHERE ID = @id
-      `);
+    const rs = await pool.request().input("id", id).query(`
+      SELECT
+        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
+        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
+        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
+        R.CREATED_AT, R.IMAGEN_URL,
+        S.Telefono AS TELEFONO
+      FROM dbo.REQUERIMIENTOS R
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
+      WHERE R.ID = @id
+    `);
 
     if (!rs.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
     return ok(res, rs.recordset[0]);
@@ -179,12 +205,7 @@ export const obtenerRequerimiento = async (req, res) => {
    ========================= */
 export const actualizarRequerimiento = async (req, res) => {
   const { id } = req.params;
-  const {
-    tipo,           // ASUNTO
-    direccion,      // DIRECCION
-    comentarios,    // → DESCRIPCION
-    descripcion,    // alternativo
-  } = req.body;
+  const { tipo, direccion, comentarios, descripcion } = req.body;
 
   const asunto = tipo ?? null;
   const dir = direccion ?? null;
@@ -198,8 +219,7 @@ export const actualizarRequerimiento = async (req, res) => {
     `);
     if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
 
-    await pool
-      .request()
+    await pool.request()
       .input("id", id)
       .input("asunto", asunto)
       .input("direccion", dir)
@@ -224,10 +244,7 @@ export const actualizarRequerimiento = async (req, res) => {
    ========================= */
 export const cambiarEstado = async (req, res) => {
   const { id } = req.params;
-  const {
-    estado,                 // "Aprobado" | "Rechazado" | "Pendiente"
-    validadorNombre = null, // nombre de quien valida
-  } = req.body;
+  const { estado, validadorNombre = null } = req.body;
 
   if (!estado) return fail(res, "Estado requerido.", 400);
 
@@ -242,8 +259,7 @@ export const cambiarEstado = async (req, res) => {
     const folio = ex.recordset[0].FOLIO;
 
     // Actualiza principal
-    await pool
-      .request()
+    await pool.request()
       .input("id", id)
       .input("estado", estado)
       .input("actor", validadorNombre)
@@ -255,8 +271,7 @@ export const cambiarEstado = async (req, res) => {
       `);
 
     // Actualiza historial (estado + updated + validador)
-    await pool
-      .request()
+    await pool.request()
       .input("folio", folio)
       .input("estado", estado)
       .input("validador", validadorNombre)
@@ -320,20 +335,25 @@ export const subirAdjunto = async (req, res) => {
 };
 
 /* =========================
-   Historial – listar todo (opcional ?estado=...)
+   Historial – listar todo (?estado)
+   – con JOIN a SOCIOS para TELEFONO y fallback de correo
    ========================= */
 export const listarHistorial = async (req, res) => {
   const { estado } = req.query;
   try {
     const pool = await getPool();
     let sql = `
-      SELECT ID, FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE,
-             ASUNTO, DIRECCION, DESCRIPCION, ESTADO, CREATED_AT, UPDATED_AT,
-             VALIDADOR_NOMBRE, IMAGEN_URL
-      FROM dbo.HISTORIAL_REQUERIMIENTOS
+      SELECT
+        H.ID, H.FOLIO, H.PERFIL_RUT, H.NOMBRE_SOLICITANTE,
+        COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
+        H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
+        H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
+        S.Telefono AS TELEFONO
+      FROM dbo.HISTORIAL_REQUERIMIENTOS H
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
     `;
-    if (estado) sql += " WHERE ESTADO=@estado";
-    sql += " ORDER BY UPDATED_AT DESC, CREATED_AT DESC, ID DESC";
+    if (estado) sql += " WHERE H.ESTADO=@estado";
+    sql += " ORDER BY H.UPDATED_AT DESC, H.CREATED_AT DESC, H.ID DESC";
 
     const rq = pool.request();
     if (estado) rq.input("estado", estado);
@@ -351,13 +371,7 @@ export const listarHistorial = async (req, res) => {
    ========================= */
 export const actualizarHistorial = async (req, res) => {
   const { folio } = req.params;
-  const {
-    tipo,           // ASUNTO
-    direccion,      // DIRECCION
-    comentarios,    // → DESCRIPCION
-    descripcion,    // alternativo
-    estado,         // opcional
-  } = req.body;
+  const { tipo, direccion, comentarios, descripcion, estado } = req.body;
 
   const asunto = tipo ?? null;
   const dir = direccion ?? null;
@@ -371,8 +385,7 @@ export const actualizarHistorial = async (req, res) => {
     `);
     if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
 
-    await pool
-      .request()
+    await pool.request()
       .input("folio", folio)
       .input("asunto", asunto)
       .input("direccion", dir)
@@ -390,8 +403,7 @@ export const actualizarHistorial = async (req, res) => {
       `);
 
     // Refleja cambios básicos en principal (si existe todavía)
-    await pool
-      .request()
+    await pool.request()
       .input("folio", folio)
       .input("asunto", asunto)
       .input("direccion", dir)
@@ -412,26 +424,37 @@ export const actualizarHistorial = async (req, res) => {
 };
 
 /* =========================
-   Obtener por FOLIO
+   Obtener por FOLIO (principal o historial)
+   – con JOIN a SOCIOS
    ========================= */
 export const obtenerPorFolio = async (req, res) => {
   const { folio } = req.params;
   try {
     const pool = await getPool();
+
     const principal = await pool.request().input("folio", folio).query(`
-      SELECT ID, FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE,
-             ASUNTO, DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL
-      FROM dbo.REQUERIMIENTOS
-      WHERE FOLIO=@folio
+      SELECT
+        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
+        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
+        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
+        R.CREATED_AT, R.IMAGEN_URL,
+        S.Telefono AS TELEFONO
+      FROM dbo.REQUERIMIENTOS R
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
+      WHERE R.FOLIO=@folio
     `);
     if (principal.recordset?.length) return ok(res, principal.recordset[0]);
 
     const hist = await pool.request().input("folio", folio).query(`
-      SELECT ID, FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE,
-             ASUNTO, DIRECCION, DESCRIPCION, ESTADO, CREATED_AT, UPDATED_AT,
-             VALIDADOR_NOMBRE, IMAGEN_URL
-      FROM dbo.HISTORIAL_REQUERIMIENTOS
-      WHERE FOLIO=@folio
+      SELECT
+        H.ID, H.FOLIO, H.PERFIL_RUT, H.NOMBRE_SOLICITANTE,
+        COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
+        H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
+        H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
+        S.Telefono AS TELEFONO
+      FROM dbo.HISTORIAL_REQUERIMIENTOS H
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
+      WHERE H.FOLIO=@folio
     `);
     if (hist.recordset?.length) return ok(res, hist.recordset[0]);
 

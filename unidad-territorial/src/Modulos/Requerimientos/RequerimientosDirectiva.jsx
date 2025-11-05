@@ -20,14 +20,13 @@ const fmtDate = (iso) =>
       })
     : "-";
 
-/** Normaliza/asegura URL pública para adjuntos */
+/** Asegura URL pública para adjuntos (maneja \, relativas, /uploads, nombre suelto) */
 const normalizeUrl = (u) => {
   if (!u) return null;
   let s = String(u).trim().replace(/\\/g, "/");
   if (/^https?:\/\//i.test(s)) return s;
   if (s.startsWith("/")) return `${API_BASE}${s}`;
   if (s.startsWith("uploads/")) return `${API_BASE}/${s}`;
-  // último recurso: asumimos nombre de archivo
   return `${API_BASE}/uploads/requerimientos/${s}`;
 };
 
@@ -35,8 +34,10 @@ const normalizeUrl = (u) => {
 const normRequer = (r) => ({
   ID_Req: r.ID ?? r.Id ?? r.id ?? null,
   Folio: r.FOLIO ?? r.Folio ?? "-",
+  Rut: r.PERFIL_RUT ?? r.Rut ?? r.RUT ?? "",
   Socio: r.NOMBRE_SOLICITANTE ?? r.Socio ?? "",
-  Telefono: r.TELEFONO ?? r.Telefono ?? "",
+  Telefono: r.TELEFONO ?? r.Telefono ?? "", // ← vendrá del JOIN con SOCIOS
+  Email: r.EMAIL_SOLICITANTE ?? r.EMAIL ?? r.Email ?? "",
   Tipo: r.ASUNTO ?? r.Tipo ?? "",
   Direccion: r.DIRECCION ?? r.Direccion ?? "",
   Detalle: r.DESCRIPCION ?? r.Detalle ?? "",
@@ -259,7 +260,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         comentario: respuesta?.trim() || "Aprobado",
       });
 
-      // UI: remover de pendientes y “mover” a historial
+      // UI: remover de pendientes y mover a historial
       setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
       setHistorial((prev) => [
         {
@@ -326,14 +327,10 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
   const confirmarAprobar = async () => { setShowApprove(false); await aprobar(); };
   const confirmarRechazar = async () => { setShowReject(false); await rechazar(); };
 
-  const pedirMasInfo = () => {
-    if (!seleccion) return;
-    alert("📨 Aquí puedes abrir tu flujo para pedir más información.");
-  };
-
   const onHistView = async (folio) => {
     try {
       setBusy(true);
+      // Preferimos API para obtener lo más fresco (incluye Telefono/Email si el backend hace JOIN)
       const det = await ReqsAPI.obtenerPorFolio(folio).catch(() => null);
 
       if (det) {
@@ -341,12 +338,15 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         return;
       }
 
+      // Fallback desde la fila del historial en memoria
       const h = historial.find((x) => x.folio === folio);
       if (h) {
         openDetail({
           ID_Req: h.idReq ?? null,
           Folio: h.folio,
           Socio: h.socio,
+          Telefono: "", // no viene en historial por defecto
+          Email: "",
           Tipo: h.tipo,
           Estado: h.estado,
           Fecha_Solicitud: h.ts,
@@ -457,12 +457,25 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
 
             <div className="cd__detailGrid">
               <div className="cd__kv"><span className="cd__k">Folio</span><span className="cd__v">{seleccion.Folio}</span></div>
+
               <div className="cd__kv">
                 <span className="cd__k">Socio</span>
-                <span className="cd__v">{seleccion.Socio} {seleccion.Telefono ? `· ${seleccion.Telefono}` : ""}</span>
+                <span className="cd__v">{seleccion.Socio}</span>
               </div>
+
+              <div className="cd__kv">
+                <span className="cd__k">Teléfono</span>
+                <span className="cd__v">{seleccion.Telefono || "-"}</span>
+              </div>
+
+              <div className="cd__kv">
+                <span className="cd__k">Correo</span>
+                <span className="cd__v">{seleccion.Email || "-"}</span>
+              </div>
+
               <div className="cd__kv"><span className="cd__k">Dirección</span><span className="cd__v">{seleccion.Direccion || "-"}</span></div>
               <div className="cd__kv"><span className="cd__k">Tipo</span><span className="cd__v">{seleccion.Tipo}</span></div>
+
               <div className="cd__kv">
                 <span className="cd__k">Estado</span>
                 <span className="cd__v">
@@ -479,7 +492,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
 
               {seleccion.Adjunto_URL && (
                 <div className="cd__block">
-                  <span className="cd__k">Adjunto</span>
+                  <span className="cd__k">Imagen</span>
                   <div className="cd__file">
                     <img
                       src={seleccion.Adjunto_URL}
@@ -498,7 +511,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
                     <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
                   </>
                 )}
-                <button className="cd__btn cd__btn--warn" onClick={pedirMasInfo} disabled={busy}>Pedir más info</button>
+                {/* Botón "Pedir más info" eliminado */}
               </div>
 
               {!isFinal && (
