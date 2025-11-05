@@ -64,6 +64,7 @@ export default function ComunicacionNoticias() {
         const list = (Array.isArray(data) ? data : [])
           .filter((n) => (n.estado ?? 1) === 1) // 1 = PUBLICADA
           .map((n) => {
+            console.log('Tipo recibido de la API:', `'${n.tipo}'`);
             const imagenPrincipal =
               toAbs(n.imagen_principal_url) ||
               toAbs(n.imagen_principal) ||
@@ -75,6 +76,8 @@ export default function ComunicacionNoticias() {
 
             const cuerpoHtml = (n.cuerpo_html || n.cuerpo || n.contenido || "").toString();
 
+            const tipoLimpio = (n.tipo || 'Junta de vecino').trim();
+
             return {
               id: n.id,
               titulo: n.titulo || "",
@@ -84,6 +87,7 @@ export default function ComunicacionNoticias() {
               imagenes: secundarias,       // 0..2 secundarias
               resumen: n.resumen || "",
               cuerpo_html: cuerpoHtml,
+              tipo: tipoLimpio,
             };
           });
 
@@ -122,7 +126,13 @@ export default function ComunicacionNoticias() {
 
     return (
       <div className="page noticias">
-        <article className="news-detail card">
+        <article 
+          className={`news-detail card ${
+          detalle.tipo === 'Municipalidad'
+            ? 'news-card--muni'
+            : 'news-card--jv'
+          }`}
+        >
           <header className="news-detail__head">
             <h1 className="news-detail__title">{detalle.titulo}</h1>
             <p className="news-detail__sub">{detalle.subtitulo || detalle.fecha}</p>
@@ -179,7 +189,14 @@ export default function ComunicacionNoticias() {
 
       <section className="grid-cards grid-4">
         {noticias.slice(0, 8).map((n) => (
-          <article key={n.id} className="news-card">
+          <article 
+            key={n.id} 
+            className={`news-card ${
+              n.tipo === 'Municipalidad' 
+                ? 'news-card--muni' 
+                : 'news-card--jv'
+            }`} 
+          >
             <div className="news-img">
               <img src={n.imagen} alt={n.titulo} />
             </div>

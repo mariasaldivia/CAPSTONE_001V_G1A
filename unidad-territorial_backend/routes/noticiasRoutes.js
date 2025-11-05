@@ -92,7 +92,7 @@ async function getCurrentImages(pool, id) {
 ================================ */
 router.post("/", upload.any(), async (req, res) => {
   try {
-    const { titulo, subtitulo, slug, resumen, cuerpo_html, publish_at, estado } = req.body;
+    const { titulo, subtitulo, slug, resumen, cuerpo_html, publish_at, estado, tipo } = req.body;
     const pool = await getPool();
 
     const groups = groupByField(req.files || []);
@@ -115,6 +115,7 @@ router.post("/", upload.any(), async (req, res) => {
       .input("imagen_sec_2", sql.NVarChar(400), secImg2)
       .input("publish_at", sql.DateTime2, publish_at || null)
       .input("estado", sql.TinyInt, estado ?? 1)
+      .input("tipo", sql.NVarChar(50), tipo)
       .execute("dbo.spNoticia_Create");
 
     res.json({ ok: true, mensaje: "Noticia publicada correctamente" });
@@ -130,7 +131,7 @@ router.post("/", upload.any(), async (req, res) => {
 router.put("/:id", upload.any(), async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, subtitulo, slug, resumen, cuerpo_html, publish_at, estado } = req.body;
+    const { titulo, subtitulo, slug, resumen, cuerpo_html, publish_at, estado, tipo } = req.body;
     const pool = await getPool();
 
     const current = await getCurrentImages(pool, id);
@@ -161,6 +162,7 @@ router.put("/:id", upload.any(), async (req, res) => {
       .input("imagen_sec_2", sql.NVarChar(400), secImg2)
       .input("publish_at", sql.DateTime2, publish_at || null)
       .input("estado", sql.TinyInt, estado ?? null)
+      .input("tipo", sql.NVarChar(50), tipo)
       .query(`
         UPDATE dbo.NOTICIA
         SET titulo=@titulo,
@@ -173,6 +175,7 @@ router.put("/:id", upload.any(), async (req, res) => {
             imagen_sec_2=@imagen_sec_2,
             publish_at = COALESCE(@publish_at, publish_at),
             estado     = COALESCE(@estado, estado),
+            tipo       = COALESCE(@tipo, tipo),
             updated_at = SYSDATETIME()
         WHERE id=@id
       `);

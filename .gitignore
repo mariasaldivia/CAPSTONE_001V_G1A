@@ -50,3 +50,7 @@ docker-compose.override.yml
 *.bak
 *.mdf
 *.ldf
+
+
+# Ignorar todo el contenido generado por usuarios
+unidad-territorial_backend/uploads/

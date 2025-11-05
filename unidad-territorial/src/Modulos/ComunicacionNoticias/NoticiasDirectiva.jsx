@@ -45,6 +45,7 @@ export default function NoticiasDirectiva() {
   const [secondary2, setSecondary2] = useState(null);
   const [errors, setErrors] = useState({});
   const editorRef = useRef(null);
+  const [isMunicipal, setIsMunicipal] = useState(false); //
 
   // contador de resumen (texto plano del cuerpo)
   const [resumenCount, setResumenCount] = useState(0);
@@ -153,6 +154,8 @@ export default function NoticiasDirectiva() {
       .trim()
       .slice(0, MAX_RESUMEN);
 
+    const tipoValor = isMunicipal ? 'Municipalidad' : 'Junta de vecino';
+
     // Si la fecha es vacía o futura, usar hoy
     let fechaPub = publishAt || todayStr();
     if (publishAt) {
@@ -169,6 +172,7 @@ export default function NoticiasDirectiva() {
       estado: editingId ? status : STATUS.PUBLICADA,
       publish_at: fechaPub + "T00:00:00.000Z",
       slug: slugify(title),
+      tipo: tipoValor,
     };
   };
 
@@ -183,6 +187,7 @@ export default function NoticiasDirectiva() {
     setErrors({});
     setEditingId(null);
     setStatus(STATUS.PUBLICADA);
+    setIsMunicipal(false);
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
       setResumenCount(0);
@@ -195,6 +200,7 @@ export default function NoticiasDirectiva() {
     setTitle(item.titulo || "");
     setSubtitle(item.subtitulo || "");
     setStatus(item.estado ?? STATUS.PUBLICADA);
+    setIsMunicipal(item.tipo === 'Municipalidad');
 
     const pub = (item.publish_at || item.created_at || "").slice(0, 10);
     setPublishAt(pub || "");
@@ -374,17 +380,34 @@ export default function NoticiasDirectiva() {
               {errors.publishAt && <small className="error">{errors.publishAt}</small>}
             </div>
 
-            {editingId && (
-              <div className="form-field">
-                <label>Estado (solo edición)</label>
-                <select value={status} onChange={(e) => setStatus(Number(e.target.value))}>
-                  <option value={STATUS.PUBLICADA}>Publicada</option>
-                  <option value={STATUS.ARCHIVADA}>Archivada</option>
-                </select>
-              </div>
-            )}
+            {/* Columna 2: Tipo de Noticia (el checkbox) */}
+          <div className="form-field form-field--checkbox">
+            <label>Tipo de Noticia</label>
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                id="tipo-noticia"
+                checked={isMunicipal}
+                onChange={(e) => setIsMunicipal(e.target.checked)}
+              />
+              <label htmlFor="tipo-noticia" className="checkbox-label">
+                Marcar si es "Municipalidad"
+              </label>
+            </div>
+            <small >
+              Por defecto: "Junta de vecino"
+            </small>
           </div>
-
+        </div>
+      {editingId && (
+          <div className="form-field" style={{ marginTop: '16px' }}>
+            <label>Estado (solo edición)</label>
+            <select value={status} onChange={(e) => setStatus(Number(e.target.value))}>
+              <option value={STATUS.PUBLICADA}>Publicada</option>
+              <option value={STATUS.ARCHIVADA}>Archivada</option>
+            </select>
+          </div>
+        )}
           <div className="form-field">
             <label>Redacción *</label>
 

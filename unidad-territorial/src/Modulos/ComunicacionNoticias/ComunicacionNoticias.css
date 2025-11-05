@@ -1,22 +1,19 @@
 :root {
-  /* Paleta de Contenido Claro (para página de noticias) 
-    con nombres nuevos para evitar conflictos.
-  */
-  --news-bg: #eff6ff;     /* blue-50 (Fondo de página) */
-  --news-panel: #ffffff;   /* white (Fondo de tarjeta) */
-  --news-border: #dbeafe;  /* blue-100 (Bordes) */
-  --news-text: #1e3a8a;    /* blue-900 (Texto principal) */
-  --news-text-muted: #1e40af; /* blue-800 (Texto secundario) */
-  --news-accent: #38bdf8;    /* orange-500 (Acento) */
-  --news-accent-bg: rgba(22, 188, 249, 0.1); /* orange transp. */
-  --news-quote-bg: #f8fafc; /* Gris muy claro para citas */
+  /* Paleta de Contenido Claro */
+  --news-bg: #eff6ff;          /* Fondo página */
+  --news-panel: #ffffff;       /* Fondo tarjeta */
+  --news-border: #dbeafe;      /* Bordes */
+  --news-text: #1e3a8a;        /* Texto principal */
+  --news-text-muted: #1e40af;  /* Texto secundario */
+  --news-accent: #38bdf8;      /* Acento */
+  --news-accent-bg: rgba(22, 188, 249, 0.1);
+  --news-quote-bg: #f8fafc;    /* Fondo citas */
 
-  /* Paleta Oscura (para la barra de suscripción, que es como un footer)
-  */
-  --footer-bg-dark: #1e3a8a; /* blue-900 */
+  /* Paleta Oscura */
+  --footer-bg-dark: #1e3a8a;
   --footer-text: #ffffff;
-  --footer-border: #1e40af;  /* blue-800 */
-  --footer-btn: var(--news-accent); /* Botón naranja */
+  --footer-border: #1e40af;
+  --footer-btn: var(--news-accent);
 }
 
 /* ===== Contenedor ===== */
@@ -35,16 +32,16 @@
   margin: 0 0 2px;
   font-size: clamp(28px, 3vw, 40px);
   font-weight: 800;
-  color: var(--news-text); /* APLICADO: Texto oscuro */
+  color: var(--news-text);
   letter-spacing: .2px;
 }
 .news-section-sub {
   margin: 0;
   font-size: 16px;
-  color: var(--news-text-muted); /* APLICADO: Texto secundario azul */
+  color: var(--news-text-muted); 
 }
 
-/* ===== Tarjetas (lista) ===== */
+/* ===== Tarjetas de noticias ===== */
 .grid-cards {
   display: grid;
   gap: 20px;
@@ -68,16 +65,51 @@
   }
 }
 
-.news-card {
-  background: var(--news-panel); /* APLICADO: Fondo de tarjeta blanco */
-  border: 1px solid var(--news-border); /* APLICADO: Borde azul claro */
+.page.noticias .news-card {
+  position: relative; 
+  background: var(--news-panel); 
+  border: 1px solid var(--news-border); 
   border-radius: 18px;
   box-shadow: 0 8px 18px rgba(10, 14, 30, .05); /* Sombra suavizada */
-  color: var(--news-text); /* APLICADO: Texto oscuro */
+  color: var(--news-text); 
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+/* Marca de agua pequeña*/
+.page.noticias .news-card::before {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 80px;
+  height: 80px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.8; /* Un poco más sutil para la card pequeña */
+  pointer-events: none; /* Para que no interfiera con el mouse */
+  z-index: 1; 
+}
+
+/* 3. Ponemos el contenido POR ENCIMA de la marca de agua */
+.page.noticias .news-card > .news-img,
+.page.noticias .news-card > .news-body {
+  position: relative; /* Necesario para que z-index funcione */
+  z-index: 2; /* Capa 2: El contenido (imagen y texto) */
+}
+
+/* Logo para Junta de Vecino */
+.page.noticias .news-card.news-card--jv::before {
+  /* 👇 Usa tu logo de siempre (o el específico de la JV) */
+  background-image: url('/logo.png'); 
+}
+.page.noticias .news-card.news-card--muni::before {
+  /* 👇 Usa tu logo de siempre (o el específico de la JV) */
+  background-image: url('/logo_municipalidad_2.png'); 
+}
+
+
 .news-img {
   aspect-ratio: 1 / 1;
   overflow: hidden;
@@ -126,7 +158,7 @@
 
 /* ===== Detalle ===== */
 .card {
-  background: var(--news-panel); /* APLICADO: Fondo blanco */
+  background: transparent;
   border: 1px solid var(--news-border); /* APLICADO: Borde azul claro */
   border-radius: 18px;
   box-shadow: 0 10px 22px rgba(10, 14, 30, .05); /* Sombra suavizada */
@@ -134,11 +166,14 @@
   overflow: hidden;
 }
 .news-detail {
-  padding: 18px;
+  padding: 24px 28px; /* margen interior horizontal igual al de .page.noticias */
+  position: relative; /* importante para anclar el pseudo-elemento */
 }
 
 .news-detail__head {
   margin-bottom: 16px;
+  margin-left: 40px;
+  margin-top: 100px;
 }
 .news-detail__title {
   margin: 0 0 15px;
@@ -151,6 +186,9 @@
   margin: 0 0 30px;
   color: var(--news-text-muted); /* APLICADO: Texto secundario azul */
   font-size: 16px;
+}
+.news-detail__body{
+  margin-left: 40px;
 }
 
 /* ===== Grid texto/fotos ===== */
@@ -234,6 +272,7 @@
 /* ===== Botón Volver ===== */
 .back-row {
   margin-top: 20px;
+  margin-left: 40px;
 }
 .back-btn {
   display: inline-block;
@@ -313,4 +352,40 @@
     grid-template-columns: 1fr;
     gap: 8px;
   }
+}
+/* ===================================
+   MARCA DE AGUA - VISTA DE DETALLE
+   =================================== */
+.page.noticias .news-detail.card {
+  position: relative; /* Ancla para la marca de agua */
+  overflow: hidden; /* Asegura que la marca no se salga */
+}
+.page.noticias .news-detail.card > * {
+  position: relative;
+  z-index: 2; /* Capa 2: Contenido */
+}
+.page.noticias .news-detail.card::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  right: 40px;
+  width: 120px;
+  height: 120px;
+
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1; /* 👈 súbelo sobre el fondo blanco */
+}
+
+/* Logo para Junta de Vecino */
+.page.noticias .news-detail.card.news-card--jv::before {
+  background-image: url('/logo.png'); 
+}
+
+/* Logo para Municipalidad */
+.page.noticias .news-detail.card.news-card--muni::before {
+  background-image: url('/logo_municipalidad_2.png'); 
 }
