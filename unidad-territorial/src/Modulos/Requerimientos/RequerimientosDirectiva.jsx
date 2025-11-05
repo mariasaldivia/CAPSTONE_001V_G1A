@@ -1,8 +1,16 @@
+// src/Modulos/Requerimientos/RequerimientosDirectiva.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
 import "./RequerimientosDirectiva.css";
 
-/* =================== Helpers (mismos de Certificados) =================== */
+/* =================== Config =================== */
+const API_BASE = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "http://localhost:4010"
+).replace(/\/+$/, "");
+
+/* =================== Helpers =================== */
 const fmtDate = (iso) =>
   iso
     ? new Date(iso).toLocaleDateString(undefined, {
@@ -12,70 +20,114 @@ const fmtDate = (iso) =>
       })
     : "-";
 
-/* =================== Íconos (mismos estilos) =================== */
-const IconoVer = () => (
-  <svg viewBox="0 0 24 24" className="cd__icon" aria-hidden="true">
-    <path d="M12 5c5 0 9 5 9 7s-4 7-9 7-9-5-9-7 4-7 9-7zm0 2C8 7 4.9 10.5 4.2 12 4.9 13.5 8 17 12 17s7.1-3.5 7.8-5C19.1 10.5 16 7 12 7zm0 2a3 3 0 110 6 3 3 0 010-6z"/>
-  </svg>
-);
-const IconoEliminar = () => (
-  <svg viewBox="0 0 24 24" className="cd__icon" aria-hidden="true">
-    <path d="M6 7h12v2H6V7zm2 3h8l-1 10H9L8 10zm3-7h2l1 2h4v2H4V5h4l1-2z"/>
-  </svg>
-);
+/** Normaliza/asegura URL pública para adjuntos */
+const normalizeUrl = (u) => {
+  if (!u) return null;
+  let s = String(u).trim().replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith("/")) return `${API_BASE}${s}`;
+  if (s.startsWith("uploads/")) return `${API_BASE}/${s}`;
+  // último recurso: asumimos nombre de archivo
+  return `${API_BASE}/uploads/requerimientos/${s}`;
+};
 
-/* =================== Datos de ejemplo (sustituir por API real) =================== */
-const MOCK_PENDIENTES = [
-  {
-    ID_Req: "R10234",
-    Folio: "R10234",
-    Socio: "Claudia",
-    Tipo: "Seguridad",
-    Fecha_Solicitud: "2025-10-01T12:00:00",
-    Estado: "Pendiente",
-    Telefono: "+569 9999 9999",
-    Direccion: "Calle 12 #345, Villa X",
-    Detalle: "Solicito revisión de cámaras por incidentes ocurridos anoche en la calle 12.",
-    Adjunto_URL: null
+/** Normaliza un registro de requerimientos (tabla principal) al shape del detalle */
+const normRequer = (r) => ({
+  ID_Req: r.ID ?? r.Id ?? r.id ?? null,
+  Folio: r.FOLIO ?? r.Folio ?? "-",
+  Socio: r.NOMBRE_SOLICITANTE ?? r.Socio ?? "",
+  Telefono: r.TELEFONO ?? r.Telefono ?? "",
+  Tipo: r.ASUNTO ?? r.Tipo ?? "",
+  Direccion: r.DIRECCION ?? r.Direccion ?? "",
+  Detalle: r.DESCRIPCION ?? r.Detalle ?? "",
+  Estado: r.ESTADO ?? r.Estado ?? "Pendiente",
+  Fecha_Solicitud: r.CREATED_AT ?? r.CreatedAt ?? null,
+  Adjunto_URL: normalizeUrl(r.IMAGEN_URL ?? r.Adjunto_URL ?? null),
+  Actor: r.ACTOR_NOMBRE ?? r.VALIDADOR_NOMBRE ?? r.Actor ?? null,
+});
+
+/** Normaliza un registro de historial al shape usado en la tabla de historial */
+const normHistRow = (h) => ({
+  folio: h.FOLIO ?? h.Folio,
+  socio: h.NOMBRE_SOLICITANTE ?? h.Socio ?? "",
+  tipo: h.ASUNTO ?? h.Tipo ?? "",
+  estado: h.ESTADO ?? h.Estado ?? "",
+  ts: h.UPDATED_AT || h.CREATED_AT || null,
+  idReq: h.ID ?? h.Id ?? null,
+  direccion: h.DIRECCION ?? "",
+  detalle: h.DESCRIPCION ?? "",
+  imagen: normalizeUrl(h.IMAGEN_URL ?? null),
+  validador: h.VALIDADOR_NOMBRE ?? null,
+});
+
+/* =================== API wrapper (alineado a tus rutas) =================== */
+const ReqsAPI = {
+  async listarPendientes() {
+    const resp = await fetch(`${API_BASE}/api/requerimientos?estado=Pendiente`, {
+      credentials: "include",
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json?.ok === false) {
+      throw new Error(json?.error || "No se pudo cargar pendientes");
+    }
+    const rows = json?.data || json || [];
+    return rows.map(normRequer);
   },
-  {
-    ID_Req: "R10235",
-    Folio: "R10235",
-    Socio: "Jorge",
-    Tipo: "Mejoras",
-    Fecha_Solicitud: "2025-09-01T10:00:00",
-    Estado: "Pendiente",
-    Telefono: "+569 8888 8888",
-    Direccion: "Los Robles 221, Villa Y",
-    Detalle: "Petición de mejoras en columpio de la plazita. La cadena se encuentra cortada.",
-    Adjunto_URL: "/img/N3_columpios2.png"
+
+  async listarHistorial(estado = "") {
+    const qs = estado ? `?estado=${encodeURIComponent(estado)}` : "";
+    const resp = await fetch(`${API_BASE}/api/requerimientos/_historial/lista/all${qs}`, {
+      credentials: "include",
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json?.ok === false) {
+      throw new Error(json?.error || "No se pudo cargar historial");
+    }
+    const rows = json?.data || json || [];
+    return rows.map(normHistRow);
   },
-  {
-    ID_Req: "R10236",
-    Folio: "R10236",
-    Socio: "Fauget",
-    Tipo: "Actividades",
-    Fecha_Solicitud: "2025-10-01T12:20:00",
-    Estado: "Pendiente",
-    Telefono: "+569 7777 7777",
-    Direccion: "Av. Central 123",
-    Detalle: "Solicitud de permiso para actividad recreativa comunitaria.",
-    Adjunto_URL: null
-  }
-];
 
-const MOCK_HIST = [
-  { ID_Req: "R10234", Folio: "R10234", Socio: "Claudia",  Tipo: "Seguridad",  Estado: "Pendiente",  Fecha_Cambio: "2025-10-01T09:20:00" },
-  { ID_Req: "R10235", Folio: "R10235", Socio: "Jorge",    Tipo: "Mejoras",    Estado: "Aprobado",   Fecha_Cambio: "2025-10-01T11:12:00" },
-  { ID_Req: "R10230", Folio: "R10230", Socio: "Ana",      Tipo: "Eventos",    Estado: "Rechazado",  Fecha_Cambio: "2025-09-30T18:12:00" },
-  { ID_Req: "R10229", Folio: "R10229", Socio: "Pedro",    Tipo: "Limpieza",   Estado: "Pendiente",  Fecha_Cambio: "2025-09-29T14:05:00" },
-  { ID_Req: "R10228", Folio: "R10228", Socio: "Marcela",  Tipo: "Seguridad",  Estado: "Pendiente",  Fecha_Cambio: "2025-09-29T08:41:00" }
-];
+  async cambiarEstado(id, { estado, validadorNombre, comentario }) {
+    const resp = await fetch(`${API_BASE}/api/requerimientos/${id}/estado`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado, validadorNombre, comentario }),
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json?.ok === false) {
+      throw new Error(json?.error || "No se pudo cambiar el estado");
+    }
+    return json?.data ?? {};
+  },
 
-/* =================== Modal de Confirmación (estilo igual a Certificados) =================== */
+  async eliminarPorFolio(folio) {
+    const resp = await fetch(`${API_BASE}/api/requerimientos/folio/${encodeURIComponent(folio)}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json?.ok === false) {
+      throw new Error(json?.error || "No se pudo eliminar");
+    }
+    return true;
+  },
+
+  async obtenerPorFolio(folio) {
+    const resp = await fetch(`${API_BASE}/api/requerimientos/folio/${encodeURIComponent(folio)}`, {
+      credentials: "include",
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || json?.ok === false) {
+      throw new Error(json?.error || "No se pudo obtener el folio");
+    }
+    return normRequer(json?.data ?? json);
+  },
+};
+
+/* =================== Modal de Confirmación (como Certificados) =================== */
 function ConfirmModal({ open, kind = "approve", folio, datos, onCancel, onConfirm }) {
   if (!open) return null;
-
   const isApprove = kind === "approve";
   const title = isApprove ? "Confirmar aprobación" : "Confirmar rechazo";
   const actionWord = isApprove ? "aprobar" : "rechazar";
@@ -95,7 +147,6 @@ function ConfirmModal({ open, kind = "approve", folio, datos, onCancel, onConfir
             {folio ? <> con folio <strong>{folio}</strong></> : null}. Esta acción es
             <strong> irreversible</strong>.
           </p>
-
           {datos && (
             <div className="cd__modalData">
               <p><b>Socio:</b> {datos.socio || "-"}</p>
@@ -119,8 +170,8 @@ function ConfirmModal({ open, kind = "approve", folio, datos, onCancel, onConfir
   );
 }
 
-/* =================== Página (mismo layout y clases .cd) =================== */
-function RequerimientosContent() {
+/* =================== Página principal =================== */
+function RequerimientosContent({ directivaNombre = "Directiva" }) {
   const [orden, setOrden] = useState("recientes");
   const [seleccion, setSeleccion] = useState(null);
   const [respuesta, setRespuesta] = useState("");
@@ -141,14 +192,21 @@ function RequerimientosContent() {
   const detailRef = useRef(null);
   const historyRef = useRef(null);
 
+  // Carga inicial
   useEffect(() => {
     (async () => {
-      // ↓ Sustituir por llamadas reales al ReqsAPI cuando lo tengas
       setLoadingList(true);
       setLoadingHist(true);
       try {
-        setPendientes(MOCK_PENDIENTES);
-        setHistorial(MOCK_HIST);
+        const [p, h] = await Promise.all([
+          ReqsAPI.listarPendientes(),
+          ReqsAPI.listarHistorial(""),
+        ]);
+        setPendientes(p);
+        setHistorial(h);
+      } catch (e) {
+        console.error(e);
+        alert(`No se pudo cargar la información inicial.\n${e.message || ""}`);
       } finally {
         setLoadingList(false);
         setLoadingHist(false);
@@ -166,12 +224,13 @@ function RequerimientosContent() {
 
   const histList = useMemo(() => {
     const rows = (historial || []).map((h) => ({
-      folio: h.Folio || h.ID_Req || "-",
-      socio: h.Socio || "",
-      tipo: h.Tipo || "",
-      estado: h.Estado || "",
-      ts: h.Fecha_Cambio || h.ts || "",
-      idReq: h.ID_Req
+      folio: h.folio,
+      socio: h.socio,
+      tipo: h.tipo,
+      estado: h.estado,
+      ts: h.ts,
+      idReq: h.idReq,
+      imagen: h.imagen,
     }));
     const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
     const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
@@ -189,69 +248,122 @@ function RequerimientosContent() {
   const closeDetail = () => { setSeleccion(null); setTimeout(() => scrollTo(topRef), 0); };
   const toggleHistory = () => { setShowHistory((s) => !s); setSeleccion(null); setTimeout(() => scrollTo(historyRef), 0); };
 
-  /* ===== Acciones base ===== */
-  const aprobarBase = async () => {
-    if (!seleccion) return;
+  /* ===== Acciones ===== */
+  const aprobar = async () => {
+    if (!seleccion?.ID_Req) return;
     try {
       setBusy(true);
-      // await ReqsAPI.cambiarEstado(seleccion.ID_Req, { estado: "Aprobado", comentario: respuesta || "Aprobado" });
+      await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
+        estado: "Aprobado",
+        validadorNombre: directivaNombre,
+        comentario: respuesta?.trim() || "Aprobado",
+      });
+
+      // UI: remover de pendientes y “mover” a historial
+      setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
+      setHistorial((prev) => [
+        {
+          folio: seleccion.Folio,
+          socio: seleccion.Socio,
+          tipo: seleccion.Tipo,
+          estado: "Aprobado",
+          ts: new Date().toISOString(),
+          idReq: seleccion.ID_Req,
+          imagen: seleccion.Adjunto_URL || null,
+        },
+        ...prev,
+      ]);
+
+      // Actualiza el detalle para ocultar botones
+      setSeleccion((s) => s ? { ...s, Estado: "Aprobado", Actor: directivaNombre } : s);
+      setRespuesta("");
       alert("✅ Requerimiento aprobado.");
-      setSeleccion(null); setRespuesta("");
     } catch (e) {
-      console.error(e); alert("No se pudo aprobar.");
-    } finally { setBusy(false); }
+      console.error(e);
+      alert(e.message || "No se pudo aprobar.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const rechazarBase = async () => {
-    if (!seleccion) return;
+  const rechazar = async () => {
+    if (!seleccion?.ID_Req) return;
     try {
       setBusy(true);
-      // await ReqsAPI.cambiarEstado(seleccion.ID_Req, { estado: "Rechazado", comentario: respuesta || "Rechazado" });
+      await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
+        estado: "Rechazado",
+        validadorNombre: directivaNombre,
+        comentario: respuesta?.trim() || "Rechazado",
+      });
+
+      setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
+      setHistorial((prev) => [
+        {
+          folio: seleccion.Folio,
+          socio: seleccion.Socio,
+          tipo: seleccion.Tipo,
+          estado: "Rechazado",
+          ts: new Date().toISOString(),
+          idReq: seleccion.ID_Req,
+          imagen: seleccion.Adjunto_URL || null,
+        },
+        ...prev,
+      ]);
+
+      setSeleccion((s) => s ? { ...s, Estado: "Rechazado", Actor: directivaNombre } : s);
+      setRespuesta("");
       alert("❌ Requerimiento rechazado.");
-      setSeleccion(null); setRespuesta("");
     } catch (e) {
-      console.error(e); alert("No se pudo rechazar.");
-    } finally { setBusy(false); }
+      console.error(e);
+      alert(e.message || "No se pudo rechazar.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  /* ===== Abrir modales ===== */
   const abrirConfirmAprobar = () => { if (!seleccion) return; setShowApprove(true); };
   const abrirConfirmRechazar = () => { if (!seleccion) return; setShowReject(true); };
-
-  /* ===== Confirmar desde modal ===== */
-  const confirmarAprobar = async () => { setShowApprove(false); await aprobarBase(); };
-  const confirmarRechazar = async () => { setShowReject(false); await rechazarBase(); };
+  const confirmarAprobar = async () => { setShowApprove(false); await aprobar(); };
+  const confirmarRechazar = async () => { setShowReject(false); await rechazar(); };
 
   const pedirMasInfo = () => {
     if (!seleccion) return;
-    const correo = seleccion?.Correo || seleccion?.Email || "";
-    if (correo) alert(`📨 Pedir más info a ${correo}`);
-    else alert("📨 No hay correo registrado para este requerimiento.");
+    alert("📨 Aquí puedes abrir tu flujo para pedir más información.");
   };
 
   const onHistView = async (folio) => {
     try {
       setBusy(true);
-      const row = (pendientes.find(p => p.Folio === folio) || historial.find(h => h.Folio === folio)) ?? null;
-      if (!row) { alert("No se pudo abrir el detalle."); return; }
-      // Normalizo a la forma del detalle:
-      const detail = pendientes.find(p => p.Folio === folio) || {
-        ID_Req: row.ID_Req,
-        Folio: row.Folio,
-        Socio: row.Socio,
-        Tipo: row.Tipo,
-        Estado: row.Estado,
-        Fecha_Solicitud: row.Fecha_Cambio,
-        Telefono: row.Telefono,
-        Direccion: row.Direccion,
-        Detalle: row.Detalle,
-        Adjunto_URL: row.Adjunto_URL
-      };
-      setSeleccion(detail);
-      setTimeout(() => scrollTo(detailRef), 0);
+      const det = await ReqsAPI.obtenerPorFolio(folio).catch(() => null);
+
+      if (det) {
+        openDetail(det);
+        return;
+      }
+
+      const h = historial.find((x) => x.folio === folio);
+      if (h) {
+        openDetail({
+          ID_Req: h.idReq ?? null,
+          Folio: h.folio,
+          Socio: h.socio,
+          Tipo: h.tipo,
+          Estado: h.estado,
+          Fecha_Solicitud: h.ts,
+          Direccion: h.direccion || "-",
+          Detalle: h.detalle || "-",
+          Adjunto_URL: h.imagen || null,
+        });
+        return;
+      }
+
+      alert("No se encontró el folio.");
     } catch (e) {
-      console.error(e); alert("No se pudo abrir el detalle.");
-    } finally { setBusy(false); }
+      console.error(e);
+      alert("No se pudo abrir el detalle.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onHistDelete = async (folio) => {
@@ -259,17 +371,21 @@ function RequerimientosContent() {
     try {
       setBusy(true);
       // UI optimista
-      setHistorial((prev) => (prev || []).filter((h) => (h.Folio || h.ID_Req) !== folio));
-      setPendientes((prev) => (prev || []).filter((p) => p.Folio !== folio));
-      // await ReqsAPI.eliminarPorFolio(folio);
-      alert("🗑️ Eliminado.");
+      setHistorial((prev) => prev.filter((h) => h.folio !== folio));
+      setPendientes((prev) => prev.filter((p) => p.Folio !== folio));
+      await ReqsAPI.eliminarPorFolio(folio);
       if (seleccion?.Folio === folio) setSeleccion(null);
+      alert("🗑️ Eliminado.");
     } catch (e) {
-      console.error(e); alert("No se pudo eliminar.");
-    } finally { setBusy(false); }
+      console.error(e);
+      alert(e.message || "No se pudo eliminar.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const hasDetail = Boolean(seleccion);
+  const isFinal = hasDetail && (seleccion.Estado === "Aprobado" || seleccion.Estado === "Rechazado");
 
   return (
     <div className="cd" ref={topRef}>
@@ -278,7 +394,6 @@ function RequerimientosContent() {
         <div className="cd__headerRow">
           <h1 className="cd__title">Requerimientos</h1>
           <div className="cd__actionsTop">
-            {/* SIN exportación (eliminado) */}
             <button className="cd__btn cd__btn--ghost" onClick={toggleHistory}>
               {showHistory ? "Ocultar historial" : "Historial"}
             </button>
@@ -319,7 +434,11 @@ function RequerimientosContent() {
                     <td>{r.Tipo}</td>
                     <td>{fmtDate(r.Fecha_Solicitud)}</td>
                     <td><span className="cd__badge is-pending">{r.Estado}</span></td>
-                    <td><button className="cd__btn cd__btn--ghost" onClick={() => openDetail(r)}>Revisar</button></td>
+                    <td>
+                      <button className="cd__btn cd__btn--ghost" onClick={() => openDetail(r)}>
+                        Revisar
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {!loadingList && pendientesOrdenados.length === 0 && <tr><td colSpan="6">Sin requerimientos pendientes.</td></tr>}
@@ -338,10 +457,20 @@ function RequerimientosContent() {
 
             <div className="cd__detailGrid">
               <div className="cd__kv"><span className="cd__k">Folio</span><span className="cd__v">{seleccion.Folio}</span></div>
-              <div className="cd__kv"><span className="cd__k">Socio</span><span className="cd__v">{seleccion.Socio} {seleccion.Telefono ? `· ${seleccion.Telefono}` : ""}</span></div>
+              <div className="cd__kv">
+                <span className="cd__k">Socio</span>
+                <span className="cd__v">{seleccion.Socio} {seleccion.Telefono ? `· ${seleccion.Telefono}` : ""}</span>
+              </div>
               <div className="cd__kv"><span className="cd__k">Dirección</span><span className="cd__v">{seleccion.Direccion || "-"}</span></div>
               <div className="cd__kv"><span className="cd__k">Tipo</span><span className="cd__v">{seleccion.Tipo}</span></div>
-              <div className="cd__kv"><span className="cd__k">Estado</span><span className="cd__v"><span className="cd__badge is-review">{seleccion.Estado}</span></span></div>
+              <div className="cd__kv">
+                <span className="cd__k">Estado</span>
+                <span className="cd__v">
+                  <span className={"cd__badge " + (isFinal ? (seleccion.Estado === "Aprobado" ? "is-ok" : "is-bad") : "is-review")}>
+                    {seleccion.Estado}
+                  </span>
+                </span>
+              </div>
 
               <div className="cd__block">
                 <span className="cd__k">Detalle</span>
@@ -352,26 +481,44 @@ function RequerimientosContent() {
                 <div className="cd__block">
                   <span className="cd__k">Adjunto</span>
                   <div className="cd__file">
-                    <img src={seleccion.Adjunto_URL} alt={`Adjunto del requerimiento ${seleccion.Folio}`} />
+                    <img
+                      src={seleccion.Adjunto_URL}
+                      alt={`Adjunto del requerimiento ${seleccion.Folio}`}
+                      onError={(e) => { e.currentTarget.src = `${API_BASE}/uploads/placeholder-image.png`; }}
+                      loading="lazy"
+                    />
                   </div>
                 </div>
               )}
 
               <div className="cd__actionsRow">
-                <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>Aprobar</button>
-                <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
+                {!isFinal && (
+                  <>
+                    <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>Aprobar</button>
+                    <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
+                  </>
+                )}
                 <button className="cd__btn cd__btn--warn" onClick={pedirMasInfo} disabled={busy}>Pedir más info</button>
               </div>
 
-              <div className="cd__resp">
-                <label htmlFor="resp">Comentario para el vecino</label>
-                <textarea
-                  id="resp" rows={4}
-                  value={respuesta}
-                  onChange={(e) => setRespuesta(e.target.value)}
-                  placeholder="Escribe aquí tu comentario…"
-                />
-              </div>
+              {!isFinal && (
+                <div className="cd__resp">
+                  <label htmlFor="resp">Comentario para el vecino</label>
+                  <textarea
+                    id="resp" rows={4}
+                    value={respuesta}
+                    onChange={(e) => setRespuesta(e.target.value)}
+                    placeholder="Escribe aquí tu comentario…"
+                  />
+                </div>
+              )}
+
+              {isFinal && seleccion?.Actor && (
+                <div className="cd__kv">
+                  <span className="cd__k">Validado por</span>
+                  <span className="cd__v">{seleccion.Actor}</span>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -415,9 +562,12 @@ function RequerimientosContent() {
                       </span>
                     </td>
                     <td className="cd__td--icons">
-                      <button className="cd__iconBtn" title="Ver" onClick={() => onHistView(h.folio)}><IconoVer /></button>
-                      {/* Sin editar en requerimientos */}
-                      <button className="cd__iconBtn" title="Eliminar" onClick={() => onHistDelete(h.folio)}><IconoEliminar /></button>
+                      <button className="cd__chipIcon" title="Ver" onClick={() => onHistView(h.folio)}>
+                        <span className="ico ico-view" aria-hidden />
+                      </button>
+                      <button className="cd__chipIcon" title="Eliminar" onClick={() => onHistDelete(h.folio)}>
+                        <span className="ico ico-trash" aria-hidden />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -461,10 +611,12 @@ function RequerimientosContent() {
 
 /* =================== Wrapper =================== */
 export default function RequerimientosDirectiva() {
-  const user = { nombre: "Nombre Directiva", cargo: "Cargo" };
+  // cámbialo por el nombre real de quien valida (sesión)
+  const user = { nombre: "Nombre Directiva", cargo: "Directiva" };
+
   return (
     <PanelLateralD title="Requerimientos" user={user} showTopUser={false}>
-      <RequerimientosContent />
+      <RequerimientosContent directivaNombre={user.nombre} />
     </PanelLateralD>
   );
 }

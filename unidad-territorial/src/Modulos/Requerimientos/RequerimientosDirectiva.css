@@ -11,6 +11,10 @@
   --content-accent: #f97316;
   --content-accent-bg: rgba(249,115,22,.08);
   --content-accent-bg-light: rgba(249,115,22,.12);
+
+  --ok: #16a34a;
+  --bad: #dc2626;
+  --warn: #eab308;
 }
 
 /* ===================================================================
@@ -21,6 +25,8 @@
   width: 100%;
   margin: 0;
   padding: 1.25rem 1rem;
+  color: var(--content-text);
+  background: var(--content-bg);
 }
 
 /* ===================================================================
@@ -35,12 +41,20 @@
 /* ===================================================================
    BOTONES
    =================================================================== */
-.cd__btn{ border: 0; border-radius: .6rem; padding: .55rem .9rem; cursor: pointer; font-weight: 600; transition: background .2s ease, transform .1s ease; }
-.cd__btn:hover{ transform: translateY(-1px); }
+.cd__btn{
+  border: 1px solid var(--content-border);
+  border-radius: .6rem; padding: .55rem .9rem; cursor: pointer;
+  font-weight: 600; transition: background .2s ease, transform .1s ease;
+  background: #fff; color: var(--content-text);
+}
+.cd__btn:hover{ transform: translateY(-1px); background: var(--content-hover); }
 .cd__btn--ghost{ background: var(--content-hover); color: var(--content-text-muted); }
-.cd__btn--ok{ background: #22c55e; color: #062235; }
-.cd__btn--danger{ background: #ef4444; color: #fff; }
-.cd__btn--warn{ background: var(--content-accent); color: #fff; }
+.cd__btn--ok{ background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.cd__btn--ok:hover{ background: #d1fae5; }
+.cd__btn--danger{ background: #fef2f2; border-color: #fecaca; color: #7f1d1d; }
+.cd__btn--danger:hover{ background: #fee2e2; }
+.cd__btn--warn{ background: #fffbeb; border-color: #fef3c7; color: #854d0e; }
+.cd__btn--warn:hover{ background: #fef3c7; }
 .cd__link{ color: var(--content-accent); text-decoration: underline; }
 
 /* ===================================================================
@@ -52,6 +66,7 @@
   border: 1px solid var(--content-border);
   border-radius: 14px;
   padding: 1rem;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
 }
 
 /* ===================================================================
@@ -81,13 +96,19 @@
   font-variant-numeric: tabular-nums;
 }
 .cd__table thead th{ font-weight: 600; opacity: .9; background: var(--content-hover); }
+.cd__table tbody tr:hover{ background: var(--content-hover); }
 .cd__table tr.is-sel{ background: var(--content-accent-bg); }
 
 .cd__table th:nth-child(1), .cd__table td:nth-child(1){ white-space: nowrap; width: 110px; }
 .cd__table th:nth-child(3), .cd__table td:nth-child(3){ white-space: nowrap; }
 .cd__table th:nth-child(4), .cd__table td:nth-child(4){ white-space: nowrap; }
 
-.cd__badge{ display: inline-flex; align-items: center; padding: .44rem .9rem; font-size: 1rem; line-height: 1; border-radius: 999px; border: 1px solid var(--content-border); white-space: nowrap; }
+.cd__badge{
+  display: inline-flex; align-items: center; padding: .44rem .9rem;
+  font-size: 1rem; line-height: 1; border-radius: 999px;
+  border: 1px solid var(--content-border); white-space: nowrap;
+  background: #fff;
+}
 .cd__badge.is-pending{ background: rgba(255,193,7,.12); }
 .cd__badge.is-review{ background: var(--content-accent-bg-light); }
 .cd__badge.is-ok{ background: rgba(16,185,129,.15); }
@@ -144,8 +165,14 @@
   background: var(--content-panel); color: var(--content-text); outline: none;
 }
 
-/* Botón descarga (no usado acá, pero mantenido por consistencia) */
-.cd__dl{ position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: rgba(0,0,0,.55); backdrop-filter: blur(2px); text-decoration: none; transition: background .2s ease; }
+/* Botón descarga (consistencia) */
+.cd__dl{
+  position: absolute; top: 8px; right: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(2px); text-decoration: none;
+  transition: background .2s ease;
+}
 .cd__dl:hover{ background: rgba(0,0,0,.75); }
 .cd__dl svg{ width: 18px; height: 18px; fill: #fff; }
 
@@ -158,14 +185,43 @@
 .cd__table--history thead th{ background: var(--content-hover); font-size: .9rem; }
 .cd__table--history tbody tr:hover{ background: var(--content-accent-bg); }
 
-.cd__th--icons, .cd__td--icons{ text-align: center; width: 130px; }
+.cd__th--icons, .cd__td--icons{ text-align: center; width: 130px; white-space: nowrap; }
+
+/* === NUEVO: chips de icono como en Certificados === */
+.cd__chipIcon{
+  --size: 34px;
+  width: var(--size); height: var(--size);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--content-border);
+  background: #fff; cursor: pointer; margin-right: .35rem;
+  transition: background .15s ease, transform .1s ease;
+}
+.cd__chipIcon:hover{ background: var(--content-hover); transform: translateY(-1px); }
+
+/* Íconos con CSS mask (ojo y papelera) */
+.ico{
+  display: inline-block; width: 18px; height: 18px;
+  background: #1e3a8a; /* azul */
+  mask-repeat: no-repeat; mask-position: center; mask-size: contain;
+}
+.ico-view{
+  /* Heroicons eye-outline */
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path stroke="%23000" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3" stroke="%23000" stroke-width="2"/></svg>');
+}
+.ico-trash{
+  /* Heroicons trash-outline */
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="%23000" stroke-width="2" d="M19 7l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7m3 0V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 7h16"/></svg>');
+}
+
+/* (Compat: estilos antiguos por si quedaron botones previos) */
 .cd__iconBtn{
   background: var(--content-hover);
   border: 1px solid var(--content-border);
   border-radius: .6rem; padding: .4rem; cursor: pointer;
   transition: background .15s ease, transform .1s ease;
 }
-.cd__iconBtn:hover{ background: var(--content-accent-bg); transform: scale(1.08); }
+.cd__iconBtn:hover{ background: var(--content-accent-bg); transform: scale(1.06); }
 .cd__icon{ width: 18px; height: 18px; display: block; fill: var(--content-text); opacity: .85; }
 .cd__iconBtn:hover .cd__icon{ opacity: 1; }
 
