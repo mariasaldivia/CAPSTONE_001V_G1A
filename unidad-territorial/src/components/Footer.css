@@ -15,7 +15,7 @@
 
 /* Contenedor en grid */
 .ft__grid{
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 2rem 1rem;
   display: grid;
@@ -26,7 +26,7 @@
 /* Grid en pantallas grandes */
 @media (min-width: 900px){
   .ft__grid{
-    grid-template-columns: 1.2fr 1fr 1fr 1fr; /* marca + 3 columnas */
+    grid-template-columns: 0.9fr 0.8fr 1.3fr 1fr; /* marca + 3 columnas */
     align-items: start;
   }
 }
@@ -35,17 +35,30 @@
 .ft__brand{
   display: flex;
   align-items: center;
-  gap: .75rem;
+  gap: .5rem;
   margin-bottom: .5rem;
+  flex-direction: column; /* Apilar logo y nombre en móvil */
+  align-items: center;
+  text-align: center;
 }
 .ft__logo{
-  height: 250px;
+  height: 200px;
   width: auto;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 4px;
 }
-.ft__brand-name{ font-size: 1.05rem; font-weight: 800; }
+.ft__brand-name { 
+  font-size: 1.2rem; /* Hacer el nombre más destacado */
+}
 .ft__brand-sub{ opacity: .9; }
+
+/* Nuevo estilo para el enlace de dirección */
+.ft__address-link {
+    display: flex;
+    font-size: 1.1rem;
+    font-weight: 300; /* Hace la dirección más visible */
+    padding-top: 5px;
+}
 
 /* Columnas */
 .ft__col{ display: grid; gap: .5rem; }
@@ -82,8 +95,10 @@
   justify-content: space-between;
   gap: .75rem;
   border-top: 1px solid var(--nav-border); /* Borde más claro */
+  padding: .9rem 1rem 1.25rem;
+  border-top: 1px solid var(--nav-border);
 }
-.ft__legal{ display: flex; gap: .9rem; }
+.ft__legal{ display: flex; gap: .9rem; margin-top: 10px; }
 
 /* Ajustes móviles */
 @media (max-width: 640px){
@@ -92,18 +107,30 @@
     align-items: flex-start;
   }
 }
-
+.ft__social-link {
+    /* 1. Alineación Horizontal y Vertical */
+    display: flex;
+    align-items: center; /* Centra el texto y el ícono verticalmente */
+    gap: 8px; /* Espacio entre el ícono y el texto */
+    
+    /* 2. Estilos de Texto */
+    color: var(--nav-fg); /* Color del texto del footer */
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
 /* Icono de Instagram */
 .ft__social {
   margin-top: 10px;
 }
 
 .ft__icon {
-  width: 50px;
-  height: 50px;
+    width: 35px; /* Un tamaño más apropiado para un ícono en línea */
+    height: auto;
   transition: transform 0.2s ease;
 }
 
 .ft__icon:hover {
   transform: scale(1.1);
 }
+

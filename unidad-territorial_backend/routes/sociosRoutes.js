@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSocios, aprobarSocio, rechazarSocio } from "../controllers/sociosController.js";
+import { getSocios, aprobarSocio, rechazarSocio, obtenerDetallesSocio } from "../controllers/sociosController.js";
 
 const router = Router();
 
@@ -14,6 +14,9 @@ router.patch("/aprobar/:idSocio", aprobarSocio);
 // DELETE /api/socios/rechazar/:idSocio
 // Rechaza (elimina) un socio pendiente
 router.delete("/rechazar/:idSocio", rechazarSocio);
+
+// RUTA PERFIL
+router.get("/detalles/:idUsuario", obtenerDetallesSocio);
 
 export default router;
 

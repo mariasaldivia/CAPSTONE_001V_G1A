@@ -10,33 +10,32 @@ export default function Footer() {
         {/* Marca / Logo */}
         <div className="ft__brand">
           <img
-            src="/logo.png" // el logo se carga directo desde /public
-            alt="Unidad Territorial"
+            src="/logo.png"
+            alt="Junta de Vecinos Mirador de Volcanes IV"
             className="ft__logo"
           />
           <div>
-            <strong className="ft__brand-name"></strong>
             <div className="ft__brand-sub">
-              
+              Junta de Vecinos
             </div>
+            <strong className="ft__brand-name">Mirador de Volcanes IV</strong>
+
           </div>
         </div>
 
         {/* Columna 1: Nuestra Sede Social */}
         <div className="ft__col">
           <h4 className="ft__title">Nuestra Sede Social</h4>
-          <p className="ft__text">
-            Visita nuestra sede en:
-            <br />
-            <strong>Lily Garafulic Yancovic 1787</strong>
-          </p>
+          {/* Unificar texto y enlace */}
+          <p className="ft__text">Visítanos y conversemos.</p>
           <a
-            className="ft__link"
-            href="https://maps.app.goo.gl/teHcy9VLQYvRVCan7"
+            className="ft__link ft__address-link" // Nueva clase para estilizar
+            href="https://maps.app.goo.gl/teHcy9VLQYvRVCan7" 
             target="_blank"
             rel="noreferrer"
           >
-            Ver en Google Maps
+            <i className="fa-solid fa-location-dot"></i> 
+            <strong>Lily Garafulic Yancovic 1787</strong>
           </a>
         </div>
 
@@ -45,7 +44,6 @@ export default function Footer() {
           <h4 className="ft__title">Contáctanos</h4>
           <ul className="ft__list">
             <li>
-              📧{" "}
               <a href="mailto:juntadevecinosvolcanescuatro@gmail.com" className="ft__link">
                 juntadevecinosvolcanescuatro@gmail.com
               </a>
@@ -54,25 +52,29 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Columna 3: Quiénes Somos */}
-        <div className="ft__col">
-          {/* Redes sociales */}
- 
-            <h4 className="ft__title">Siguenos en Instagram </h4>
-            <a
-              href="https://www.instagram.com/mirador.volcanesiv?igsh=MXBnbXZ3czNrbDduaw==" 
-              target="_blank"
-              rel="noreferrer"
-            >
-              <img
-                src="/instagram.png" // el ícono debe estar en /public/instagram.png
-                alt="Instagram"
-                className="ft__icon"
-              />
-                        
-            </a>
-            <p className="ft__text">@mirador.volcanesiv</p>
-          </div>
+{/* Columna 3: Redes Sociales */}
+<div className="ft__col">
+  <h4 className="ft__title">Síguenos</h4>
+  <p className="ft__text">Mantente al tanto de todas las novedades.</p>
+  
+  <div className="ft__social-icons">
+    {/* Usar íconos SVG/PNG pequeños o Font Awesome */}
+    <a
+      href="https://www.instagram.com/mirador.volcanesiv?igsh=MXBnbXZ3czNrbDduaw==" 
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Instagram de Mirador de Volcanes IV"
+      className="ft__social-link" // Añadimos una clase para estilizar
+    >
+      <img
+        src="/instagram.png"
+        alt="Instagram"
+        className="ft__icon"
+      />
+    @mirador.volcanesiv
+    </a>
+  </div>
+</div>
    
       </div>
 

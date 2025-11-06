@@ -83,3 +83,51 @@ export const rechazarSocio = async (req, res) => {
     res.status(500).json({ ok: false, message: "Error al rechazar socio", error: error.message });
   }
 };
+
+/** PARA DATOS DEL PERFIL
+ *  Obtiene los detalles de un socio específico usando el ID_Usuario (de la sesión).
+ */
+export const obtenerDetallesSocio = async (req, res) => {
+  // Obtenemos el ID_Usuario que viene de la URL (React nos lo enviará)
+  const { idUsuario } = req.params;
+
+  if (!idUsuario) {
+    return res.status(400).json({ ok: false, message: "No se proporcionó ID de usuario" });
+  }
+
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      // Pasamos el ID_Usuario como parámetro seguro
+      .input("idUsuario", sql.Int, idUsuario)
+      .query(`
+        SELECT 
+          ID_Socio, 
+          ID_Usuario, 
+          RUT, 
+          Nombres, 
+          Apellidos, 
+          CONVERT(varchar, Fecha_Nacimiento, 23) as Fecha_Nacimiento,
+          Calle, 
+          Numero_Casa, 
+          Correo, 
+          Telefono, 
+          Fecha_Inscripcion,
+          Estado_Inscripcion
+        FROM dbo.SOCIOS
+        WHERE ID_Usuario = @idUsuario  
+      `);
+
+    // Verificamos si encontramos al socio
+    if (result.recordset.length > 0) {
+      // Devolvemos solo el primer registro (debería ser único)
+      res.status(200).json({ ok: true, socio: result.recordset[0] });
+    } else {
+      res.status(404).json({ ok: false, message: "Socio no encontrado con ese ID de usuario" });
+    }
+
+  } catch (error) {
+    console.error("Error al obtener detalles del socio:", error);
+    res.status(500).json({ ok: false, message: "Error al obtener detalles del socio", error: error.message });
+  }
+};

@@ -84,6 +84,7 @@
 
 /* --- AVATAR (con z-index) --- */
 .perfil-avatar {
+    margin-top: 20px;
     width: 120px;
     height: 120px;
     border-radius: 50%;
@@ -111,6 +112,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr; /* 2 columnas de igual ancho para los grupos */
     gap: 20px 30px; /* Espacio vertical y horizontal entre los grupos */
+    border-bottom: 1px dashed var(--color-acento);
+    padding-top: 20px;
+    padding-bottom: 40px;
 }
 
 @media (max-width: 767px) {
@@ -122,9 +126,6 @@
 
 
 .perfil-grupo {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed var(--color-fondo-claro);
     /* CAMBIO: Para asegurar que el borde se vea bien con el grid */
     display: flex;
     flex-direction: column;

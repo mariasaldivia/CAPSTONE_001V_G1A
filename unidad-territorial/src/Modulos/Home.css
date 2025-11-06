@@ -1,56 +1,128 @@
 :root {
-      
-    --color-base-oscuro:#1e3a8a;      /* Azul Marino Oscuro (Confianza) */
-    --color-secundario: #1e40af;    /* Verde Azulado/Petróleo (Comunidad) */
-    --color-acento: #f97316;        /* Naranja Vibrante (Acción/Calidez) */
+  --color-base-oscuro: #1e3a8a;    /* Azul Marino Oscuro (Confianza) */
+  --color-secundario: #1e40af;     /* Azul Intermedio (Comunidad) */
+  --color-acento: #f97316;         /* Naranja Vibrante (Acción/Calidez) */
 
-    /* Colores Neutros */
-    --color-fondo-claro: #eff6ff;   /* Beige Claro (Acogida/Familia) */
-    --color-blanco: #FFFFFF;    
-
+  /* Colores Neutros */
+  --color-fondo-claro: #9cc6fd;    /* Azul Muy Claro */
+  --color-blanco: #ffffff;
 }
-/* ==================================== 
-SECCIÓN DIRECTIVA 
-==================================== */
+
+/* ESTILOS COMPARTIDOS  */
+/* ==================================== */
+.feature-grid {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 50px;
+}
+.feature-item {
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  text-align: left;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 40px;
+  padding-right: 40px;
+  background-color: var(--color-blanco);
+}
+
+#aboutUs, #destacada, #directiva, #preguntas, #contacto{
+  padding: 60px 5%;
+  text-align: center;
+}
+/* Título principal */
+#aboutUs h2, #destacada h2,
+#directiva h2, #preguntas h2, #contacto h2 {
+  font-size: 2.5em;
+  font-weight: 700;
+}
+/* Subtítulos dentro de cada tarjeta */
+#aboutUs .feature-item h3,
+#destacada .feature-item h3 {
+  color: var(--color-secundario);
+  font-size: 1.3em;
+  margin-bottom: 10px;
+}
+/* Justificación del texto */
+#aboutUs .feature-item p,
+#destacada .feature-item p  {
+  text-align: justify;
+  line-height: 1.6;
+}
+
+/* ==================================== */
+/* SECCIÓN SOBRE NOSOTROS               */
+/* ==================================== */
+#aboutUs {
+  background-color: var(--color-fondo-claro);
+}
+/* Título principal */
+#aboutUs h2 {
+  color: var(--color-base-oscuro);
+}
+/* Contenedor de cada bloque (Misión, Visión, etc.) */
+#aboutUs .feature-item {
+  border-left: 6px solid var(--color-acento); /* toque naranja */
+}
+
+/* ==================================== */
+/* SECCIÓN DESTACADA (CERCANÍA/FAMILIA) */
+/* ==================================== */
+#destacada {
+  background-color: var(--color-secundario);
+}
+#destacada h2, #destacada h3{
+  color: var(--color-blanco);
+}
+#destacada h3 {
+  font-size: 1.5em;
+  font-weight: 500;
+}
+
+/* ==================================== */
+/*        SECCIÓN DIRECTIVA             */                 
+/* ==================================== */
 #directiva {
-    background-color: var(--color-fondo-claro); 
-    color: var(--color-base-oscuro);
-    padding: 80px 5%;
-    text-align: center;
+  background-color: var(--color-fondo-claro); 
+  color: var(--color-base-oscuro);
 }
-
 .directiva-content {
-    max-width: 1200px;
-    margin: 0 auto;
+  max-width: 1300px;
+  margin: 0 auto;
 }
-
 #directiva h2 {
-    color: var(--color-base-oscuro); 
-    font-size: 2.5em;
-    margin-bottom: 10px;
+  color: var(--color-base-oscuro); 
 }
-
-#directiva p {
-    font-size: 1.1em;
-    margin-bottom: 40px;
-    color: var(--color-secundario); 
+#directiva .bajada {
+  text-align: center;
+  max-width: 900px;
+  font-size: 1.3em;
+  margin-bottom: 40px;
+  color: var(--color-secundario); 
+  font-weight: 400;
+  margin-left: auto; 
+  margin-right: auto;
 }
 
 /* MEJORA: CSS Grid para responsividad automática */
 .directiva-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  margin-bottom: 50px;
 }
 
 .miembro-card {
-    /* Ya no se necesita flex-basis ni min-width */
-    background-color: var(--color-blanco);
-    color: var(--color-base-oscuro);
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s ease;
+  /* Ya no se necesita flex-basis ni min-width */
+  background-color: var(--color-blanco);
+  color: var(--color-base-oscuro);
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
 }
 
 .miembro-card:hover {
@@ -59,37 +131,39 @@ SECCIÓN DIRECTIVA
 }
 
 .foto-placeholder {
-    width: 100px;
-    height: 100px;
-    background-color: var(--color-fondo-claro);
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    border: 3px solid var(--color-secundario);
+  width: 120px;
+  height: 120px;
+  background-color: var(--color-fondo-claro);
+  border-radius: 50%;
+  margin: 10px auto 40px;
+  border: 3px solid var(--color-secundario);
 }
 
 .miembro-card h3 {
-    font-size: 1.3em;
-    margin-bottom: 5px;
-    color: var(--color-base-oscuro);
+  font-size: 1.3em;
+  margin-bottom: 5px;
+  color: var(--color-base-oscuro);
 }
 
 .miembro-card h4 {
-    font-size: 1em;
-    font-weight: normal;
-    margin-bottom: 10px;
-    color: var(--color-acento);
+  font-size: 1.2em;
+  font-weight: normal;
+  margin-bottom: 10px;
+  color: var(--color-acento);
 }
 
 .miembro-card p {
-    font-size: 0.9em;
-    margin-bottom: 15px;
-    color: var(--color-secundario); /* MEJORA: !important eliminado */
+  font-size: 1em;
+  margin-bottom: 25px;
+  color: var(--color-secundario); 
+  padding-left: 10px;
+  padding-right: 10px;
 }
 .perfil-link {
-    color: var(--color-secundario);
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 0.9em;
+  color: var(--color-secundario);
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.9em;
 }
 
 .perfil-link:hover {
@@ -131,80 +205,16 @@ SECCIÓN DIRECTIVA
 }
 
 /* ==================================== */
-/* SECCIÓN SOBRE NOSOTROS*/
+/* ==== PREGUNTAS FRECUENTES==== */
 /* ==================================== */
-#aboutUs {
-    padding: 60px 5%;
-    background-color: var(--color-base-oscuro);
-    text-align: center;
+#preguntas {
+  background-color: var(--color-secundario);
+  margin-bottom: 40px;
 }
 
-#aboutUs h2 {
-    color: var(--color-blanco);
-    font-size: 2em;
-    margin-bottom: 20px;
-}
-
-/* ==================================== */
-/* SECCIÓN DESTACADA (CERCANÍA/FAMILIA) */
-/* ==================================== */
-#destacada {
-    padding: 60px 5%;
-    background-color: var(--color-fondo-claro);
-    text-align: center;
-}
-
-#destacada h2 {
-    color: var(--color-secundario);
-    font-size: 2em;
-    margin-bottom: 20px;
-}
-        
-/* MEJORA: Estilos DRY para .feature-grid y .feature-item
-  Se definen los estilos comunes una sola vez.
-*/
-.feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-}
-
-.feature-item {
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.feature-item h3 {
-    color: var(--color-secundario);
-}
-
-/* Estilos específicos que SÍ cambian */
-#aboutUs .feature-item {
-    background-color: var(--color-fondo-claro); 
-}
-
-#destacada .feature-item {
-    background-color: var(--color-blanco); 
-}
-
-/* ==== PREGUNTAS FRECUENTES ==== */
-
-#faq {
-  margin: 60px auto;
-  padding: 40px 20px;
-  max-width: 800px;
-  background: var(--color-fondo-claro);
-  border-radius: 16px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
-
-#faq h2 {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: var(--color-base-oscuro);
+#preguntas h2 {
+  color: var(--color-blanco);
+  margin-bottom: 40px;
 }
 
 .faq-toggle-button {
@@ -215,6 +225,7 @@ SECCIÓN DIRECTIVA
   color: var(--color-blanco);
   border: none;
   border-radius: 8px;
+  font-size: large;  
   font-weight: 600;
   cursor: pointer;
   transition: background 0.3s;
@@ -225,7 +236,9 @@ SECCIÓN DIRECTIVA
 }
 
 .faq-toggle-button.cerrar {
-  background: var(--color-secundario);
+  margin-top: 40px;
+  color: var(--color-base-oscuro);
+  background: var(--color-fondo-claro);
 }
 
 .faq-list {
@@ -296,4 +309,72 @@ SECCIÓN DIRECTIVA
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-3px); }
   to { opacity: 1; transform: translateY(0); }
+}
+/* ==================================== */
+/*      CONTACTO              */
+/* ==================================== */
+
+#contacto p {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 30px; /* Espacio con el botón */
+}
+
+.contacto-wrapper {
+    max-width: 800px;
+    margin: 0 auto; 
+    padding: 0 20px;
+}
+
+#contacto h2 {
+    font-size: 2.2em;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+#contacto p {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* --- 2. Estilos para la Cuadrícula de Información (info-grid) --- */
+.info-grid {
+    display: flex; /* Usamos Flexbox para centrar y distribuir */
+    flex-wrap: wrap;
+    justify-content: center; /* Centra los bloques en el eje horizontal */
+    gap: 20px 40px; 
+    margin: 0 auto 40px auto; 
+    max-width: 700px;
+}
+
+.info-grid p {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: bold; /* Damos más peso al texto de contacto */
+    color: #333;
+}
+
+.info-grid p a {
+    color: #333;
+    text-decoration: none;
+    border-bottom: 2px dotted #ff8c00; /* Subrayado punteado en el email */
+}
+
+/* --- 3. Estilos del Botón CTA --- */
+.cta-button {
+    display: inline-block;
+    padding: 15px 40px;
+    background-color: #ff8c00; 
+    color: white;
+    text-decoration: none;
+    border-radius: 50px; /* Botón con bordes redondeados */
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 40px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para que resalte */
+}
+
+.cta-button:hover {
+    background-color: #e57e00;
 }
