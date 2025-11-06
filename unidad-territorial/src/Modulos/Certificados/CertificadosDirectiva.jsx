@@ -145,11 +145,11 @@ function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
           <p>Este ingreso <b>manual</b> quedará registrado y se <b>aprobará de inmediato</b> (pasará al historial).</p>
           {datos && (
             <div className="cd__modalData">
-              <p><b>Nombre:</b> {datos.nombre || "-"}</p>
-              <p><b>RUT:</b> {datos.rut || "-"}</p>
-              <p><b>Dirección:</b> {datos.direccion || "-"}</p>
-              <p><b>Correo:</b> {datos.email || "-"}</p>
-              <p><b>Método de pago:</b> {datos.metodoPago || "-"}</p>
+              <p><b>Nombre:</b> {datos.nombre || "-"} </p>
+              <p><b>RUT:</b> {datos.rut || "-"} </p>
+              <p><b>Dirección:</b> {datos.direccion || "-"} </p>
+              <p><b>Correo:</b> {datos.email || "-"} </p>
+              <p><b>Método de pago:</b> {datos.metodoPago || "-"} </p>
             </div>
           )}
         </div>
@@ -742,6 +742,11 @@ function CertificadosContent() {
                 <div className="cd__kv"><span className="cd__k">Correo</span>
                   <span className="cd__v"><a className="cd__link" href={`mailto:${seleccion.Email}`}>{seleccion.Email}</a></span>
                 </div>
+
+                {/* NUEVO: Teléfono */}
+                <div className="cd__kv"><span className="cd__k">Teléfono</span><span className="cd__v">{seleccion.TELEFONO ?? seleccion.Telefono ?? seleccion.telefono ?? "-"}</span>
+</div>
+
                 <div className="cd__kv"><span className="cd__k">Estado</span>
                   <span className="cd__v"><span className="cd__badge is-review">{seleccion.Estado}</span></span>
                 </div>
@@ -789,7 +794,7 @@ function CertificadosContent() {
                   <div className="cd__actionsRow">
                     <button className="cd__btn cd__btn--ok" onClick={aprobar} disabled={busy}>Aprobar</button>
                     <button className="cd__btn cd__btn--danger" onClick={rechazar} disabled={busy}>Rechazar</button>
-                    <button className="cd__btn cd__btn--warn" onClick={() => alert(`📨 Pedir más info a ${seleccion.Email}`)} disabled={busy}>Pedir más info</button>
+                    {/* botón "Pedir más info" eliminado */}
                   </div>
                 )}
 

@@ -36,7 +36,7 @@ const normRequer = (r) => ({
   Folio: r.FOLIO ?? r.Folio ?? "-",
   Rut: r.PERFIL_RUT ?? r.Rut ?? r.RUT ?? "",
   Socio: r.NOMBRE_SOLICITANTE ?? r.Socio ?? "",
-  Telefono: r.TELEFONO ?? r.Telefono ?? "", // ← vendrá del JOIN con SOCIOS
+  Telefono: r.TELEFONO ?? r.Telefono ?? "", // puede venir vacío en "pendientes"
   Email: r.EMAIL_SOLICITANTE ?? r.EMAIL ?? r.Email ?? "",
   Tipo: r.ASUNTO ?? r.Tipo ?? "",
   Direccion: r.DIRECCION ?? r.Direccion ?? "",
@@ -59,6 +59,25 @@ const normHistRow = (h) => ({
   detalle: h.DESCRIPCION ?? "",
   imagen: normalizeUrl(h.IMAGEN_URL ?? null),
   validador: h.VALIDADOR_NOMBRE ?? null,
+  telefono: h.TELEFONO ?? h.Telefono ?? "",   // ← VIENE DIRECTO DE dbo.HISTORIAL_REQUERIMIENTOS
+  email: h.EMAIL ?? h.Email ?? h.EMAIL_SOLICITANTE ?? "", // opcional si lo tienes en esa tabla
+});
+
+/** Convierte una fila de HISTORIAL a "detalle" (para el panel derecho) */
+const histRowToDetail = (h) => ({
+  ID_Req: h.ID ?? h.Id ?? null,
+  Folio: h.FOLIO ?? h.Folio ?? "-",
+  Rut: h.PERFIL_RUT ?? h.Rut ?? h.RUT ?? "",
+  Socio: h.NOMBRE_SOLICITANTE ?? h.Socio ?? "",
+  Telefono: h.TELEFONO ?? h.Telefono ?? "",
+  Email: h.EMAIL ?? h.Email ?? h.EMAIL_SOLICITANTE ?? "",
+  Tipo: h.ASUNTO ?? h.Tipo ?? "",
+  Direccion: h.DIRECCION ?? h.Direccion ?? "",
+  Detalle: h.DESCRIPCION ?? h.Detalle ?? "",
+  Estado: h.ESTADO ?? h.Estado ?? "Pendiente",
+  Fecha_Solicitud: h.CREATED_AT ?? h.UPDATED_AT ?? null,
+  Adjunto_URL: normalizeUrl(h.IMAGEN_URL ?? null),
+  Actor: h.VALIDADOR_NOMBRE ?? h.ACTOR_NOMBRE ?? null,
 });
 
 /* =================== API wrapper (alineado a tus rutas) =================== */
@@ -114,7 +133,27 @@ const ReqsAPI = {
     return true;
   },
 
+  /** Lee el detalle priorizando el HISTORIAL (donde está TELEFONO) */
   async obtenerPorFolio(folio) {
+    // 1) INTENTO: leer DIRECTO del historial por folio (dbo.HISTORIAL_REQUERIMIENTOS)
+    //    Ajusta la ruta si tu backend expone otra URL.
+    try {
+      const rHist = await fetch(
+        `${API_BASE}/api/requerimientos/_historial/folio/${encodeURIComponent(folio)}`, // ← lee DIRECTO del historial
+        { credentials: "include" }
+      );
+      const jHist = await rHist.json().catch(() => ({}));
+      if (rHist.ok && jHist) {
+        const row = jHist.data ?? jHist;
+        if (row && (row.TELEFONO || row.FOLIO)) {
+          return histRowToDetail(row);
+        }
+      }
+    } catch (_) {
+      // sigue con el fallback
+    }
+
+    // 2) FALLBACK: endpoint previo (podría no traer TELEFONO si no hace JOIN)
     const resp = await fetch(`${API_BASE}/api/requerimientos/folio/${encodeURIComponent(folio)}`, {
       credentials: "include",
     });
@@ -232,6 +271,10 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
       ts: h.ts,
       idReq: h.idReq,
       imagen: h.imagen,
+      telefono: h.telefono || "",
+      email: h.email || "",
+      direccion: h.direccion || "",
+      detalle: h.detalle || "",
     }));
     const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
     const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
@@ -245,9 +288,22 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
   }, [histOrder, historial]);
 
   const scrollTo = (ref) => ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const openDetail = (row) => { setSeleccion(row); setTimeout(() => scrollTo(detailRef), 0); };
-  const closeDetail = () => { setSeleccion(null); setTimeout(() => scrollTo(topRef), 0); };
-  const toggleHistory = () => { setShowHistory((s) => !s); setSeleccion(null); setTimeout(() => scrollTo(historyRef), 0); };
+
+  const openDetail = (row) => {
+    setSeleccion(row);
+    setTimeout(() => scrollTo(detailRef), 0);
+  };
+
+  const closeDetail = () => {
+    setSeleccion(null);
+    setTimeout(() => scrollTo(topRef), 0);
+  };
+
+  const toggleHistory = () => {
+    setShowHistory((s) => !s);
+    setSeleccion(null);
+    setTimeout(() => scrollTo(historyRef), 0);
+  };
 
   /* ===== Acciones ===== */
   const aprobar = async () => {
@@ -271,6 +327,10 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
           ts: new Date().toISOString(),
           idReq: seleccion.ID_Req,
           imagen: seleccion.Adjunto_URL || null,
+          telefono: seleccion.Telefono || "",
+          email: seleccion.Email || "",
+          direccion: seleccion.Direccion || "",
+          detalle: seleccion.Detalle || "",
         },
         ...prev,
       ]);
@@ -307,6 +367,10 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
           ts: new Date().toISOString(),
           idReq: seleccion.ID_Req,
           imagen: seleccion.Adjunto_URL || null,
+          telefono: seleccion.Telefono || "",
+          email: seleccion.Email || "",
+          direccion: seleccion.Direccion || "",
+          detalle: seleccion.Detalle || "",
         },
         ...prev,
       ]);
@@ -330,23 +394,23 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
   const onHistView = async (folio) => {
     try {
       setBusy(true);
-      // Preferimos API para obtener lo más fresco (incluye Telefono/Email si el backend hace JOIN)
-      const det = await ReqsAPI.obtenerPorFolio(folio).catch(() => null);
 
+      // Preferimos API (HISTORIAL) para obtener el teléfono
+      const det = await ReqsAPI.obtenerPorFolio(folio).catch(() => null);
       if (det) {
         openDetail(det);
         return;
       }
 
-      // Fallback desde la fila del historial en memoria
+      // Fallback desde la fila del historial cargada en memoria
       const h = historial.find((x) => x.folio === folio);
       if (h) {
         openDetail({
           ID_Req: h.idReq ?? null,
           Folio: h.folio,
           Socio: h.socio,
-          Telefono: "", // no viene en historial por defecto
-          Email: "",
+          Telefono: h.telefono || "",
+          Email: h.email || "",
           Tipo: h.tipo,
           Estado: h.estado,
           Fecha_Solicitud: h.ts,
@@ -382,6 +446,22 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Cuando abres un pendiente, intenta hidratar Teléfono/Email desde historial (si existiera ya) */
+  const openDetailHydrateFromHist = (row) => {
+    const h = historial.find((x) => x.folio === row.Folio);
+    if (h && (h.telefono || h.email)) {
+      openDetail({
+        ...row,
+        Telefono: row.Telefono || h.telefono || "",
+        Email: row.Email || h.email || "",
+        Direccion: row.Direccion || h.direccion || "",
+        Detalle: row.Detalle || h.detalle || "",
+      });
+      return;
+    }
+    openDetail(row);
   };
 
   const hasDetail = Boolean(seleccion);
@@ -435,7 +515,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
                     <td>{fmtDate(r.Fecha_Solicitud)}</td>
                     <td><span className="cd__badge is-pending">{r.Estado}</span></td>
                     <td>
-                      <button className="cd__btn cd__btn--ghost" onClick={() => openDetail(r)}>
+                      <button className="cd__btn cd__btn--ghost" onClick={() => openDetailHydrateFromHist(r)}>
                         Revisar
                       </button>
                     </td>
@@ -511,7 +591,6 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
                     <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
                   </>
                 )}
-                {/* Botón "Pedir más info" eliminado */}
               </div>
 
               {!isFinal && (

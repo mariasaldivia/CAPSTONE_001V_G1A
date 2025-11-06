@@ -195,10 +195,16 @@ export default function RequerimientosVecino() {
           <SuccessPanel data={successData} onClose={() => setSuccessData(null)} />
         ) : (
           <>
-            <p className="rv__intro">
-              Cuéntanos lo que necesita tu comunidad.
-Usa este formulario para informar problemas, hacer sugerencias o solicitar apoyo a la Junta de Vecinos. Tu participación ayuda a mejorar el entorno de todos.
-            </p>
+           <p style={{ margin: "0 .75rem 1rem", textAlign: "center", color: "#475569", lineHeight: 1.5, }} > Usa este formulario para ingresar tus solicitudes 
+            o requerimientos a la Junta de Vecinos. Indica el tipo de requerimiento, la dirección exacta y, si lo deseas, adjunta una imagen que ayude a entender la situación. 
+            En Comentarios puedes agregar detalles importantes. </p>
+             <ul style={{ margin: "0 1.25rem 1rem", 
+              paddingLeft: "1.1rem", color: "#64748b", 
+              fontSize: ".95rem", lineHeight: 1.5, }} >
+                 <li> Completa tu <strong>Nombre</strong> y <strong>RUT</strong> (se intentan cargar desde tu sesión).
+                  </li> <li> Elige el <strong>tipo</strong> que mejor describa tu solicitud y la{" "} 
+                  <strong>dirección</strong> lo más precisa posible. </li> <li> Adjunta una <strong>imagen</strong> 
+                  si ayuda a explicar el caso (opcional). </li> </ul>
            
             <form className="rv__form" onSubmit={onSubmit} noValidate>
               <div className="rv__row">

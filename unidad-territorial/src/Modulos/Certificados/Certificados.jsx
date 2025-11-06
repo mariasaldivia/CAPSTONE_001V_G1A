@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react"; 
 import "./Certificados.css";
 import { CertAPI } from "../../api/certificados"; // 👈 helper API
 
@@ -41,7 +41,8 @@ export default function Certificados() {
     rut: "",
     direccion: "",
     email: "",
-    comprobante: null, // file (opcional, si no sube se toma "Fisico")
+    telefono: "",       // 👈 NUEVO
+    comprobante: null,  // file (opcional, si no sube se toma "Fisico")
   });
 
   // UI estados
@@ -87,12 +88,13 @@ export default function Certificados() {
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // Habilitar botón (👉 ahora el comprobante es obligatorio)
+  // Habilitar botón (👉 comprobante obligatorio)
   const puedeEnviar =
     form.nombre.trim() &&
     form.rut.trim() &&
     form.direccion.trim() &&
     form.email.trim() &&
+    form.telefono.trim() &&     // 👈 obligatorio
     !!form.comprobante &&
     rutValido &&
     !loading;
@@ -128,7 +130,7 @@ export default function Certificados() {
       setRutValido(false);
       return;
     }
-    if (!form.nombre || !form.direccion || !form.email || !form.comprobante) {
+    if (!form.nombre || !form.direccion || !form.email || !form.telefono || !form.comprobante) {
       return;
     }
 
@@ -142,8 +144,8 @@ export default function Certificados() {
         rut: form.rut.trim(),
         direccion: form.direccion.trim(),
         email: form.email.trim(),
+        telefono: form.telefono.trim(),   // 👈 NUEVO
         metodoPago,
-        // 👇 ya no enviamos una URL falsa; el archivo se sube en un segundo paso
         comprobanteUrl: form.comprobante ? null : null,
         notas: "Solicitud web (socio)",
         idSocio: null,
@@ -153,7 +155,6 @@ export default function Certificados() {
       // 1) Crear solicitud
       const row = await CertAPI.solicitarDesdeWeb(payload);
 
-      // Obtén ID_Cert (defensivo por si cambia el nombre)
       const idCert =
         row?.ID_Cert ?? row?.id ?? row?.Id ?? row?.idCert ?? null;
 
@@ -174,11 +175,17 @@ export default function Certificados() {
       setDone(true);
 
       // Limpiar form
-      setForm({ nombre: "", rut: "", direccion: "", email: "", comprobante: null });
+      setForm({
+        nombre: "",
+        rut: "",
+        direccion: "",
+        email: "",
+        telefono: "",     // 👈 reset
+        comprobante: null
+      });
       setFileName("");
       setFilePreview(null);
 
-      // Scroll arriba para ver el mensaje
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error(err);
@@ -225,7 +232,6 @@ export default function Certificados() {
             </div>
           )}
 
-          {/* Aviso si falló la subida del comprobante */}
           {uploadWarn && <div className="form-error" style={{ marginTop: 12 }}>{uploadWarn}</div>}
 
           <div className="success__actions">
@@ -241,7 +247,6 @@ export default function Certificados() {
         <main className="grid">
           {/* FORMULARIO */}
           <form className="card form" onSubmit={onSubmit} noValidate id="formulario">
-            {/* Error inline */}
             {errorMsg && <div className="form-error">{errorMsg}</div>}
 
             {/* Nombre */}
@@ -303,6 +308,21 @@ export default function Certificados() {
                 onChange={onChange}
                 required
                 autoComplete="email"
+              />
+            </div>
+
+            {/* Teléfono (NUEVO) */}
+            <div className="group">
+              <label htmlFor="telefono">Teléfono*</label>
+              <input
+                id="telefono"
+                name="telefono"
+                placeholder="+56912345678"
+                value={form.telefono}
+                onChange={onChange}
+                required
+                inputMode="tel"
+                autoComplete="tel"
               />
             </div>
 

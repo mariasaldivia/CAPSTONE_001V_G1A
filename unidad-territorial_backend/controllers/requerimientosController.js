@@ -76,7 +76,7 @@ export const crearRequerimiento = async (req, res) => {
     let imagenUrl = null;
     if (req.file) imagenUrl = publicUrlFor(req.file.path);
 
-    // ── NUEVO: si no viene teléfono, buscar en SOCIOS por RUT normalizado
+    // ── si no viene teléfono, buscar en SOCIOS por RUT normalizado
     const telFromSocioRs = await pool.request()
       .input("rutSocio", rut_socio)
       .query(`
@@ -155,7 +155,7 @@ export const listarRequerimientos = async (req, res) => {
         COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
         R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
         R.CREATED_AT, R.IMAGEN_URL,
-        S.Telefono AS TELEFONO
+        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
       FROM dbo.REQUERIMIENTOS R
       LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
     `;
@@ -186,7 +186,7 @@ export const obtenerRequerimiento = async (req, res) => {
         COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
         R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
         R.CREATED_AT, R.IMAGEN_URL,
-        S.Telefono AS TELEFONO
+        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
       FROM dbo.REQUERIMIENTOS R
       LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
       WHERE R.ID = @id
@@ -348,7 +348,7 @@ export const listarHistorial = async (req, res) => {
         COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
         H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
         H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
-        S.Telefono AS TELEFONO
+        COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO
       FROM dbo.HISTORIAL_REQUERIMIENTOS H
       LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
     `;
@@ -438,7 +438,7 @@ export const obtenerPorFolio = async (req, res) => {
         COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
         R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
         R.CREATED_AT, R.IMAGEN_URL,
-        S.Telefono AS TELEFONO
+        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
       FROM dbo.REQUERIMIENTOS R
       LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
       WHERE R.FOLIO=@folio
@@ -451,7 +451,7 @@ export const obtenerPorFolio = async (req, res) => {
         COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
         H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
         H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
-        S.Telefono AS TELEFONO
+        COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO
       FROM dbo.HISTORIAL_REQUERIMIENTOS H
       LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
       WHERE H.FOLIO=@folio
