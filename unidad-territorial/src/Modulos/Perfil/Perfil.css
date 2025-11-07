@@ -266,3 +266,107 @@ a:hover {
 .perfil-btn-editar:hover {
     background-color: #e0630b; 
 }
+
+
+/* --- 5. ESTILOS PARA MODO EDICIÓN --- */
+
+/* El input de texto general */
+.perfil-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1.05em; /* Un poco más pequeño que el texto para que quepa bien */
+  font-family: Arial, sans-serif;
+  color: var(--color-base-oscuro);
+  background-color: var(--color-blanco);
+  border: 1px solid var(--color-secundario); /* Borde azul */
+  border-radius: 6px;
+  box-sizing: border-box; /* Súper importante para que el padding no rompa el ancho */
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Efecto visual al seleccionar el input */
+.perfil-input:focus {
+  outline: none;
+  border-color: var(--color-acento); /* Borde naranja al enfocar */
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); /* Sombra naranja suave */
+}
+
+/* Contenedor para "Calle" y "Número" */
+.perfil-grupo-direccion {
+  display: flex;
+  gap: 10px; /* Espacio entre los dos inputs */
+}
+
+/* Hacemos que el input de la calle ocupe el espacio disponible */
+.perfil-grupo-direccion .perfil-input {
+  flex: 1; /* Ocupa el espacio sobrante */
+}
+
+/* El input corto para el número de casa */
+.perfil-input-numero {
+  /* Replicamos los estilos base del .perfil-input */
+  padding: 10px 12px;
+  font-size: 1.05em;
+  font-family: Arial, sans-serif;
+  color: var(--color-base-oscuro);
+  background-color: var(--color-blanco);
+  border: 1px solid var(--color-secundario);
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  
+  /* El cambio clave: un ancho fijo */
+  width: 80px; 
+  flex-shrink: 0; /* Evita que se encoja */
+}
+
+.perfil-input-numero:focus {
+  outline: none;
+  border-color: var(--color-acento);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+/* Contenedor para los botones "Guardar" y "Cancelar" */
+.perfil-botones-accion {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px; /* Espacio extra arriba */
+  
+  /* Esto hace que el contenedor se alinee a la derecha de la grilla */
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+/* Botón de Guardar (Estilo principal) */
+.perfil-btn-guardar {
+  background-color: var(--color-acento); /* Naranja */
+  color: var(--color-blanco);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.perfil-btn-guardar:hover {
+  background-color: #e0630b; /* Naranja más oscuro */
+}
+
+/* Botón de Cancelar (Estilo secundario) */
+.perfil-btn-cancelar {
+  background-color: #9ca3af; /* Un gris neutro */
+  color: var(--color-blanco);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.perfil-btn-cancelar:hover {
+  background-color: #6b7280; /* Gris más oscuro */
+}

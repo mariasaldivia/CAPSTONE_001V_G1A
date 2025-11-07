@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSocios, aprobarSocio, rechazarSocio, obtenerDetallesSocio } from "../controllers/sociosController.js";
+import { getSocios, aprobarSocio, rechazarSocio, obtenerDetallesSocio, actualizarContacto } from "../controllers/sociosController.js";
 
 const router = Router();
 
@@ -17,6 +17,9 @@ router.delete("/rechazar/:idSocio", rechazarSocio);
 
 // RUTA PERFIL
 router.get("/detalles/:idUsuario", obtenerDetallesSocio);
+
+//ACTUALIZAR
+router.patch("/actualizar/:idUsuario",actualizarContacto);
 
 export default router;
 

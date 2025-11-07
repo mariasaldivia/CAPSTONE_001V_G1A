@@ -55,7 +55,7 @@ export default function Certificados() {
   const [folio, setFolio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [uploadWarn, setUploadWarn] = useState(""); // ⚠️ aviso si falla el upload
+  const [uploadWarn, setUploadWarn] = useState(""); 
 
   // Manejo de cambios
   const onChange = (e) => {
@@ -88,13 +88,13 @@ export default function Certificados() {
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // Habilitar botón (👉 comprobante obligatorio)
+  // Habilitar botón
   const puedeEnviar =
     form.nombre.trim() &&
     form.rut.trim() &&
     form.direccion.trim() &&
     form.email.trim() &&
-    form.telefono.trim() &&     // 👈 obligatorio
+    form.telefono.trim() &&     
     !!form.comprobante &&
     rutValido &&
     !loading;
@@ -144,7 +144,7 @@ export default function Certificados() {
         rut: form.rut.trim(),
         direccion: form.direccion.trim(),
         email: form.email.trim(),
-        telefono: form.telefono.trim(),   // 👈 NUEVO
+        telefono: form.telefono.trim(),   
         metodoPago,
         comprobanteUrl: form.comprobante ? null : null,
         notas: "Solicitud web (socio)",
@@ -371,7 +371,7 @@ export default function Certificados() {
                 <strong>Nombre:</strong> Junta de Vecinos Mirador Cuatro
               </li>
               <li>
-                <strong>RUT:</strong> 65.205.436-6  65205436-6
+                <strong>RUT:</strong> 65.205.436-6 
               </li>
               <li>
                 <strong>Banco:</strong> Banco Estado

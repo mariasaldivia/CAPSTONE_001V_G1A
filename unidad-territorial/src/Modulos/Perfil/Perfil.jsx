@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Perfil.css'; // Asegúrate de que la ruta sea correcta
+import Modal from '../../components/Modal';
 
 function leerUsuarioSesion() {
   try {
@@ -56,55 +57,111 @@ export default function Perfil() {
   const [cargando, setCargando] = useState(true); // Para manejar el estado de carga
   const [error, setError] = useState(null); // Para manejar errores
 
-  // --- EDICIÓN ---
-  const [isEditing, setIsEditing] = useState(false); // ¿Está en modo edición?
-  const [formData, setFormData] = useState({ // Datos del formulario
-    correo: '',
-    telefono: '',
-    calle: '',
-    numeroCasa: ''
+  // --- ACTUALIZAR Datos ---
+  const [isEditing, setIsEditing] = useState(false); 
+  const [formData, setFormData] = useState({ 
+    Correo: '',
+    Telefono: '',
+    Calle: '',
+    Numero_Casa: ''
   });
+
+  //MODAL
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+
+  // 1. Se llama al hacer clic en "Editar Perfil"
+  const handleEditClick = () => {
+    // 2. CARGA LOS NUEVOS CAMPOS DESDE 'datosSocio'
+    setFormData({
+      Correo: datosSocio.Correo,
+      Telefono: datosSocio.Telefono,
+      Calle: datosSocio.Calle,
+      Numero_Casa: datosSocio.Numero_Casa,
+    });
+    setIsEditing(true); // Muestra el formulario
+  };
+
+  // 2. Se llama al hacer clic en "Cancelar"
+  const handleCancelClick = () => {
+    setIsEditing(false); // Oculta el formulario
+  };
+
+  // 3. Se llama al hacer clic en "Guardar"
+  const handleSaveClick = async () => {
+    try {
+      const idParaGuardar = usuario.ID_Usuario || usuario.id;
+      const data = await actualizarDatosSocio(idParaGuardar, formData);
+      // Actualiza el estado local (datosSocio) para que la UI se refresque
+      // Usamos el 'data.datosActualizados' que nos devuelve la API
+      setDatosSocio(prevSocio => ({
+        ...prevSocio,
+        ...data.datosActualizados 
+      }));
+
+      setIsEditing(false); // Oculta el formulario
+
+      //Abrir el MODAL de ÉXITO
+      setModalState({
+        isOpen: true,
+        type: 'success',
+        title: '¡Éxito!',
+        message: 'Tus datos se cambiaron correctamente.'
+      });
+      
+    } catch (error) {
+      console.error("Error al guardar:", error);
+
+      //Abrir el MODAL de ERROR
+      setModalState({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: error.message || 'No se pudo guardar la información.'
+      });
+    }
+  };
+
 
   useEffect(() => {
     const usuarioGuardado = leerUsuarioSesion();
     setUsuario(usuarioGuardado);
 
-    // Verificamos que tengamos un usuario y su ID_Usuario para buscar
-     if (usuarioGuardado && usuarioGuardado.ID_Usuario) {
+    // *** LA SOLUCIÓN ***
+    // Buscamos el ID con CUALQUIER nombre posible (id, ID_Usuario).
+    // Esto funciona si el usuario tiene 1 rol (ID_Usuario) o varios (id).
+    const idParaBuscar = usuarioGuardado ? (usuarioGuardado.ID_Usuario || usuarioGuardado.id) : null;
+// Si se encontró un ID, llamamos a la API
+    if (idParaBuscar) { 
       
-      // Llamamos a la función de fetch
-      obtenerDatosSocioPorId(usuarioGuardado.ID_Usuario)
-       .then(data => {
+      obtenerDatosSocioPorId(idParaBuscar) // <-- Usamos el ID encontrado
+        .then(data => {
           // ¡Éxito! Guardamos los datos de la tabla SOCIOS
-        setDatosSocio(data);
+          setDatosSocio(data);
         })
         .catch(err => {
           // Si la API falla (ej. 404), guardamos el error
-         setError(err.message);
-       })
+          setError(err.message);
+        })
         .finally(() => {
           // Terminamos la carga, ya sea con éxito o error
-           setCargando(false);
+          setCargando(false);
         });
 
     } else {
-      // Si no hay usuario en sesión, no hay nada que cargar
+      // No hay usuario en sesión, o el usuario no tiene ID
       setCargando(false);
     }
-  }, []);
+  }, []); // El array vacío [] asegura que esto se ejecute solo una vez
 
   if (cargando) {
     return (
       <div className="perfil-container">
         <h1 className="perfil-titulo">Cargando perfil...</h1>
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="perfil-container no-user">
-        <h1 className="perfil-titulo">Error</h1>
-        <p>{error}</p>
       </div>
     );
   }
@@ -123,6 +180,8 @@ export default function Perfil() {
 {/* --- 1. TÍTULO (vuelve a estar solo) --- */}
       <h1 className="perfil-titulo">Mi Perfil</h1>
 
+{/* --- REEMPLAZA ESTE BLOQUE COMPLETO --- */}
+
       {/* --- 2. TARJETA DE INFORMACIÓN PERSONAL --- */}
       <div className="perfil-card">
         <div className="perfil-avatar">
@@ -132,36 +191,92 @@ export default function Perfil() {
         </div>
 
         <div className="perfil-info">
+          
+          {/* --- DATOS NO EDITABLES --- */}
           <div className="perfil-grupo">
             <label className="perfil-label">Nombres:</label>
-            <p className="perfil-valor">{datosSocio.Nombres  || 'No especificado'}</p>
+            <p className="perfil-valor">{datosSocio.Nombres || 'No especificado'}</p>
           </div>
           <div className="perfil-grupo">
             <label className="perfil-label">Apellidos:</label>
-            <p className="perfil-valor">{datosSocio.Apellidos  || 'No especificado'}</p>
+            <p className="perfil-valor">{datosSocio.Apellidos || 'No especificado'}</p>
           </div>
-
           <div className="perfil-grupo">
-            <label className="perfil-label">RUT :</label>
+            <label className="perfil-label">RUT:</label>
             <p className="perfil-valor">{datosSocio.RUT || 'Miembro'}</p>
           </div>
+
+          {/* --- DATOS DE CONTACTO (AHORA EDITABLES) --- */}
+
           <div className="perfil-grupo">
             <label className="perfil-label">Dirección:</label>
-            <p className="perfil-valor">{`${datosSocio.Calle || 'Calle no especificada'}  #${datosSocio.Numero_Casa || 'S/N'}`}</p>
+            {isEditing ? (
+              <div className="perfil-grupo-direccion">
+                <input
+                  type="text"
+                  placeholder="Nombre de la calle"
+                  className="perfil-input" 
+                  value={formData.Calle}
+                  onChange={(e) => setFormData({ ...formData, Calle: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="#"
+                  className="perfil-input-numero"
+                  value={formData.Numero_Casa}
+                  onChange={(e) => setFormData({ ...formData, Numero_Casa: e.target.value })}
+                />
+              </div>
+            ) : (
+              <p className="perfil-valor">{`${datosSocio.Calle || 'Calle no especificada'} #${datosSocio.Numero_Casa || 'S/N'}`}</p>
+            )}
           </div>
-
+          
           <div className="perfil-grupo">
             <label className="perfil-label">Correo Electrónico:</label>
-            <p className="perfil-valor">{datosSocio.Correo || 'No especificado'}</p>
+            {isEditing ? (
+              <input
+                type="email"
+                className="perfil-input"
+                value={formData.Correo}
+                onChange={(e) => setFormData({ ...formData, Correo: e.target.value })}
+              />
+            ) : (
+              <p className="perfil-valor">{datosSocio.Correo || 'No especificado'}</p>
+            )}
           </div>
+          
           <div className="perfil-grupo">
             <label className="perfil-label">Teléfono celular:</label>
-            <p className="perfil-valor">{datosSocio.Telefono || 'No especificado'}</p>
+            {isEditing ? (
+              <input
+                type="tel"
+                className="perfil-input"
+                value={formData.Telefono}
+                onChange={(e) => setFormData({ ...formData, Telefono: e.target.value })}
+              />
+            ) : (
+              <p className="perfil-valor">{datosSocio.Telefono || 'No especificado'}</p>
+            )}
           </div>
 
-            <button className="perfil-btn-editar">Editar Perfil</button>
-        </div>
+          {/* --- BOTONES DE ACCIÓN (CON LÓGICA) --- */}
+          {isEditing ? (
+            <div className="perfil-botones-accion">
+              <button className="perfil-btn-guardar" onClick={handleSaveClick}>
+                Guardar
+              </button>
+              <button className="perfil-btn-cancelar" onClick={handleCancelClick}>
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button className="perfil-btn-editar" onClick={handleEditClick}>
+              Editar Contacto
+            </button>
+          )}
 
+        </div>
       </div>
 
   
@@ -200,7 +315,21 @@ export default function Perfil() {
         </ul>
       </div>
 
+
+      <Modal 
+        isOpen={modalState.isOpen} 
+        onClose={() => setModalState({ ...modalState, isOpen: false })} 
+        title={modalState.title}
+        type={modalState.type}
+      >
+        {/* El 'children' ahora es solo el mensaje */}
+        <p>{modalState.message}</p> 
+      </Modal>
+
+
     </div>
+
+
 
 
   );
