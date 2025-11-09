@@ -1,513 +1,232 @@
-// controllers/requerimientosController.js
+import { getPool, sql } from "../pool.js";
 import path from "path";
-import { getPool } from "../pool.js";
-
-/* =========================
-   Helpers
-   ========================= */
-const ok = (res, data = {}, code = 200) => res.status(code).json({ ok: true, data });
-const fail = (res, error = "ERROR", code = 500) => res.status(code).json({ ok: false, error });
-const now = () => new Date();
-
-/** Genera folio tipo R000001 con relleno a 6 */
-const buildFolio = async (pool) => {
-  const q = await pool.request().query(`
-    SELECT TOP 1 FOLIO
-    FROM dbo.HISTORIAL_REQUERIMIENTOS
-    WHERE ISNUMERIC(REPLACE(FOLIO,'R','')) = 1
-    ORDER BY TRY_CONVERT(INT, REPLACE(FOLIO,'R','')) DESC
-  `);
-
-  const last = q.recordset?.[0]?.FOLIO || "R000000";
-  const n = parseInt(String(last).replace(/^R/i, ""), 10) || 0;
-  const next = n + 1;
-  return `R${String(next).padStart(6, "0")}`;
-};
-
-/** Construye URL pública para un archivo subido */
+/* ===========================
+ * Helper: Genera la URL pública de un archivo
+ * =========================== */
 const publicUrlFor = (filePath) => {
-  const base =
-    (process.env.API_PUBLIC_URL?.replace(/\/+$/, "")) ||
-    (process.env.APP_BASE_URL?.replace(/\/+$/, "")) ||
-    `http://localhost:${process.env.PORT || 4010}`;
+  const base = (process.env.VITE_API_URL || "http://localhost:4010").replace(/\/+$/, "");
+  // Asegúrate que la ruta pública coincida con tu 'uploadRequerimientos.js'
   const rel = `/uploads/requerimientos/${path.basename(filePath)}`;
   return `${base}${rel}`;
 };
 
-/* =========================================================
-   Normalización de RUT (para JOIN sin puntos ni guión)
-   ========================================================= */
-const RUT_EQ = `
-  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
-  REPLACE(REPLACE(UPPER(R.PERFIL_RUT),'.',''),'-','')
-`;
-const RUT_EQ_H = `
-  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
-  REPLACE(REPLACE(UPPER(H.PERFIL_RUT),'.',''),'-','')
-`;
-
-/* =========================
-   Crear requerimiento
-   ========================= */
-export const crearRequerimiento = async (req, res) => {
-  const {
-    socioNombre,
-    rut_socio,     // PERFIL_RUT
-    email,
-    telefono,      // puede venir vacío
-    tipo,          // ASUNTO
-    direccion,
-    comentarios,   // → DESCRIPCION
+/* ===========================
+ * 1. CREAR NUEVO REQUERIMIENTO (POST)
+ * (Inserta en VECINAL y en BITACORA)
+ * =========================== */
+export const crearMensajeBuzon = async (req, res) => {
+  const { 
+    socioNombre, // -> Viene del frontend
+    rut_socio,
+    telefono, 
+    tipo, 
+    comentarios, 
+    direccion 
   } = req.body;
 
-  if (!socioNombre || !rut_socio || !tipo || !direccion) {
-    return fail(res, "Faltan datos obligatorios (socioNombre, rut_socio, tipo, direccion).", 400);
+  // 2. Leemos el archivo (si vino) desde req.file
+  const imagenURL = req.file ? publicUrlFor(req.file.path) : null;
+
+  // 3. Mapeamos los nombres del frontend a la BDD
+  // (Tu frontend envía 'socioNombre', 'tipo', 'comentarios')
+  const nombre = socioNombre;
+  const rut = rut_socio;
+  const asunto = tipo;
+  const mensaje = comentarios || ""; // Asegurarnos que no sea null
+
+  if (!nombre || !asunto || !mensaje) {
+    return res.status(400).json({ ok: false, message: "Faltan campos obligatorios." });
   }
 
-  const descripcion = (comentarios || "").trim();
-  const asunto = tipo || "Otro";
+  const pool = await getPool();
+  const tx = new sql.Transaction(pool);
 
   try {
-    const pool = await getPool();
-    const folio = await buildFolio(pool);
-    const created = now();
+    await tx.begin(); // <-- Inicia Transacción
 
-    // Si vino imagen en el mismo POST
-    let imagenUrl = null;
-    if (req.file) imagenUrl = publicUrlFor(req.file.path);
-
-    // ── si no viene teléfono, buscar en SOCIOS por RUT normalizado
-    const telFromSocioRs = await pool.request()
-      .input("rutSocio", rut_socio)
-      .query(`
-        SELECT TOP 1 s.Telefono
-        FROM dbo.SOCIOS s
-        WHERE REPLACE(REPLACE(UPPER(s.RUT),'.',''),'-','')
-           = REPLACE(REPLACE(UPPER(@rutSocio),'.',''),'-','')
-      `);
-    const telefonoFinal = (telefono && String(telefono).trim()) || telFromSocioRs.recordset?.[0]?.Telefono || null;
-
-    // Inserta en principal (incluye TELEFONO)
-    await pool.request()
-      .input("folio", folio)
-      .input("rut", rut_socio)
-      .input("nombre", socioNombre)
-      .input("mail", email || null)
-      .input("tel", telefonoFinal)
-      .input("asunto", asunto)
-      .input("direccion", direccion || null)
-      .input("desc", descripcion)
-      .input("estado", "Pendiente")
-      .input("actor", null)
-      .input("created", created)
-      .input("img", imagenUrl)
-      .query(`
-        INSERT INTO dbo.REQUERIMIENTOS
-          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, TELEFONO,
-           ASUNTO, DIRECCION, DESCRIPCION, ESTADO, ACTOR_NOMBRE, CREATED_AT, IMAGEN_URL)
-        VALUES
-          (@folio, @rut, @nombre, @mail, @tel,
-           @asunto, @direccion, @desc, @estado, @actor, @created, @img)
-      `);
-
-    // Inserta en historial (incluye TELEFONO)
-    await pool.request()
-      .input("folio", folio)
-      .input("rut", rut_socio)
-      .input("nombre", socioNombre)
-      .input("mail", email || null)
-      .input("tel", telefonoFinal)
-      .input("asunto", asunto)
-      .input("direccion", direccion || null)
-      .input("desc", descripcion)
-      .input("estado", "Pendiente")
-      .input("created", created)
-      .input("updated", created)
-      .input("validador", null)
-      .input("img", imagenUrl)
-      .query(`
-        INSERT INTO dbo.HISTORIAL_REQUERIMIENTOS
-          (FOLIO, PERFIL_RUT, NOMBRE_SOLICITANTE, EMAIL_SOLICITANTE, TELEFONO,
-           ASUNTO, DIRECCION, DESCRIPCION, ESTADO, CREATED_AT, UPDATED_AT, VALIDADOR_NOMBRE, IMAGEN_URL)
-        VALUES
-          (@folio, @rut, @nombre, @mail, @tel,
-           @asunto, @direccion, @desc, @estado, @created, @updated, @validador, @img)
-      `);
-
-    return ok(res, { Folio: folio, Imagen_URL: imagenUrl, Adjunto_URL: imagenUrl });
-  } catch (e) {
-    console.error("crearRequerimiento:", e);
-    return fail(res, e.message || "ERROR_CREAR_REQUERIMIENTO");
-  }
-};
-
-/* =========================
-   Listar requerimientos (?estado)
-   – con JOIN a SOCIOS para TELEFONO y fallback de correo
-   ========================= */
-export const listarRequerimientos = async (req, res) => {
-  const { estado } = req.query;
-  try {
-    const pool = await getPool();
-    let sql = `
-      SELECT
-        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
-        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
-        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
-        R.CREATED_AT, R.IMAGEN_URL,
-        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
-      FROM dbo.REQUERIMIENTOS R
-      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
-    `;
-    if (estado) sql += " WHERE R.ESTADO = @estado";
-    sql += " ORDER BY R.CREATED_AT DESC, R.ID DESC";
-
-    const rq = pool.request();
-    if (estado) rq.input("estado", estado);
-
-    const rs = await rq.query(sql);
-    return ok(res, rs.recordset || []);
-  } catch (e) {
-    console.error("listarRequerimientos:", e);
-    return fail(res, e.message || "ERROR_LISTAR");
-  }
-};
-
-/* =========================
-   Obtener requerimiento por ID – con JOIN a SOCIOS
-   ========================= */
-export const obtenerRequerimiento = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const pool = await getPool();
-    const rs = await pool.request().input("id", id).query(`
-      SELECT
-        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
-        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
-        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
-        R.CREATED_AT, R.IMAGEN_URL,
-        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
-      FROM dbo.REQUERIMIENTOS R
-      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
-      WHERE R.ID = @id
+    // 1. Inserta en la tabla principal
+    const reqBuzon = new sql.Request(tx);
+    reqBuzon.input("NombreSocio", sql.NVarChar(120), nombre);
+    reqBuzon.input("RUT", sql.VarChar(12), rut || null);
+    reqBuzon.input("Telefono", sql.VarChar(30), telefono || null);
+    reqBuzon.input("Asunto", sql.NVarChar(200), asunto);
+    reqBuzon.input("Mensaje", sql.NVarChar(sql.MAX), mensaje);
+    reqBuzon.input("Direccion", sql.NVarChar(255), direccion || null);
+    reqBuzon.input("ImagenURL", sql.NVarChar(400), imagenURL || null);
+    
+    const resultBuzon = await reqBuzon.query(`
+      INSERT INTO dbo.BUZON_VECINAL 
+        (NombreSocio, RUT, Telefono, Asunto, Mensaje, Direccion, ImagenURL, Estado)
+      OUTPUT inserted.ID_Buzon, inserted.Folio, inserted.FechaCreacion, inserted.Estado
+      VALUES 
+        (@NombreSocio, @RUT, @Telefono, @Asunto, @Mensaje, @Direccion, @ImagenURL, 'Pendiente');
     `);
 
-    if (!rs.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
-    return ok(res, rs.recordset[0]);
-  } catch (e) {
-    console.error("obtenerRequerimiento:", e);
-    return fail(res, e.message || "ERROR_OBTENER");
+    const nuevoTicket = resultBuzon.recordset[0];
+
+    // 2. Inserta el primer registro en la Bitácora
+    const reqBitacora = new sql.Request(tx);
+    reqBitacora.input("ID_Buzon_FK", sql.Int, nuevoTicket.ID_Buzon);
+    reqBitacora.input("ID_Usuario_FK", sql.Int, null); // Creado por el público
+    reqBitacora.input("EstadoAnterior", sql.VarChar(20), null);
+    reqBitacora.input("EstadoNuevo", sql.VarChar(20), nuevoTicket.Estado);
+    reqBitacora.input("Comentario", sql.NVarChar(1000), "Requerimiento a aviso creado por vecino.");
+
+    await reqBitacora.query(`
+      INSERT INTO dbo.BUZON_BITACORA
+        (ID_Buzon_FK, ID_Usuario_FK, EstadoAnterior, EstadoNuevo, Comentario)
+      VALUES
+        (@ID_Buzon_FK, @ID_Usuario_FK, @EstadoAnterior, @EstadoNuevo, @Comentario);
+    `);
+
+    await tx.commit(); // <-- Confirma Transacción
+    res.status(201).json({ ok: true, data:{
+      Folio: nuevoTicket.Folio,
+      Adjunto_URL:imagenURL
+    } });
+
+  } catch (error) {
+    await tx.rollback(); // <-- Deshace todo si falla
+    console.error("Error al crear mensaje de buzón:", error);
+    res.status(500).json({ ok: false, message: "Error al guardar el mensaje", error: error.message });
   }
 };
 
-/* =========================
-   Actualizar requerimiento por ID (principal)
-   ========================= */
-export const actualizarRequerimiento = async (req, res) => {
-  const { id } = req.params;
-  const { tipo, direccion, comentarios, descripcion } = req.body;
-
-  const asunto = tipo ?? null;
-  const dir = direccion ?? null;
-  const desc = (comentarios ?? descripcion ?? "").trim();
-
+/* ===========================
+ * 2. LISTAR MENSAJES (GET)
+ * (Lee de la tabla principal BUZON_VECINAL)
+ * =========================== */
+export const listarMensajesBuzon = async (req, res) => {
+  const estado = req.query.estado || null; 
   try {
     const pool = await getPool();
+    const request = pool.request();
+    let query = "SELECT * FROM dbo.BUZON_VECINAL";
+    const estadosValidos = ['Pendiente', 'En Revisión', 'Resuelto'];
 
-    const ex = await pool.request().input("id", id).query(`
-      SELECT ID FROM dbo.REQUERIMIENTOS WHERE ID=@id
-    `);
-    if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
+    if (estado && estadosValidos.includes(estado)) {
+      query += " WHERE Estado = @Estado";
+      request.input("Estado", sql.VarChar(20), estado);
+    }
+    query += " ORDER BY FechaCreacion DESC";
 
-    await pool.request()
-      .input("id", id)
-      .input("asunto", asunto)
-      .input("direccion", dir)
-      .input("desc", desc)
-      .query(`
-        UPDATE dbo.REQUERIMIENTOS
-        SET ASUNTO     = COALESCE(@asunto, ASUNTO),
-            DIRECCION  = @direccion,
-            DESCRIPCION= @desc
-        WHERE ID = @id
-      `);
-
-    return ok(res, { ID: id });
-  } catch (e) {
-    console.error("actualizarRequerimiento:", e);
-    return fail(res, e.message || "ERROR_ACTUALIZAR");
+    const result = await request.query(query);
+    res.status(200).json({ ok: true, data: result.recordset });
+  } catch (error) {
+    console.error("Error al listar mensajes:", error);
+    res.status(500).json({ ok: false, message: "Error al obtener los mensajes", error: error.message });
   }
 };
 
-/* =========================
-   Cambiar estado (ID)
-   ========================= */
-export const cambiarEstado = async (req, res) => {
-  const { id } = req.params;
-  const { estado, validadorNombre = null } = req.body;
+/* ===========================
+ * 3. CAMBIAR ESTADO (Función genérica para "En Revisión" o "Resuelto")
+ * (Actualiza VECINAL e inserta en BITACORA)
+ * =========================== */
+export const cambiarEstadoBuzon = async (req, res) => {
+  const { id } = req.params; // ID_Buzon
+  const { estadoNuevo, respuestaAdmin, idAdmin } = req.body;
 
-  if (!estado) return fail(res, "Estado requerido.", 400);
+  // Validación
+  const estadosValidos = ['En Revisión', 'Resuelto'];
+  if (!estadosValidos.includes(estadoNuevo)) {
+    return res.status(400).json({ ok: false, message: "Estado nuevo no válido." });
+  }
+  if (estadoNuevo === 'Resuelto' && !respuestaAdmin) {
+    return res.status(400).json({ ok: false, message: "Se requiere un comentario para resolver el ticket." });
+  }
+  if (!idAdmin) {
+    return res.status(400).json({ ok: false, message: "Se requiere un ID de administrador." });
+  }
+
+  const pool = await getPool();
+  const tx = new sql.Transaction(pool);
 
   try {
-    const pool = await getPool();
+    await tx.begin();
 
-    // Obtener FOLIO a partir del ID
-    const ex = await pool.request().input("id", id).query(`
-      SELECT FOLIO FROM dbo.REQUERIMIENTOS WHERE ID=@id
-    `);
-    if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
-    const folio = ex.recordset[0].FOLIO;
+    // 1. Obtener el estado anterior
+    const reqEstado = new sql.Request(tx);
+    reqEstado.input("ID_Buzon", sql.Int, id);
+    const estadoResult = await reqEstado.query("SELECT Estado FROM dbo.BUZON_VECINAL WHERE ID_Buzon = @ID_Buzon");
+    
+    if (estadoResult.recordset.length === 0) {
+      throw new Error("Ticket no encontrado.");
+    }
+    const estadoAnterior = estadoResult.recordset[0].Estado;
 
-    // Actualiza principal
-    await pool.request()
-      .input("id", id)
-      .input("estado", estado)
-      .input("actor", validadorNombre)
-      .query(`
-        UPDATE dbo.REQUERIMIENTOS
-        SET ESTADO=@estado,
-            ACTOR_NOMBRE=@actor
-        WHERE ID=@id
-      `);
-
-    // Actualiza historial (estado + updated + validador)
-    await pool.request()
-      .input("folio", folio)
-      .input("estado", estado)
-      .input("validador", validadorNombre)
-      .input("updated", now())
-      .query(`
-        UPDATE dbo.HISTORIAL_REQUERIMIENTOS
-        SET ESTADO=@estado,
-            VALIDADOR_NOMBRE=@validador,
-            UPDATED_AT=@updated
-        WHERE FOLIO=@folio
-      `);
-
-    // Si el estado es final, eliminar de principal (opcional)
-    if (estado === "Aprobado" || estado === "Rechazado") {
-      await pool.request().input("id", id).query(`
-        DELETE FROM dbo.REQUERIMIENTOS WHERE ID=@id
-      `);
+    if (estadoAnterior === 'Resuelto') {
+      throw new Error("El ticket ya está resuelto.");
     }
 
-    return ok(res, { FOLIO: folio, estado });
-  } catch (e) {
-    console.error("cambiarEstado:", e);
-    return fail(res, e.message || "ERROR_CAMBIAR_ESTADO");
-  }
-};
-
-/* =========================
-   Subir adjunto (archivo) – ACTUALIZA ambas tablas
-   ========================= */
-export const subirAdjunto = async (req, res) => {
-  try {
-    if (!req.file) return fail(res, "No se recibió archivo.", 400);
-
-    const imagenUrl = publicUrlFor(req.file.path);
-
-    const pool = await getPool();
-
-    // Actualiza por ID en principal
-    const id = req.params.id;
-    const ex = await pool.request().input("id", id).query(`
-      SELECT FOLIO FROM dbo.REQUERIMIENTOS WHERE ID=@id
-    `);
-    if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
-
-    const folio = ex.recordset[0].FOLIO;
-
-    await pool.request().input("id", id).input("url", imagenUrl).query(`
-      UPDATE dbo.REQUERIMIENTOS SET IMAGEN_URL=@url WHERE ID=@id
-    `);
-
-    // Refleja también en HISTORIAL por FOLIO
-    await pool.request().input("folio", folio).input("url", imagenUrl).query(`
-      UPDATE dbo.HISTORIAL_REQUERIMIENTOS SET IMAGEN_URL=@url WHERE FOLIO=@folio
-    `);
-
-    return ok(res, { url: imagenUrl, Folio: folio });
-  } catch (e) {
-    console.error("subirAdjunto:", e);
-    return fail(res, e.message || "ERROR_SUBIR_ADJUNTO");
-  }
-};
-
-/* =========================
-   Historial – listar todo (?estado)
-   – con JOIN a SOCIOS para TELEFONO y fallback de correo
-   ========================= */
-export const listarHistorial = async (req, res) => {
-  const { estado } = req.query;
-  try {
-    const pool = await getPool();
-    let sql = `
-      SELECT
-        H.ID, H.FOLIO, H.PERFIL_RUT, H.NOMBRE_SOLICITANTE,
-        COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
-        H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
-        H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
-        COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO
-      FROM dbo.HISTORIAL_REQUERIMIENTOS H
-      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
+    // 2. Actualizar la tabla principal
+    const reqUpdate = new sql.Request(tx);
+    reqUpdate.input("ID_Buzon", sql.Int, id);
+    reqUpdate.input("Estado", sql.VarChar(20), estadoNuevo);
+    reqUpdate.input("RespuestaAdmin", sql.NVarChar(1000), respuestaAdmin || null);
+    reqUpdate.input("ResueltoPor_ID", sql.Int, idAdmin);
+    
+    let queryUpdate = `
+      UPDATE dbo.BUZON_VECINAL
+      SET 
+        Estado = @Estado,
+        ResueltoPor_ID = @ResueltoPor_ID,
+        RespuestaAdmin = COALESCE(@RespuestaAdmin, RespuestaAdmin)
     `;
-    if (estado) sql += " WHERE H.ESTADO=@estado";
-    sql += " ORDER BY H.UPDATED_AT DESC, H.CREATED_AT DESC, H.ID DESC";
+    // Solo actualiza la fecha de resuelto si el estado es 'Resuelto'
+    if (estadoNuevo === 'Resuelto') {
+      queryUpdate += ", FechaResuelto = SYSDATETIME()";
+    }
+    queryUpdate += " WHERE ID_Buzon = @ID_Buzon";
 
-    const rq = pool.request();
-    if (estado) rq.input("estado", estado);
+    await reqUpdate.query(queryUpdate);
 
-    const rs = await rq.query(sql);
-    return ok(res, rs.recordset || []);
-  } catch (e) {
-    console.error("listarHistorial:", e);
-    return fail(res, e.message || "ERROR_LISTAR_HISTORIAL");
+    // 3. Insertar en la Bitácora
+    const reqBitacora = new sql.Request(tx);
+    reqBitacora.input("ID_Buzon_FK", sql.Int, id);
+    reqBitacora.input("ID_Usuario_FK", sql.Int, idAdmin);
+    reqBitacora.input("EstadoAnterior", sql.VarChar(20), estadoAnterior);
+    reqBitacora.input("EstadoNuevo", sql.VarChar(20), estadoNuevo);
+    reqBitacora.input("Comentario", sql.NVarChar(1000), respuestaAdmin || `Cambiado a ${estadoNuevo}`);
+
+    await reqBitacora.query(`
+      INSERT INTO dbo.BUZON_BITACORA
+        (ID_Buzon_FK, ID_Usuario_FK, EstadoAnterior, EstadoNuevo, Comentario)
+      VALUES
+        (@ID_Buzon_FK, @ID_Usuario_FK, @EstadoAnterior, @EstadoNuevo, @Comentario);
+    `);
+
+    await tx.commit();
+    res.status(200).json({ ok: true, message: `Ticket actualizado a: ${estadoNuevo}` });
+
+  } catch (error) {
+    await tx.rollback();
+    console.error("Error al cambiar estado:", error);
+    res.status(500).json({ ok: false, message: error.message || "Error al actualizar el estado" });
   }
 };
 
-/* =========================
-   Historial – actualizar por FOLIO
-   ========================= */
-export const actualizarHistorial = async (req, res) => {
-  const { folio } = req.params;
-  const { tipo, direccion, comentarios, descripcion, estado } = req.body;
-
-  const asunto = tipo ?? null;
-  const dir = direccion ?? null;
-  const desc = (comentarios ?? descripcion ?? "").trim();
+/* ===========================
+ * 4. OBTENER BITÁCORA DE UN TICKET (GET)
+ * (¡Nueva! Para ver el historial de un solo ticket)
+ * =========================== */
+export const listarBitacoraPorBuzon = async (req, res) => {
+  const { id } = req.params; // ID_Buzon
 
   try {
     const pool = await getPool();
-
-    const ex = await pool.request().input("folio", folio).query(`
-      SELECT ID FROM dbo.HISTORIAL_REQUERIMIENTOS WHERE FOLIO=@folio
-    `);
-    if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
-
-    await pool.request()
-      .input("folio", folio)
-      .input("asunto", asunto)
-      .input("direccion", dir)
-      .input("desc", desc)
-      .input("estado", estado ?? null)
-      .input("updated", now())
+    const result = await pool.request()
+      .input("ID_Buzon_FK", sql.Int, id)
       .query(`
-        UPDATE dbo.HISTORIAL_REQUERIMIENTOS
-        SET ASUNTO     = COALESCE(@asunto, ASUNTO),
-            DIRECCION  = @direccion,
-            DESCRIPCION= @desc,
-            ESTADO     = COALESCE(@estado, ESTADO),
-            UPDATED_AT = @updated
-        WHERE FOLIO = @folio
+        SELECT B.*, U.Nombre_Usuario 
+        FROM dbo.BUZON_BITACORA B
+        LEFT JOIN dbo.USUARIO U ON B.ID_Usuario_FK = U.ID_Usuario
+        WHERE B.ID_Buzon_FK = @ID_Buzon_FK
+        ORDER BY B.FechaCambio ASC;
       `);
-
-    // Refleja cambios básicos en principal (si existe todavía)
-    await pool.request()
-      .input("folio", folio)
-      .input("asunto", asunto)
-      .input("direccion", dir)
-      .input("desc", desc)
-      .query(`
-        UPDATE dbo.REQUERIMIENTOS
-        SET ASUNTO = COALESCE(@asunto, ASUNTO),
-            DIRECCION = @direccion,
-            DESCRIPCION = @desc
-        WHERE FOLIO = @folio
-      `);
-
-    return ok(res, { FOLIO: folio });
-  } catch (e) {
-    console.error("actualizarHistorial:", e);
-    return fail(res, e.message || "ERROR_ACTUALIZAR_HISTORIAL");
-  }
-};
-
-/* =========================
-   Obtener por FOLIO (principal o historial)
-   – con JOIN a SOCIOS
-   ========================= */
-export const obtenerPorFolio = async (req, res) => {
-  const { folio } = req.params;
-  try {
-    const pool = await getPool();
-
-    const principal = await pool.request().input("folio", folio).query(`
-      SELECT
-        R.ID, R.FOLIO, R.PERFIL_RUT, R.NOMBRE_SOLICITANTE,
-        COALESCE(R.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
-        R.ASUNTO, R.DIRECCION, R.DESCRIPCION, R.ESTADO, R.ACTOR_NOMBRE,
-        R.CREATED_AT, R.IMAGEN_URL,
-        COALESCE(R.TELEFONO, S.Telefono) AS TELEFONO
-      FROM dbo.REQUERIMIENTOS R
-      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ}
-      WHERE R.FOLIO=@folio
-    `);
-    if (principal.recordset?.length) return ok(res, principal.recordset[0]);
-
-    const hist = await pool.request().input("folio", folio).query(`
-      SELECT
-        H.ID, H.FOLIO, H.PERFIL_RUT, H.NOMBRE_SOLICITANTE,
-        COALESCE(H.EMAIL_SOLICITANTE, S.Correo) AS EMAIL_SOLICITANTE,
-        H.ASUNTO, H.DIRECCION, H.DESCRIPCION, H.ESTADO,
-        H.CREATED_AT, H.UPDATED_AT, H.VALIDADOR_NOMBRE, H.IMAGEN_URL,
-        COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO
-      FROM dbo.HISTORIAL_REQUERIMIENTOS H
-      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_H}
-      WHERE H.FOLIO=@folio
-    `);
-    if (hist.recordset?.length) return ok(res, hist.recordset[0]);
-
-    return fail(res, "NO_ENCONTRADO", 404);
-  } catch (e) {
-    console.error("obtenerPorFolio:", e);
-    return fail(res, e.message || "ERROR_OBTENER_FOLIO");
-  }
-};
-
-/* =========================
-   Eliminar por ID (principal)
-   ========================= */
-export const eliminarRequerimiento = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const pool = await getPool();
-
-    const ex = await pool.request().input("id", id).query(`
-      SELECT FOLIO FROM dbo.REQUERIMIENTOS WHERE ID=@id
-    `);
-    if (!ex.recordset?.length) return fail(res, "NO_ENCONTRADO", 404);
-
-    await pool.request().input("id", id).query(`
-      DELETE FROM dbo.REQUERIMIENTOS WHERE ID=@id
-    `);
-
-    return ok(res, { ID: id });
-  } catch (e) {
-    console.error("eliminarRequerimiento:", e);
-    return fail(res, e.message || "ERROR_ELIMINAR");
-  }
-};
-
-/* =========================
-   Eliminar por FOLIO (borra principal + historial)
-   ========================= */
-export const eliminarPorFolio = async (req, res) => {
-  const { folio } = req.params;
-  try {
-    const pool = await getPool();
-
-    await pool.request().input("folio", folio).query(`
-      DELETE FROM dbo.REQUERIMIENTOS WHERE FOLIO=@folio
-    `);
-
-    await pool.request().input("folio", folio).query(`
-      DELETE FROM dbo.HISTORIAL_REQUERIMIENTOS WHERE FOLIO=@folio
-    `);
-
-    return ok(res, { FOLIO: folio });
-  } catch (e) {
-    console.error("eliminarPorFolio:", e);
-    return fail(res, e.message || "ERROR_ELIMINAR_FOLIO");
+      
+    res.status(200).json({ ok: true, data: result.recordset });
+  } catch (error) {
+    console.error("Error al listar bitácora:", error);
+    res.status(500).json({ ok: false, message: "Error al obtener la bitácora", error: error.message });
   }
 };

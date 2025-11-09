@@ -1,35 +1,26 @@
-// routes/requerimientosRoutes.js
 import { Router } from "express";
-import * as R from "../controllers/requerimientosController.js";
+import { 
+  crearMensajeBuzon, 
+  listarMensajesBuzon,
+  cambiarEstadoBuzon,
+  listarBitacoraPorBuzon 
+} from "../controllers/requerimientosController.js";
+
+// 1. AÑADE LA 'S' AQUÍ (en el import)
 import { uploadRequerimientos } from "../middleware/uploadRequerimientos.js";
 
-const r = Router();
+// (Tus imports de auth...)
 
-/* =======================
-   GENERALES
-   ======================= */
-r.get("/", R.listarRequerimientos);
-r.post("/", uploadRequerimientos.single("imagen"), R.crearRequerimiento);
+const router = Router(); 
 
-/* =======================
-   HISTORIAL
-   ======================= */
-r.get("/_historial/lista/all", R.listarHistorial);
-r.patch("/_historial/:folio", R.actualizarHistorial);
+// --- Ruta Pública ---
+// 2. AÑADE LA 'S' AQUÍ (en el uso)
+router.post("/", uploadRequerimientos.single("imagen"), crearMensajeBuzon);
 
-/* =======================
-   POR FOLIO
-   ======================= */
-r.get("/folio/:folio", R.obtenerPorFolio);
-r.delete("/folio/:folio", R.eliminarPorFolio);
 
-/* =======================
-   POR ID
-   ======================= */
-r.get("/:id", R.obtenerRequerimiento);
-r.patch("/:id", R.actualizarRequerimiento);
-r.patch("/:id/estado", R.cambiarEstado);
-r.post("/:id/adjunto", uploadRequerimientos.single("imagen"), R.subirAdjunto);
-r.delete("/:id", R.eliminarRequerimiento);
+// --- Rutas de Admin/Directiva ---
+router.get("/", listarMensajesBuzon);
+router.get("/:id/bitacora", listarBitacoraPorBuzon);
+router.patch("/:id/estado", cambiarEstadoBuzon);
 
-export default r;
+export default router;

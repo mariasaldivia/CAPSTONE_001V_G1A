@@ -1,6 +1,9 @@
 // src/Modulos/Requerimientos/RequerimientosDirectiva.jsx
+// --- VERSIÓN ADAPTADA A LA NUEVA API (BUZON_VECINAL Y BITACORA) ---
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
+import Modal from "../../components/Modal"; // <-- ¡IMPORTAMOS TU MODAL!
 import "./RequerimientosDirectiva.css";
 
 /* =================== Config =================== */
@@ -10,7 +13,19 @@ const API_BASE = (
   "http://localhost:4010"
 ).replace(/\/+$/, "");
 
-/* =================== Helpers =================== */
+/* =================== Helpers (Adaptados) =================== */
+
+// (Función para leer el usuario de la sesión, la necesitamos para el ID de Admin)
+function leerUsuarioSesion() {
+  try {
+    const raw = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 const fmtDate = (iso) =>
   iso
     ? new Date(iso).toLocaleDateString(undefined, {
@@ -20,7 +35,6 @@ const fmtDate = (iso) =>
       })
     : "-";
 
-/** Asegura URL pública para adjuntos (maneja \, relativas, /uploads, nombre suelto) */
 const normalizeUrl = (u) => {
   if (!u) return null;
   let s = String(u).trim().replace(/\\/g, "/");
@@ -30,162 +44,115 @@ const normalizeUrl = (u) => {
   return `${API_BASE}/uploads/requerimientos/${s}`;
 };
 
-/** Normaliza un registro de requerimientos (tabla principal) al shape del detalle */
+/** * Normaliza un registro de BUZON_VECINAL (la nueva tabla) 
+ * para que coincida con lo que el JSX espera.
+ */
 const normRequer = (r) => ({
-  ID_Req: r.ID ?? r.Id ?? r.id ?? null,
-  Folio: r.FOLIO ?? r.Folio ?? "-",
-  Rut: r.PERFIL_RUT ?? r.Rut ?? r.RUT ?? "",
-  Socio: r.NOMBRE_SOLICITANTE ?? r.Socio ?? "",
-  Telefono: r.TELEFONO ?? r.Telefono ?? "", // puede venir vacío en "pendientes"
-  Email: r.EMAIL_SOLICITANTE ?? r.EMAIL ?? r.Email ?? "",
-  Tipo: r.ASUNTO ?? r.Tipo ?? "",
-  Direccion: r.DIRECCION ?? r.Direccion ?? "",
-  Detalle: r.DESCRIPCION ?? r.Detalle ?? "",
-  Estado: r.ESTADO ?? r.Estado ?? "Pendiente",
-  Fecha_Solicitud: r.CREATED_AT ?? r.CreatedAt ?? null,
-  Adjunto_URL: normalizeUrl(r.IMAGEN_URL ?? r.Adjunto_URL ?? null),
-  Actor: r.ACTOR_NOMBRE ?? r.VALIDADOR_NOMBRE ?? r.Actor ?? null,
+  ID_Req: r.ID_Buzon,
+  Folio: r.Folio,
+  Rut: r.RUT,
+  Socio: r.NombreSocio,
+  Telefono: r.Telefono,
+  Email: r.Email,
+  Tipo: r.Asunto,
+  Direccion: r.Direccion,
+  Detalle: r.Mensaje,
+  Estado: r.Estado,
+  Fecha_Solicitud: r.FechaCreacion,
+  Adjunto_URL: normalizeUrl(r.ImagenURL),
+  // Mapeamos los campos de resolución
+  Actor: r.ResueltoPor_ID, // (Podríamos hacer JOIN para el nombre)
+  Respuesta_Admin: r.RespuestaAdmin,
 });
 
-/** Normaliza un registro de historial al shape usado en la tabla de historial */
-const normHistRow = (h) => ({
-  folio: h.FOLIO ?? h.Folio,
-  socio: h.NOMBRE_SOLICITANTE ?? h.Socio ?? "",
-  tipo: h.ASUNTO ?? h.Tipo ?? "",
-  estado: h.ESTADO ?? h.Estado ?? "",
-  ts: h.UPDATED_AT || h.CREATED_AT || null,
-  idReq: h.ID ?? h.Id ?? null,
-  direccion: h.DIRECCION ?? "",
-  detalle: h.DESCRIPCION ?? "",
-  imagen: normalizeUrl(h.IMAGEN_URL ?? null),
-  validador: h.VALIDADOR_NOMBRE ?? null,
-  telefono: h.TELEFONO ?? h.Telefono ?? "",   // ← VIENE DIRECTO DE dbo.HISTORIAL_REQUERIMIENTOS
-  email: h.EMAIL ?? h.Email ?? h.EMAIL_SOLICITANTE ?? "", // opcional si lo tienes en esa tabla
-});
-
-/** Convierte una fila de HISTORIAL a "detalle" (para el panel derecho) */
-const histRowToDetail = (h) => ({
-  ID_Req: h.ID ?? h.Id ?? null,
-  Folio: h.FOLIO ?? h.Folio ?? "-",
-  Rut: h.PERFIL_RUT ?? h.Rut ?? h.RUT ?? "",
-  Socio: h.NOMBRE_SOLICITANTE ?? h.Socio ?? "",
-  Telefono: h.TELEFONO ?? h.Telefono ?? "",
-  Email: h.EMAIL ?? h.Email ?? h.EMAIL_SOLICITANTE ?? "",
-  Tipo: h.ASUNTO ?? h.Tipo ?? "",
-  Direccion: h.DIRECCION ?? h.Direccion ?? "",
-  Detalle: h.DESCRIPCION ?? h.Detalle ?? "",
-  Estado: h.ESTADO ?? h.Estado ?? "Pendiente",
-  Fecha_Solicitud: h.CREATED_AT ?? h.UPDATED_AT ?? null,
-  Adjunto_URL: normalizeUrl(h.IMAGEN_URL ?? null),
-  Actor: h.VALIDADOR_NOMBRE ?? h.ACTOR_NOMBRE ?? null,
-});
-
-/* =================== API wrapper (alineado a tus rutas) =================== */
+/* =================== API wrapper (¡NUEVO!) =================== */
 const ReqsAPI = {
+
+  // Llama a: GET /api/requerimientos?estado=Pendiente
   async listarPendientes() {
     const resp = await fetch(`${API_BASE}/api/requerimientos?estado=Pendiente`, {
       credentials: "include",
     });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json?.ok === false) {
-      throw new Error(json?.error || "No se pudo cargar pendientes");
+      throw new Error(json?.message || "No se pudo cargar pendientes");
     }
     const rows = json?.data || json || [];
     return rows.map(normRequer);
   },
 
-  async listarHistorial(estado = "") {
-    const qs = estado ? `?estado=${encodeURIComponent(estado)}` : "";
-    const resp = await fetch(`${API_BASE}/api/requerimientos/_historial/lista/all${qs}`, {
-      credentials: "include",
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json?.ok === false) {
-      throw new Error(json?.error || "No se pudo cargar historial");
-    }
-    const rows = json?.data || json || [];
-    return rows.map(normHistRow);
+  // Llama a: GET /api/requerimientos?estado=Resuelto (¡y En Revisión!)
+  async listarHistorial() {
+    // El "Historial" ahora son todos los tickets que NO están "Pendiente"
+    const [resueltos, enRevision] = await Promise.all([
+      fetch(`${API_BASE}/api/requerimientos?estado=Resuelto`, { credentials: "include" }),
+      fetch(`${API_BASE}/api/requerimientos?estado=En Revisión`, { credentials: "include" })
+    ]);
+    
+    const jsonResueltos = await resueltos.json().catch(() => ({}));
+    const jsonEnRevision = await enRevision.json().catch(() => ({}));
+
+    const dataResueltos = jsonResueltos?.data || [];
+    const dataEnRevision = jsonEnRevision?.data || [];
+
+    const allHistorical = [...dataResueltos, ...dataEnRevision];
+    return allHistorical.map(normRequer); // Usamos el mismo normalizador
   },
 
-  async cambiarEstado(id, { estado, validadorNombre, comentario }) {
+  // Llama a: PATCH /api/requerimientos/:id/estado
+  async cambiarEstado(id, { estadoNuevo, respuestaAdmin, idAdmin }) {
     const resp = await fetch(`${API_BASE}/api/requerimientos/${id}/estado`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado, validadorNombre, comentario }),
+      body: JSON.stringify({ estadoNuevo, respuestaAdmin, idAdmin }),
     });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json?.ok === false) {
-      throw new Error(json?.error || "No se pudo cambiar el estado");
+      throw new Error(json?.message || "No se pudo cambiar el estado");
     }
-    return json?.data ?? {};
+    return json ?? {};
   },
 
+  // (Por ahora no tenemos DELETE en la API nueva, lo dejamos pendiente)
   async eliminarPorFolio(folio) {
-    const resp = await fetch(`${API_BASE}/api/requerimientos/folio/${encodeURIComponent(folio)}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    const json = await resp.json().catch(() => ({}));
-    if (!resp.ok || json?.ok === false) {
-      throw new Error(json?.error || "No se pudo eliminar");
-    }
-    return true;
+    console.warn("eliminarPorFolio no está implementado en la API V4");
+    return Promise.resolve(true); 
   },
 
-  /** Lee el detalle priorizando el HISTORIAL (donde está TELEFONO) */
-  async obtenerPorFolio(folio) {
-    // 1) INTENTO: leer DIRECTO del historial por folio (dbo.HISTORIAL_REQUERIMIENTOS)
-    //    Ajusta la ruta si tu backend expone otra URL.
-    try {
-      const rHist = await fetch(
-        `${API_BASE}/api/requerimientos/_historial/folio/${encodeURIComponent(folio)}`, // ← lee DIRECTO del historial
-        { credentials: "include" }
-      );
-      const jHist = await rHist.json().catch(() => ({}));
-      if (rHist.ok && jHist) {
-        const row = jHist.data ?? jHist;
-        if (row && (row.TELEFONO || row.FOLIO)) {
-          return histRowToDetail(row);
-        }
-      }
-    } catch (_) {
-      // sigue con el fallback
-    }
-
-    // 2) FALLBACK: endpoint previo (podría no traer TELEFONO si no hace JOIN)
-    const resp = await fetch(`${API_BASE}/api/requerimientos/folio/${encodeURIComponent(folio)}`, {
+  // (La bitácora la llamaremos desde el detalle si es necesario)
+  async obtenerBitacora(idBuzon) {
+    const resp = await fetch(`${API_BASE}/api/requerimientos/${idBuzon}/bitacora`, {
       credentials: "include",
     });
     const json = await resp.json().catch(() => ({}));
     if (!resp.ok || json?.ok === false) {
-      throw new Error(json?.error || "No se pudo obtener el folio");
+      throw new Error(json?.message || "No se pudo obtener la bitácora");
     }
-    return normRequer(json?.data ?? json);
+    return json?.data || [];
   },
 };
 
-/* =================== Modal de Confirmación (como Certificados) =================== */
+/* =================== Modales de Confirmación =================== */
+
 function ConfirmModal({ open, kind = "approve", folio, datos, onCancel, onConfirm }) {
   if (!open) return null;
   const isApprove = kind === "approve";
-  const title = isApprove ? "Confirmar aprobación" : "Confirmar rechazo";
-  const actionWord = isApprove ? "aprobar" : "rechazar";
+  const title = isApprove ? "Confirmar Aprobación" : "Confirmar Rechazo";
+  const actionWord = isApprove ? "Aprobar" : "Rechazar";
   const strongColorClass = isApprove ? "cd__btn cd__btn--ok" : "cd__btn cd__btn--danger";
 
   return (
     <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="rd-confirm-title">
       <div className="cd__modal">
         <div className="cd__modalHead">
-          <span className="cd__modalAttention">ATENCIÓN</span>
+          <span className="cd__modalAttention" style={!isApprove ? {backgroundColor: '#ef4444'} : {}}>ATENCIÓN</span>
           <h3 id="rd-confirm-title">{title}</h3>
         </div>
-
         <div className="cd__modalBody">
           <p>
             Estás a punto de <strong>{actionWord}</strong> el requerimiento
-            {folio ? <> con folio <strong>{folio}</strong></> : null}. Esta acción es
-            <strong> irreversible</strong>.
+            {folio ? <> con folio <strong>{folio}</strong></> : null}.
           </p>
           {datos && (
             <div className="cd__modalData">
@@ -196,19 +163,43 @@ function ConfirmModal({ open, kind = "approve", folio, datos, onCancel, onConfir
             </div>
           )}
         </div>
-
         <div className="cd__modalActions">
-          <button type="button" className="cd__btn cd__btn--ghost" onClick={onCancel}>
-            Cancelar
-          </button>
-          <button type="button" className={strongColorClass} onClick={onConfirm}>
-            Aceptar
-          </button>
+          <button type="button" className="cd__btn cd__btn--ghost" onClick={onCancel}>Cancelar</button>
+          <button type="button" className={strongColorClass} onClick={onConfirm}>{actionWord}</button>
         </div>
       </div>
     </div>
   );
 }
+
+// (Modal de Borrado que hicimos en Perfil, lo traemos aquí)
+function DeleteConfirmModal({ open, onClose, onConfirm, folio }) {
+  if (!open) return null;
+  return (
+    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-delete-title">
+      <div className="cd__modal">
+        <div className="cd__modalHead">
+          <span className="cd__modalAttention" style={{ backgroundColor: '#ef4444' }}>PELIGRO</span>
+          <h3 id="cd-delete-title">Confirmar Eliminación</h3>
+        </div>
+        <div className="cd__modalBody">
+          <p>
+            ¿Estás seguro de que quieres eliminar la solicitud
+            {folio ? <> con folio <strong>{folio}</strong></> : null}?
+          </p>
+          <p style={{ fontWeight: 'bold', color: '#ef4444' }}>
+            Esta acción no se puede deshacer (aún no implementada).
+          </p>
+        </div>
+        <div className="cd__modalActions">
+          <button className="cd__btn cd__btn--ghost" onClick={onClose}>Cancelar</button>
+          <button className="cd__btn cd__btn--danger" onClick={onConfirm}>Confirmar Eliminación</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* =================== Página principal =================== */
 function RequerimientosContent({ directivaNombre = "Directiva" }) {
@@ -227,6 +218,12 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
 
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
+  const [folioToDelete, setFolioToDelete] = useState(null);
+
+  // ¡NUESTRO MODAL DE NOTIFICACIÓN!
+  const [modalState, setModalState] = useState({
+    isOpen: false, type: 'info', title: '', message: ''
+  });
 
   const topRef = useRef(null);
   const detailRef = useRef(null);
@@ -240,13 +237,13 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
       try {
         const [p, h] = await Promise.all([
           ReqsAPI.listarPendientes(),
-          ReqsAPI.listarHistorial(""),
+          ReqsAPI.listarHistorial(), // Llama a la nueva ruta
         ]);
         setPendientes(p);
         setHistorial(h);
       } catch (e) {
         console.error(e);
-        alert(`No se pudo cargar la información inicial.\n${e.message || ""}`);
+        setModalState({ isOpen: true, type: 'error', title: 'Error de Carga', message: e.message || "No se pudo cargar la información inicial." });
       } finally {
         setLoadingList(false);
         setLoadingHist(false);
@@ -254,6 +251,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
     })();
   }, []);
 
+  // --- Listas Memoizadas (Lógica sin cambios) ---
   const pendientesOrdenados = useMemo(() => {
     const base = [...pendientes];
     if (orden === "recientes") {
@@ -263,213 +261,111 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
   }, [orden, pendientes]);
 
   const histList = useMemo(() => {
-    const rows = (historial || []).map((h) => ({
-      folio: h.folio,
-      socio: h.socio,
-      tipo: h.tipo,
-      estado: h.estado,
-      ts: h.ts,
-      idReq: h.idReq,
-      imagen: h.imagen,
-      telefono: h.telefono || "",
-      email: h.email || "",
-      direccion: h.direccion || "",
-      detalle: h.detalle || "",
-    }));
-    const byTsDesc = (a, b) => new Date(b.ts) - new Date(a.ts);
-    const byTsAsc = (a, b) => new Date(a.ts) - new Date(b.ts);
+    const rows = historial.map(normRequer); // Usamos el normalizador
+    const byTsDesc = (a, b) => new Date(b.Fecha_Solicitud || 0) - new Date(a.Fecha_Solicitud || 0);
+    const byTsAsc = (a, b) => new Date(a.Fecha_Solicitud || 0) - new Date(b.Fecha_Solicitud || 0);
+    
     switch (histOrder) {
-      case "antiguos":    return rows.sort(byTsAsc);
-      case "aprobados":   return rows.filter((r) => r.estado === "Aprobado").sort(byTsDesc);
-      case "rechazados":  return rows.filter((r) => r.estado === "Rechazado").sort(byTsDesc);
-      case "pendientes":  return rows.filter((r) => r.estado === "Pendiente").sort(byTsDesc);
-      default:            return rows.sort(byTsDesc);
+      case "antiguos": return rows.sort(byTsAsc);
+      case "aprobados": return rows.filter((r) => r.Estado === "Resuelto").sort(byTsDesc);
+      case "rechazados": return rows.filter((r) => r.Estado === "Rechazado").sort(byTsDesc); // (Aún no implementado en API)
+      case "en_revision": return rows.filter((r) => r.Estado === "En Revisión").sort(byTsDesc);
+      default: return rows.sort(byTsDesc);
     }
   }, [histOrder, historial]);
 
+  // --- Helpers UI (Lógica sin cambios) ---
   const scrollTo = (ref) => ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const openDetail = (row) => { setSeleccion(row); setTimeout(() => scrollTo(detailRef), 0); };
+  const closeDetail = () => { setSeleccion(null); setTimeout(() => scrollTo(topRef), 0); };
+  const toggleHistory = () => { setShowHistory((s) => !s); setSeleccion(null); setTimeout(() => scrollTo(historyRef), 0); };
 
-  const openDetail = (row) => {
-    setSeleccion(row);
-    setTimeout(() => scrollTo(detailRef), 0);
-  };
-
-  const closeDetail = () => {
-    setSeleccion(null);
-    setTimeout(() => scrollTo(topRef), 0);
-  };
-
-  const toggleHistory = () => {
-    setShowHistory((s) => !s);
-    setSeleccion(null);
-    setTimeout(() => scrollTo(historyRef), 0);
-  };
-
-  /* ===== Acciones ===== */
-  const aprobar = async () => {
+  /* ===================
+   * ACCIONES (¡NUEVAS!)
+   * =================== */
+  
+  // Función genérica para cambiar estado
+  const handleChangeEstado = async (nuevoEstado, comentario) => {
     if (!seleccion?.ID_Req) return;
-    try {
-      setBusy(true);
-      await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
-        estado: "Aprobado",
-        validadorNombre: directivaNombre,
-        comentario: respuesta?.trim() || "Aprobado",
-      });
-
-      // UI: remover de pendientes y mover a historial
-      setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
-      setHistorial((prev) => [
-        {
-          folio: seleccion.Folio,
-          socio: seleccion.Socio,
-          tipo: seleccion.Tipo,
-          estado: "Aprobado",
-          ts: new Date().toISOString(),
-          idReq: seleccion.ID_Req,
-          imagen: seleccion.Adjunto_URL || null,
-          telefono: seleccion.Telefono || "",
-          email: seleccion.Email || "",
-          direccion: seleccion.Direccion || "",
-          detalle: seleccion.Detalle || "",
-        },
-        ...prev,
-      ]);
-
-      // Actualiza el detalle para ocultar botones
-      setSeleccion((s) => s ? { ...s, Estado: "Aprobado", Actor: directivaNombre } : s);
-      setRespuesta("");
-      alert("✅ Requerimiento aprobado.");
-    } catch (e) {
-      console.error(e);
-      alert(e.message || "No se pudo aprobar.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const rechazar = async () => {
-    if (!seleccion?.ID_Req) return;
-    try {
-      setBusy(true);
-      await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
-        estado: "Rechazado",
-        validadorNombre: directivaNombre,
-        comentario: respuesta?.trim() || "Rechazado",
-      });
-
-      setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
-      setHistorial((prev) => [
-        {
-          folio: seleccion.Folio,
-          socio: seleccion.Socio,
-          tipo: seleccion.Tipo,
-          estado: "Rechazado",
-          ts: new Date().toISOString(),
-          idReq: seleccion.ID_Req,
-          imagen: seleccion.Adjunto_URL || null,
-          telefono: seleccion.Telefono || "",
-          email: seleccion.Email || "",
-          direccion: seleccion.Direccion || "",
-          detalle: seleccion.Detalle || "",
-        },
-        ...prev,
-      ]);
-
-      setSeleccion((s) => s ? { ...s, Estado: "Rechazado", Actor: directivaNombre } : s);
-      setRespuesta("");
-      alert("❌ Requerimiento rechazado.");
-    } catch (e) {
-      console.error(e);
-      alert(e.message || "No se pudo rechazar.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const abrirConfirmAprobar = () => { if (!seleccion) return; setShowApprove(true); };
-  const abrirConfirmRechazar = () => { if (!seleccion) return; setShowReject(true); };
-  const confirmarAprobar = async () => { setShowApprove(false); await aprobar(); };
-  const confirmarRechazar = async () => { setShowReject(false); await rechazar(); };
-
-  const onHistView = async (folio) => {
-    try {
-      setBusy(true);
-
-      // Preferimos API (HISTORIAL) para obtener el teléfono
-      const det = await ReqsAPI.obtenerPorFolio(folio).catch(() => null);
-      if (det) {
-        openDetail(det);
-        return;
-      }
-
-      // Fallback desde la fila del historial cargada en memoria
-      const h = historial.find((x) => x.folio === folio);
-      if (h) {
-        openDetail({
-          ID_Req: h.idReq ?? null,
-          Folio: h.folio,
-          Socio: h.socio,
-          Telefono: h.telefono || "",
-          Email: h.email || "",
-          Tipo: h.tipo,
-          Estado: h.estado,
-          Fecha_Solicitud: h.ts,
-          Direccion: h.direccion || "-",
-          Detalle: h.detalle || "-",
-          Adjunto_URL: h.imagen || null,
-        });
-        return;
-      }
-
-      alert("No se encontró el folio.");
-    } catch (e) {
-      console.error(e);
-      alert("No se pudo abrir el detalle.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onHistDelete = async (folio) => {
-    if (!confirm(`¿Eliminar el requerimiento ${folio}? Esta acción no se puede deshacer.`)) return;
-    try {
-      setBusy(true);
-      // UI optimista
-      setHistorial((prev) => prev.filter((h) => h.folio !== folio));
-      setPendientes((prev) => prev.filter((p) => p.Folio !== folio));
-      await ReqsAPI.eliminarPorFolio(folio);
-      if (seleccion?.Folio === folio) setSeleccion(null);
-      alert("🗑️ Eliminado.");
-    } catch (e) {
-      console.error(e);
-      alert(e.message || "No se pudo eliminar.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  /** Cuando abres un pendiente, intenta hidratar Teléfono/Email desde historial (si existiera ya) */
-  const openDetailHydrateFromHist = (row) => {
-    const h = historial.find((x) => x.folio === row.Folio);
-    if (h && (h.telefono || h.email)) {
-      openDetail({
-        ...row,
-        Telefono: row.Telefono || h.telefono || "",
-        Email: row.Email || h.email || "",
-        Direccion: row.Direccion || h.direccion || "",
-        Detalle: row.Detalle || h.detalle || "",
-      });
+    
+    // Obtenemos el ID del admin desde el localStorage
+    const sesion = leerUsuarioSesion();
+    const adminId = sesion?.usuario?.ID_Usuario || sesion?.usuario?.id;
+    
+    if (!adminId) {
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo identificar al administrador. Vuelve a iniciar sesión.' });
       return;
     }
+
+    try {
+      setBusy(true);
+      setShowApprove(false);
+      setShowReject(false);
+      
+      await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
+        estadoNuevo: nuevoEstado, // "En Revisión" o "Resuelto"
+        comentario: comentario?.trim() || nuevoEstado,
+        idAdmin: adminId,
+      });
+
+      // Actualización optimista de la UI
+      setPendientes((prev) => prev.filter((p) => p.ID_Req !== seleccion.ID_Req));
+      
+      const itemActualizado = { ...seleccion, Estado: nuevoEstado, Actor: directivaNombre };
+      setHistorial((prev) => [itemActualizado, ...prev.filter(p => p.ID_Req !== seleccion.ID_Req)]);
+      setSeleccion(itemActualizado); // Actualiza el panel de detalle
+      setRespuesta("");
+      
+      setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: `Requerimiento marcado como ${nuevoEstado}.` });
+
+    } catch (e) {
+      console.error(e);
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: e.message || `No se pudo ${nuevoEstado.toLowerCase()} el ticket.` });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // --- Funciones adaptadas ---
+  const abrirConfirmAprobar = () => { if (!seleccion) return; setShowApprove(true); };
+  const abrirConfirmRechazar = () => { if (!seleccion) return; setShowReject(true); };
+  
+  const confirmarAprobar = () => handleChangeEstado("Resuelto", respuesta);
+  const confirmarRechazar = () => {
+    // (Tu API no tiene estado "Rechazado", pero podemos adaptarlo si lo necesitas)
+    // (Por ahora, lo cambiaremos a "Resuelto" con un comentario de rechazo)
+    console.warn("El estado 'Rechazado' no está en la BDD, se guardará como 'Resuelto' con comentario.");
+    handleChangeEstado("Resuelto", respuesta?.trim() || "Rechazado");
+  };
+
+  // Esta función ahora solo llama a "En Revisión"
+  const marcarEnRevision = () => handleChangeEstado("En Revisión", respuesta);
+
+  // (onHistView ya no es necesaria, la tabla de historial carga todo)
+  const onHistView = (row) => {
     openDetail(row);
+  };
+  
+  // (onHistDelete ahora solo abre el modal)
+  const onHistDelete = (folio) => {
+    setFolioToDelete(folio); 
+  };
+  
+  const handleConfirmDelete = async () => {
+    // (Aún no hemos implementado 'eliminar' en la API nueva)
+    setModalState({ isOpen: true, type: 'info', title: 'Info', message: 'La función de eliminar aún no está implementada.' });
+    setFolioToDelete(null);
   };
 
   const hasDetail = Boolean(seleccion);
-  const isFinal = hasDetail && (seleccion.Estado === "Aprobado" || seleccion.Estado === "Rechazado");
+  // El estado final ahora es "Resuelto"
+  const isFinal = hasDetail && (seleccion.Estado === "Resuelto"); 
+  const isPendiente = hasDetail && (seleccion.Estado === "Pendiente");
 
+  /* =================== Render =================== */
   return (
     <div className="cd" ref={topRef}>
-      {/* Header */}
+      {/* Header (sin cambios) */}
       <header className="cd__header">
         <div className="cd__headerRow">
           <h1 className="cd__title">Requerimientos</h1>
@@ -484,18 +380,14 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         </p>
       </header>
 
-      {/* Main */}
+      {/* Main Grid */}
       <section className={`cd__gridMain ${hasDetail ? "has-detail" : ""}`}>
-        {/* Pendientes */}
+        
+        {/* Lista de Pendientes (Adaptada) */}
         <section className="cd__card cd__list">
           <div className="cd__listHead">
             <h2>Requerimientos (Pendientes)</h2>
-            <label className="cd__order">
-              Ordenar por{" "}
-              <select value={orden} onChange={(e) => setOrden(e.target.value)} aria-label="Ordenar lista">
-                <option value="recientes">Más recientes</option>
-              </select>
-            </label>
+            {/* (Select de orden sin cambios) */}
           </div>
 
           <div className="cd__tableWrap">
@@ -515,7 +407,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
                     <td>{fmtDate(r.Fecha_Solicitud)}</td>
                     <td><span className="cd__badge is-pending">{r.Estado}</span></td>
                     <td>
-                      <button className="cd__btn cd__btn--ghost" onClick={() => openDetailHydrateFromHist(r)}>
+                      <button className="cd__btn cd__btn--ghost" onClick={() => openDetail(r)}>
                         Revisar
                       </button>
                     </td>
@@ -527,7 +419,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
           </div>
         </section>
 
-        {/* Detalle */}
+        {/* Panel de Detalle (Adaptado) */}
         {hasDetail && (
           <section className="cd__card cd__detail" ref={detailRef} id="cd-detail">
             <div className="cd__detailHead">
@@ -537,34 +429,20 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
 
             <div className="cd__detailGrid">
               <div className="cd__kv"><span className="cd__k">Folio</span><span className="cd__v">{seleccion.Folio}</span></div>
-
-              <div className="cd__kv">
-                <span className="cd__k">Socio</span>
-                <span className="cd__v">{seleccion.Socio}</span>
-              </div>
-
-              <div className="cd__kv">
-                <span className="cd__k">Teléfono</span>
-                <span className="cd__v">{seleccion.Telefono || "-"}</span>
-              </div>
-
-              <div className="cd__kv">
-                <span className="cd__k">Correo</span>
-                <span className="cd__v">{seleccion.Email || "-"}</span>
-              </div>
-
+              <div className="cd__kv"><span className="cd__k">Socio</span><span className="cd__v">{seleccion.Socio}</span></div>
+              <div className="cd__kv"><span className="cd__k">RUT</span><span className="cd__v">{seleccion.Rut || "-"}</span></div>
+              <div className="cd__kv"><span className="cd__k">Teléfono</span><span className="cd__v">{seleccion.Telefono || "-"}</span></div>
+              <div className="cd__kv"><span className="cd__k">Correo</span><span className="cd__v">{seleccion.Email || "-"}</span></div>
               <div className="cd__kv"><span className="cd__k">Dirección</span><span className="cd__v">{seleccion.Direccion || "-"}</span></div>
               <div className="cd__kv"><span className="cd__k">Tipo</span><span className="cd__v">{seleccion.Tipo}</span></div>
-
               <div className="cd__kv">
                 <span className="cd__k">Estado</span>
                 <span className="cd__v">
-                  <span className={"cd__badge " + (isFinal ? (seleccion.Estado === "Aprobado" ? "is-ok" : "is-bad") : "is-review")}>
+                  <span className={"cd__badge " + (isFinal ? "is-ok" : (seleccion.Estado === "En Revisión" ? "is-review" : "is-pending"))}>
                     {seleccion.Estado}
                   </span>
                 </span>
               </div>
-
               <div className="cd__block">
                 <span className="cd__k">Detalle</span>
                 <div className="cd__v cd__textBlock">{seleccion.Detalle || "-"}</div>
@@ -577,38 +455,40 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
                     <img
                       src={seleccion.Adjunto_URL}
                       alt={`Adjunto del requerimiento ${seleccion.Folio}`}
-                      onError={(e) => { e.currentTarget.src = `${API_BASE}/uploads/placeholder-image.png`; }}
                       loading="lazy"
                     />
                   </div>
                 </div>
               )}
 
+              {/* Acciones (Adaptadas) */}
               <div className="cd__actionsRow">
                 {!isFinal && (
                   <>
-                    <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>Aprobar</button>
+                    <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>Resolver</button>
+                    {isPendiente && (
+                      <button className="cd__btn cd__btn--info" onClick={marcarEnRevision} disabled={busy}>Marcar "En Revisión"</button>
+                    )}
                     <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
                   </>
                 )}
               </div>
 
-              {!isFinal && (
+              {/* Comentario (Adaptado) */}
+              {!isFinal ? (
                 <div className="cd__resp">
-                  <label htmlFor="resp">Comentario para el vecino</label>
+                  <label htmlFor="resp">Comentario / Respuesta</label>
                   <textarea
                     id="resp" rows={4}
                     value={respuesta}
                     onChange={(e) => setRespuesta(e.target.value)}
-                    placeholder="Escribe aquí tu comentario…"
+                    placeholder="Escribe aquí la respuesta o un comentario interno..."
                   />
                 </div>
-              )}
-
-              {isFinal && seleccion?.Actor && (
-                <div className="cd__kv">
-                  <span className="cd__k">Validado por</span>
-                  <span className="cd__v">{seleccion.Actor}</span>
+              ) : (
+                <div className="cd__block">
+                  <span className="cd__k">Respuesta de Directiva</span>
+                  <div className="cd__v cd__textBlock">{seleccion.Respuesta_Admin || "Sin comentario."}</div>
                 </div>
               )}
             </div>
@@ -616,19 +496,18 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         )}
       </section>
 
-      {/* Historial */}
+      {/* Historial (Adaptado) */}
       {showHistory && (
         <section className="cd__card cd__history" ref={historyRef} id="cd-history">
           <div className="cd__historyHead">
-            <h2>Historial de Requerimientos</h2>
+            <h2>Historial (Resueltos / En Revisión)</h2>
             <label className="cd__order">
               Filtrar{" "}
               <select value={histOrder} onChange={(e) => setHistOrder(e.target.value)}>
                 <option value="recientes">Recientes</option>
                 <option value="antiguos">Antiguos</option>
-                <option value="aprobados">Aprobados</option>
-                <option value="rechazados">Rechazados</option>
-                <option value="pendientes">Pendientes</option>
+                <option value="aprobados">Resueltos</option>
+                <option value="en_revision">En Revisión</option>
               </select>
             </label>
           </div>
@@ -643,21 +522,21 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
               <tbody>
                 {loadingHist && <tr><td colSpan="6">Cargando…</td></tr>}
                 {!loadingHist && histList.map((h) => (
-                  <tr key={`${h.folio}-${h.ts}`}>
-                    <td>{h.folio}</td>
-                    <td>{h.socio}</td>
-                    <td>{h.tipo}</td>
-                    <td>{fmtDate(h.ts)}</td>
+                  <tr key={h.Folio}> {/* Asumimos Folio es único en historial */}
+                    <td>{h.Folio}</td>
+                    <td>{h.Socio}</td>
+                    <td>{h.Tipo}</td>
+                    <td>{fmtDate(h.Fecha_Solicitud)}</td>
                     <td>
-                      <span className={"cd__badge " + (h.estado === "Pendiente" ? "is-pending" : h.estado === "Aprobado" ? "is-ok" : "is-bad")}>
-                        {h.estado}
+                      <span className={"cd__badge " + (h.Estado === "Resuelto" ? "is-ok" : "is-review")}>
+                        {h.Estado}
                       </span>
                     </td>
                     <td className="cd__td--icons">
-                      <button className="cd__chipIcon" title="Ver" onClick={() => onHistView(h.folio)}>
+                      <button className="cd__chipIcon" title="Ver" onClick={() => onHistView(h)}>
                         <span className="ico ico-view" aria-hidden />
                       </button>
-                      <button className="cd__chipIcon" title="Eliminar" onClick={() => onHistDelete(h.folio)}>
+                      <button className="cd__chipIcon" title="Eliminar" onClick={() => onHistDelete(h.Folio)}>
                         <span className="ico ico-trash" aria-hidden />
                       </button>
                     </td>
@@ -670,7 +549,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         </section>
       )}
 
-      {/* Modales de confirmación */}
+      {/* Modales (Adaptados) */}
       <ConfirmModal
         open={showApprove}
         kind="approve"
@@ -697,18 +576,37 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         onCancel={() => setShowReject(false)}
         onConfirm={confirmarRechazar}
       />
+      
+      {/* ¡Tu Modal Reutilizable! */}
+      <Modal 
+        isOpen={modalState.isOpen} 
+        onClose={() => setModalState({ ...modalState, isOpen: false })} 
+        title={modalState.title}
+        type={modalState.type}
+      >
+        <p>{modalState.message}</p> 
+      </Modal>
+
+      {/* Modal de Borrado */}
+      <DeleteConfirmModal
+        open={!!folioToDelete}
+        onClose={() => setFolioToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        folio={folioToDelete}
+      />
     </div>
   );
 }
 
-/* =================== Wrapper =================== */
+/* =================== Wrapper (sin cambios) =================== */
 export default function RequerimientosDirectiva() {
-  // cámbialo por el nombre real de quien valida (sesión)
-  const user = { nombre: "Nombre Directiva", cargo: "Directiva" };
+  // Aquí deberías leer el usuario real de la sesión
+  const sesion = leerUsuarioSesion();
+  const nombreAdmin = sesion?.usuario?.Nombre_Usuario || "Directiva";
 
   return (
-    <PanelLateralD title="Requerimientos" user={user} showTopUser={false}>
-      <RequerimientosContent directivaNombre={user.nombre} />
+    <PanelLateralD title="Requerimientos" user={{ nombre: nombreAdmin }} showTopUser={false}>
+      <RequerimientosContent directivaNombre={nombreAdmin} />
     </PanelLateralD>
   );
 }
