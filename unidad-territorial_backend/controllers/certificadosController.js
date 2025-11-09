@@ -188,12 +188,14 @@ export async function crearCertificado(req, res) {
       notas = "Solicitud web (socio)"
     } = req.body || {};
 
-    if (!nombre || !rut || !direccion || !email) {
+    if (!nombre || !rut || !direccion) {
       return res.status(400).json({ ok: false, error: "FALTAN_CAMPOS" });
     }
     if (!METODOS.has(metodoPago)) {
       return res.status(400).json({ ok: false, error: "METODO_INVALIDO" });
     }
+    // (Convertimos un string vacío "" en un 'null' real para la BDD)
+    const emailFinal = (email && String(email).trim()) ? String(email).trim() : null;
 
     const pool = await getPool();
 
@@ -219,7 +221,7 @@ export async function crearCertificado(req, res) {
         .input("nombre", sql.NVarChar(120), nombre)
         .input("rut", sql.VarChar(12), rut)
         .input("dir", sql.NVarChar(200), direccion)
-        .input("email", sql.NVarChar(160), email)
+        .input("email", sql.NVarChar(160), emailFinal)
         .input("tel", sql.VarChar(20), telefonoFinal)      // 👈 TELEFONO
         .input("metodo", sql.VarChar(20), metodoPago)
         .input("url", sql.NVarChar(400), comprobanteUrl)

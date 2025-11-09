@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
 import { CertAPI } from "../../api/certificados";
 import "./CertificadosDirectiva.css";
+import Modal from '../../components/Modal';
 
 /* =================== Helpers =================== */
 const fmtDate = (iso) =>
@@ -163,6 +164,33 @@ function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
   );
 }
 
+function DeleteConfirmModal({ open, onClose, onConfirm, folio }) {
+  if (!open) return null;
+  return (
+    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-delete-title">
+      <div className="cd__modal">
+        <div className="cd__modalHead">
+          <span className="cd__modalAttention" >PELIGRO</span>
+          <h3 id="cd-delete-title">Confirmar Eliminación</h3>
+        </div>
+        <div className="cd__modalBody">
+          <p>
+            ¿Estás seguro de que quieres eliminar la solicitud
+            {folio ? <> con folio <strong>{folio}</strong></> : null}?
+          </p>
+          <p style={{ fontWeight: 'bold', color: '#ef4444' }}>
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+        <div className="cd__modalActions">
+          <button className="cd__btn cd__btn--ghost" onClick={onClose}>Cancelar</button>
+          <button className="cd__btn cd__btn--danger" onClick={onConfirm}>Confirmar Eliminación</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* =================== Página =================== */
 function CertificadosContent() {
   const [mode, setMode] = useState("list"); // list | manual
@@ -184,6 +212,8 @@ function CertificadosContent() {
   const [editId, setEditId] = useState(null);
   const [editFolio, setEditFolio] = useState(null);
 
+  const [folioToDelete, setFolioToDelete] = useState(null);
+  
   const [manualForm, setManualForm] = useState({
     nombre: "", rut: "", direccion: "", email: "",
     metodoPago: "transferencia",
@@ -193,6 +223,14 @@ function CertificadosContent() {
 
   const [pendientes, setPendientes] = useState([]);
   const [historial,   setHistorial]   = useState([]);
+
+  //MODAL
+    const [modalState, setModalState] = useState({
+      isOpen: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
 
   const topRef = useRef(null);
   const detailRef = useRef(null);
@@ -319,10 +357,10 @@ function CertificadosContent() {
       }
       await Promise.all([refreshList(), refreshHist()]);
       setSeleccion(null); setRespuesta("");
-      alert("✅ Certificado aprobado.");
+      setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: 'Certificado aprobado correctamente.' });
     } catch (e) {
       console.error(e);
-      alert("No se pudo aprobar.");
+      setModalState({ isOpen: true, type: 'error', title: 'Éxito', message: 'No se pudo aprobar el certificado.' });
     } finally { setBusy(false); }
   };
   const rechazar = async () => {
@@ -336,8 +374,10 @@ function CertificadosContent() {
       });
       await Promise.all([refreshList(), refreshHist()]);
       setSeleccion(null); setRespuesta("");
-      alert("❌ Certificado rechazado.");
-    } catch (e) { console.error(e); alert("No se pudo rechazar."); }
+      setModalState({ isOpen: true, type: 'success', title: 'Rechazado', message: 'Certificado rechazado correctamente.' });
+    } catch (e) { 
+      console.error(e);
+      setModalState({ isOpen: true, type: 'error', title: 'Éxito', message: 'No se pudo rechazar el certificado.' }); }
     finally { setBusy(false); }
   };
 
@@ -356,8 +396,8 @@ function CertificadosContent() {
     await Promise.all([refreshList(), refreshHist()]);
     setMode("list");
     setManualForm({ nombre: "", rut: "", direccion: "", email: "", metodoPago: "transferencia", comprobante: null, comprobanteName: "" });
-    alert("✅ Ingreso manual registrado y aprobado.");
-  };
+    setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: 'Ingreso manual registrado y aprobado.' }); 
+    };
 
   const saveManual = async (e) => {
     e.preventDefault();
@@ -384,7 +424,7 @@ function CertificadosContent() {
         await Promise.all([refreshList(), refreshHist()]);
         setMode("list"); setEditFolio(null); setEditId(null);
         setManualForm({ nombre: "", rut: "", direccion: "", email: "", metodoPago: "transferencia", comprobante: null, comprobanteName: "" });
-        alert("✅ Cambios guardados.");
+        setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: 'Cambios guardados correctamente.' });
         return;
       }
       if (editId) {
@@ -392,20 +432,22 @@ function CertificadosContent() {
         await Promise.all([refreshList(), refreshHist()]);
         setMode("list"); setEditId(null);
         setManualForm({ nombre: "", rut: "", direccion: "", email: "", metodoPago: "transferencia", comprobante: null, comprobanteName: "" });
-        alert("✅ Registro actualizado.");
+        setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: 'Registro actualizado.' });
         return;
       }
       setPendingPayload(payload);
       setShowSaveConfirm(true);
     } catch (err) {
       console.error(err);
-      alert("No se pudo guardar el ingreso manual.");
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo guardar el ingreso manual.' });
     } finally { setBusy(false); }
   };
 
   const confirmSaveAccept = async () => {
     if (!pendingPayload) return setShowSaveConfirm(false);
-    try { setBusy(true); setShowSaveConfirm(false); await doSaveManualNew(pendingPayload); }
+    try { setBusy(true); setShowSaveConfirm(false); 
+      await doSaveManualNew(pendingPayload);
+      setModalState({ isOpen: true, type: 'success', title: 'Éxito', message: 'Ingreso manual registrado y aprobado.' });}
     catch (e) { console.error(e); alert("No se pudo completar el ingreso manual."); }
     finally { setBusy(false); setPendingPayload(null); }
   };
@@ -419,7 +461,9 @@ function CertificadosContent() {
       setSeleccion(row); setMode("list");
       if (!showHistory) setShowHistory(true);
       setTimeout(() => scrollTo(detailRef), 0);
-    } catch (e) { alert("No se pudo abrir el detalle."); console.error(e); }
+    } catch (e) { 
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo abrir el detalle.' });
+      console.error(e); }
     finally { setBusy(false); }
   };
 
@@ -440,25 +484,43 @@ function CertificadosContent() {
       });
       setMode("manual"); setRutError("");
       setTimeout(() => scrollTo(topRef), 0);
-    } catch (e) { alert("No se pudo abrir para editar."); console.error(e); }
+    } catch (e) { 
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo abrir para editar.' });
+      console.error(e); }
     finally { setBusy(false); }
   };
 
   const onHistDelete = async (folio) => {
-    if (!confirm(`¿Eliminar la solicitud ${folio}? Esta acción no se puede deshacer.`)) return;
+    setFolioToDelete(folio);
+  };
+
+  const handleConfirmDelete = async () => {
+    const folio = folioToDelete; // 1. Obtiene el folio desde el estado
+    if (!folio) return;
+
     try {
       setBusy(true);
-      // Optimista en UI
+      
+      // 2. Lógica de borrado (la que cortaste de onHistDelete)
       setHistorial((prev) => (prev || []).filter((h) => (h.Folio || h.ID_Cert) !== folio));
       setPendientes((prev) => (prev || []).filter((p) => p.Folio !== folio));
+      
       await CertAPI.eliminarPorFolio(folio);
       await Promise.all([refreshList(), refreshHist()]);
       if (seleccion?.Folio === folio) setSeleccion(null);
-      alert("🗑️ Eliminado.");
+      
+      // 3. Usa tu modal de notificación
+      setModalState({ isOpen: true, type: 'success', title: 'Eliminado', message: 'Registro eliminado correctamente.' });
+    
     } catch (e) {
-      console.error(e); alert("No se pudo eliminar.");
+      console.error(e); 
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo eliminar el registro.' });
       await Promise.all([refreshList(), refreshHist()]);
-    } finally { setBusy(false); }
+    
+    } finally {
+      setBusy(false);
+      setFolioToDelete(null); // 4. Cierra el modal de confirmación
+    }
   };
 
   /* ===== Exportar Excel (XLSX estilizado) ===== */
@@ -476,7 +538,7 @@ function CertificadosContent() {
 
   const exportHistoryToXLSX = async () => {
     if (!historial || !historial.length) {
-      alert("No hay datos para exportar.");
+      setModalState({ isOpen: true, type: 'info', title: 'Info', message: 'No hay datos en el historial para exportar.' });
       return;
     }
 
@@ -485,7 +547,8 @@ function CertificadosContent() {
       ExcelJS = await loadExcelJS();
     } catch (e) {
       console.error("No se pudo cargar ExcelJS:", e);
-      alert("Error al cargar ExcelJS. Ver consola.");
+      setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'Error al cargar Excel.' });
+      
       return;
     }
 
@@ -641,7 +704,7 @@ function CertificadosContent() {
         </p>
       </header>
 
-      {/* Main */}
+      {/* Ingreso manual */}
       {mode === "manual" ? (
         <section className="cd__card cd__manual">
           <div className="cd__manualHead">
@@ -658,9 +721,15 @@ function CertificadosContent() {
                 <input name="rut" value={manualForm.rut} onChange={onManualChange} placeholder="12.345.678-5" required aria-invalid={!!rutError}/>
                 {rutError && <small className="cd__error">{rutError}</small>}
               </label>
-              <label className="cd__group"><span>Correo</span>
-                <input type="email" name="email" value={manualForm.email} onChange={onManualChange} required />
+              <label className="cd__group">
+                {/* 1. Añadimos "(Opcional)" al label */}
+                <span>Correo (Opcional)</span> 
+                {/* 2. Quitamos 'required' */}
+                <input type="email" name="email" value={manualForm.email} onChange={onManualChange} /> 
+                {/* 3. (Opcional) Añadimos texto de ayuda, que es mejor UX */}
+                <small className="cd__hint">Se usará para enviar notificaciones al socio.</small>
               </label>
+
               <label className="cd__group cd__group--full"><span>Dirección</span>
                 <input name="direccion" value={manualForm.direccion} onChange={onManualChange} required />
               </label>
@@ -886,7 +955,23 @@ function CertificadosContent() {
           metodoPago: pendingPayload?.metodoPago,
         }}
       />
+      <DeleteConfirmModal
+        open={!!folioToDelete}
+        onClose={() => setFolioToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        folio={folioToDelete}
+      />
+      {/*  MODAL DE NOTIFICACIONES */}
+    <Modal 
+      isOpen={modalState.isOpen} 
+      onClose={() => setModalState({ ...modalState, isOpen: false })} 
+      title={modalState.title}
+      type={modalState.type}
+    >
+      <p>{modalState.message}</p> 
+    </Modal>
     </div>
+    
   );
 }
 
