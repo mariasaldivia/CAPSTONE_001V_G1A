@@ -1,9 +1,7 @@
 // src/Modulos/Requerimientos/RequerimientosDirectiva.jsx
-// --- VERSIÓN ADAPTADA A LA NUEVA API (BUZON_VECINAL Y BITACORA) ---
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import PanelLateralD from "../../components/PanelLateralD";
-import Modal from "../../components/Modal"; // <-- ¡IMPORTAMOS TU MODAL!
+import Modal from "../../components/Modal"; 
 import "./RequerimientosDirectiva.css";
 
 /* =================== Config =================== */
@@ -17,13 +15,13 @@ const API_BASE = (
 
 // (Función para leer el usuario de la sesión, la necesitamos para el ID de Admin)
 function leerUsuarioSesion() {
-  try {
-    const raw = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  try {
+    const raw = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 const fmtDate = (iso) =>
@@ -48,7 +46,7 @@ const normalizeUrl = (u) => {
  * para que coincida con lo que el JSX espera.
  */
 const normRequer = (r) => ({
-  ID_Req: r.ID_Buzon,
+  ID_Req: r.ID_Buzon || r.ID_Buzon_FK || r.ID_Historial,
   Folio: r.Folio,
   Rut: r.RUT,
   Socio: r.NombreSocio,
@@ -58,7 +56,7 @@ const normRequer = (r) => ({
   Direccion: r.Direccion,
   Detalle: r.Mensaje,
   Estado: r.Estado,
-  Fecha_Solicitud: r.FechaCreacion,
+  Fecha_Solicitud: r.FechaCreacion || r.FechaResuelto,
   Adjunto_URL: normalizeUrl(r.ImagenURL),
   // Mapeamos los campos de resolución
   Actor: r.ResueltoPor_ID, // (Podríamos hacer JOIN para el nombre)
@@ -81,23 +79,40 @@ const ReqsAPI = {
     return rows.map(normRequer);
   },
 
-  // Llama a: GET /api/requerimientos?estado=Resuelto (¡y En Revisión!)
+
+  // --- REEMPLAZA ESTA FUNCIÓN COMPLETA ---
   async listarHistorial() {
-    // El "Historial" ahora son todos los tickets que NO están "Pendiente"
-    const [resueltos, enRevision] = await Promise.all([
-      fetch(`${API_BASE}/api/requerimientos?estado=Resuelto`, { credentials: "include" }),
-      fetch(`${API_BASE}/api/requerimientos?estado=En Revisión`, { credentials: "include" })
-    ]);
-    
-    const jsonResueltos = await resueltos.json().catch(() => ({}));
-    const jsonEnRevision = await enRevision.json().catch(() => ({}));
+    try {
+      // 1. Llama a "Resuelto" y "En Revisión" en paralelo
+      const [resueltosResp, enRevisionResp] = await Promise.all([
+        fetch(`${API_BASE}/api/requerimientos?estado=Resuelto`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/requerimientos?estado=En Revisión`, { credentials: "include" })
+      ]);
 
-    const dataResueltos = jsonResueltos?.data || [];
-    const dataEnRevision = jsonEnRevision?.data || [];
+      // 2. Revisa si AMBAS llamadas fueron exitosas
+      if (!resueltosResp.ok || !enRevisionResp.ok) {
+        // Si una falla, lanza el error
+        throw new Error("Una de las sub-consultas del historial falló.");
+      }
 
-    const allHistorical = [...dataResueltos, ...dataEnRevision];
-    return allHistorical.map(normRequer); // Usamos el mismo normalizador
+      // 3. Parsea los JSON
+      const jsonResueltos = await resueltosResp.json().catch(() => ({}));
+      const jsonEnRevision = await enRevisionResp.json().catch(() => ({}));
+
+      const dataResueltos = jsonResueltos?.data || [];
+      const dataEnRevision = jsonEnRevision?.data || [];
+
+      // 4. Combina y normaliza
+      const allHistorical = [...dataResueltos, ...dataEnRevision];
+      return allHistorical;
+
+    } catch (e) {
+      console.error("Error en ReqsAPI.listarHistorial:", e);
+      // 5. Lanza el error que el modal SÍ entiende
+      throw new Error("No se pudo cargar historial");
+    }
   },
+
 
   // Llama a: PATCH /api/requerimientos/:id/estado
   async cambiarEstado(id, { estadoNuevo, respuestaAdmin, idAdmin }) {
@@ -230,6 +245,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
   const historyRef = useRef(null);
 
   // Carga inicial
+// --- REEMPLAZA TU USEEFFECT COMPLETO POR ESTE ---
   useEffect(() => {
     (async () => {
       setLoadingList(true);
@@ -249,7 +265,8 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
         setLoadingHist(false);
       }
     })();
-  }, []);
+  }, []); // El array vacío [] asegura que esto se ejecute solo una vez
+  // --- FIN DEL REEMPLAZO ---FIN DEL REEMPLAZO ---
 
   // --- Listas Memoizadas (Lógica sin cambios) ---
   const pendientesOrdenados = useMemo(() => {
@@ -268,7 +285,6 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
     switch (histOrder) {
       case "antiguos": return rows.sort(byTsAsc);
       case "aprobados": return rows.filter((r) => r.Estado === "Resuelto").sort(byTsDesc);
-      case "rechazados": return rows.filter((r) => r.Estado === "Rechazado").sort(byTsDesc); // (Aún no implementado en API)
       case "en_revision": return rows.filter((r) => r.Estado === "En Revisión").sort(byTsDesc);
       default: return rows.sort(byTsDesc);
     }
@@ -290,8 +306,9 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
     
     // Obtenemos el ID del admin desde el localStorage
     const sesion = leerUsuarioSesion();
-    const adminId = sesion?.usuario?.ID_Usuario || sesion?.usuario?.id;
-    
+    // LÍNEA CORRECTA
+    const adminId = sesion?.ID_Usuario || sesion?.id;
+
     if (!adminId) {
       setModalState({ isOpen: true, type: 'error', title: 'Error', message: 'No se pudo identificar al administrador. Vuelve a iniciar sesión.' });
       return;
@@ -304,7 +321,7 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
       
       await ReqsAPI.cambiarEstado(seleccion.ID_Req, {
         estadoNuevo: nuevoEstado, // "En Revisión" o "Resuelto"
-        comentario: comentario?.trim() || nuevoEstado,
+        respuestaAdmin: comentario?.trim() || nuevoEstado,
         idAdmin: adminId,
       });
 
@@ -465,17 +482,27 @@ function RequerimientosContent({ directivaNombre = "Directiva" }) {
               <div className="cd__actionsRow">
                 {!isFinal && (
                   <>
-                    <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>Resolver</button>
+                    {/* * Botón #1: Resolver (Aprobar)
+                      * Aparece si está Pendiente O En Revisión.
+                    */}
+                    <button className="cd__btn cd__btn--ok" onClick={abrirConfirmAprobar} disabled={busy}>
+                      Resolver
+                    </button>
+
+                    {/* * Botón #2: Marcar "En Revisión" (con comentario)
+                      * Aparece SÓLO si está Pendiente.
+                    */}
                     {isPendiente && (
-                      <button className="cd__btn cd__btn--info" onClick={marcarEnRevision} disabled={busy}>Marcar "En Revisión"</button>
+                      <button className="cd__btn cd__btn--info" onClick={marcarEnRevision} disabled={busy}>
+                        Enviar Comentario y Revisar
+                      </button>
                     )}
-                    <button className="cd__btn cd__btn--danger" onClick={abrirConfirmRechazar} disabled={busy}>Rechazar</button>
                   </>
                 )}
               </div>
 
               {/* Comentario (Adaptado) */}
-              {!isFinal ? (
+              {isPendiente ? (
                 <div className="cd__resp">
                   <label htmlFor="resp">Comentario / Respuesta</label>
                   <textarea
