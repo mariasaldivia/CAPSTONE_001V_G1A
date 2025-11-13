@@ -88,33 +88,101 @@ details[open] summary {
   border-radius: 999px;
   text-transform: uppercase;
 }
-/* 🔹 Estado base */
-.pv-estado {
-  font-weight: 600;
-  padding: 0.3rem 0.8rem;
-  border-radius: 1rem;
-  font-size: 0.9rem;
-  text-transform: capitalize;
-}
-
-/* Abierto (Semántico - se mantiene) */
+/* Estados visuales */
 .estado-abierto {
-  background-color: #dcfce7;
-  color: #15803d;
+  border-top: 4px solid #2e7d32;
 }
-
-/* En revisión (Semántico - se mantiene) */
 .estado-revision {
-  background-color: #fef9c3;
-  color: #854d0e;
+  border-top: 4px solid #fbc02d;
 }
-
-/* Finalizado (Adaptado) */
 .estado-finalizado {
-  background-color: var(--pv-border); /* APLICADO */
-  color: var(--pv-text-muted); /* APLICADO */
+  border-top: 4px solid #d32f2f;
 }
 
+/* Badges (etiquetas de estado) */
+.estado-badge {
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: white;
+  margin-left: 10px;
+}
+.estado-abierto.estado-badge {
+  background-color: #43a047;
+}
+.estado-revision.estado-badge {
+  background-color: #fbc02d;
+  color: #333;
+}
+.estado-finalizado.estado-badge {
+  background-color: #d32f2f;
+}
+
+/* Botones */
+.pv-btn-green {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+}
+.pv-btn-green:hover {
+  background-color: #1b5e20;
+}
+
+/* Mensajes informativos */
+.pv-msg-warning {
+  background-color: #fff8e1;
+  border-left: 4px solid #fbc02d;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  color: #795548;
+  font-weight: 500;
+}
+
+.pv-msg-finalizado {
+  background-color: #ffebee;
+  border-left: 4px solid #c62828;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  color: #b71c1c;
+  font-weight: 500;
+}
+
+.estado-select {
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  outline: none;
+  transition: 0.3s ease;
+}
+
+/* Cambios de color según estado */
+.estado-select.estado-abierto {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.estado-select.estado-revision {
+  background-color: #fffde7;
+  color: #f9a825;
+  border-color: #fbc02d;
+}
+
+.estado-select.estado-finalizado {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #d32f2f;
+}
 
 .pv-descripcion {
   margin: 0.75rem 0 1rem;
@@ -428,4 +496,248 @@ details[open] summary {
 /* Espaciado entre cards internas */
 .historial-container {
   margin-top: 1rem;
+}
+/* Modal postulantes */
+/* .pv-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv-modal-content {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+} */
+ /* 🔹 Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #1d3557;
+}
+
+.modal-text {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+textarea {
+  width: 100%;
+  resize: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+.btn-guardar{
+  background-color: #15803d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 5px;
+  color: #fff;
+}
+
+.btn-cancelar {
+  background-color: #ccc;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ver-bases {
+  color: #f97316;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pv-bases {
+  background: #f8f8f8;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.btn-guardar-estado {
+  background-color: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-guardar-estado:hover {
+  background-color: #15803d;
+}
+
+.tabla-postulantes select {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.3rem;
+  font-size: 0.9rem;
+}
+/* 🔹 Contenedor inferior de botones */
+.proyecto-card .acciones-proyecto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #ddd;
+}
+
+/* 🔹 Botones principales */
+.btn-editar,
+.btn-eliminar,
+.btn-ver-postulantes {
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* 🔹 Eliminar: rojo */
+.btn-eliminar {
+  background-color: #dc2626;
+  color: #fff;
+}
+.btn-eliminar:hover {
+  background-color: #b91c1c;
+}
+
+/* 🔹 Editar: azul */
+.btn-editar {
+  background-color: #2563eb;
+  color: #fff;
+}
+.btn-editar:hover {
+  background-color: #1d4ed8;
+}
+
+/* 🔹 Ver postulantes: gris */
+.btn-ver-postulantes {
+  background-color: #6b7280;
+  color: #fff;
+  margin-left: 0.5rem;
+}
+.btn-ver-postulantes:hover {
+  background-color: #4b5563;
+}
+
+/* 🔹 Modal para eliminar */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.25s ease;
+}
+
+.modal-content h3 {
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.modal-content p {
+  color: #374151;
+  margin-bottom: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.modal-buttons button {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-buttons .btn-cancelar {
+  background-color: #9ca3af;
+  color: #fff;
+}
+.modal-buttons .btn-cancelar:hover {
+  background-color: #6b7280;
+}
+
+.modal-buttons .btn-confirmar {
+  background-color: #dc2626;
+  color: #fff;
+}
+.modal-buttons .btn-confirmar:hover {
+  background-color: #b91c1c;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

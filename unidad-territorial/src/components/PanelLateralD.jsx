@@ -201,7 +201,7 @@ export default function PanelLateralD({
               "adm__item" + (isActive ? " adm__item--active" : "")
             }
           >
-            Proyectos Vecinales
+            Actividades
           </NavLink>
 
           <NavLink

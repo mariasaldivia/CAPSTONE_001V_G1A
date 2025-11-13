@@ -17,6 +17,8 @@ import certificadosRoutes from "./routes/certificadosRoutes.js";
 import sociosRoutes from "./routes/sociosRoutes.js"; // <-- Se importa la ruta de socios
 import noticiasRoutes from "./routes/noticiasRoutes.js";
 import requerimientosRoutes from "./routes/requerimientosRoutes.js"; //
+import proyectoRoutes from "./routes/proyectoRoutes.js";
+import postulacionRoutes from "./routes/postulacionRoutes.js";
 
 // ================================
 // 🚀 Inicialización de servidor
@@ -57,6 +59,9 @@ app.use("/api/certificados", certificadosRoutes);
 app.use("/api/socios", sociosRoutes); // <-- Se usa la ruta de socios
 app.use("/api/noticias", noticiasRoutes);
 app.use("/api/requerimientos", requerimientosRoutes); 
+app.use("/api/proyectos", proyectoRoutes);
+app.use("/api/postulaciones", postulacionRoutes);
+
 
 // ================================
 // ⚠️ Manejo de rutas no encontradas

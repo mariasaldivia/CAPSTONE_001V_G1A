@@ -1,250 +1,181 @@
-import React, { useState } from "react";
-import ProyectosTable from "./components/ProyectosTable";
+import React, { useState, useEffect } from "react";
+import { obtenerProyectos } from "../../api/proyectosApi";
+import { postularProyecto } from "../../api/postulacionesApi";
 import "./ProyectosVecinales.css";
 
 function ProyectosVecinalesVecino() {
-  const [proyectos] = useState([
-   {
-      nombre: "Campeonato de Rayuela",
-      descripcion: "Torneo comunitario de rayuela en el Parque La Paloma.",
-      horario: "10:30",
-      fechaInicio: "10-10-2025",
-      fechaFin: "25-10-2025",
-      bases: "",
-      estado: "Abierto",
-    },
-    {
-      nombre: "Gran Bingo Bailable Malón",
-      descripcion: "Evento recreativo con bingo, música y convivencia vecinal.",
-       horario: "14:30 - 18:00",
-      fechaInicio: "12-10-2025",
-      fechaFin: "28-10-2025",
-      bases: "Aforo limitado a 120 personas (por orden de inscripción). Max 4 personas por casa",
-      estado: "Abierto",
-    },
-    {
-      nombre: "Feria de Salud Comunitaria",
-      descripcion: "Instancia de atención y prevención en salud para la comunidad.",
-       horario: "08:00 - 13:00",
-      fechaInicio: "15-10-2025",
-      fechaFin: "30-10-2025",
-      bases: "",
-      estado: "Abierto",
-    },
-    {
-      nombre: "Campeonato de Brisca",
-      descripcion: "Competencia de cartas brisca organizada por la junta de vecinos.",
-      horario: "15:30",
-      fechaInicio: "01-10-2025",
-      fechaFin: "18-10-2025",
-      bases: "",
-      estado: "Abierto",
-    },
-    {
-      nombre: "Bingo Adulto Mayor",
-      descripcion: "Jornada de bingo y convivencia con premios para los participantes.",
-       horario: "15:00",
-      fechaInicio: "10-10-2025",
-      fechaFin: "22-10-2025",
-      bases: "Podrán participar vecinos mayores de 60 años pertenecientes a la Junta. Inscripción previa obligatoria (cupos limitados a 60 personas). Cada participante podrá invitar a un acompañante mayor de edad.",
-      estado: "Abierto",
-    },
-     {
-      nombre: "Muestras Coreograficas de Org. CDR",
-      descripcion: "Competencia de cartas brisca organizada por la junta de vecinos.",
-       horario: "15:00",
-      fechaInicio: "01-10-2025",
-      fechaFin: "16-10-2025",
-      bases: "",
-      estado: "En Revisión",
-    },
-  ]);
-
-  const [modalOpen, setModalOpen] = useState(false);
+  const [proyectos, setProyectos] = useState([]);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
-  const [form, setForm] = useState({
-    nombre: "",
-    rut: "",
-    direccion: "",
-    comentarios: "",
-  });
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ motivo: "" });
+  const socioId = 1; // 🔹 cambiar por el ID real del socio logueado
 
+  // 🔹 Cargar proyectos desde backend
+  useEffect(() => {
+    async function fetchData() {
+      const data = await obtenerProyectos();
+      setProyectos(data);
+    }
+    fetchData();
+  }, []);
+
+  // 🔹 Abrir modal según el tipo de proyecto
   const abrirModal = (proyecto) => {
     setProyectoSeleccionado(proyecto);
-    setModalOpen(true);
+    setShowModal(true);
   };
 
+  // 🔹 Cerrar modal
   const cerrarModal = () => {
-    setModalOpen(false);
-    setForm({ nombre: "", rut: "", direccion: "", comentarios: "" });
+    setShowModal(false);
+    setProyectoSeleccionado(null);
+    setFormData({ motivo: "" });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
+  // 🔹 Enviar postulación
+  const handlePostular = async () => {
+    if (!proyectoSeleccionado) return;
 
-  const enviarPostulacion = (e) => {
-    e.preventDefault();
-    alert(`✅ Postulación enviada para: ${proyectoSeleccionado.nombre}`);
+    await postularProyecto(socioId, proyectoSeleccionado.ID_Proyecto);
+    alert("✅ Tu postulación fue enviada correctamente");
     cerrarModal();
   };
 
-  const postularAProyecto = (proyecto) => {
-    if (proyecto.bases) {
-      abrirModal(proyecto);
-    } else {
-      alert(`✅ Te has postulado al proyecto: ${proyecto.nombre}`);
-    }
-  };
-  const normalizarEstado = (estado) => {
-    const estadoNormalizado = estado.toLowerCase().trim();
-    switch (estadoNormalizado) {
-      case "abierto":
-        return "estado-abierto";
-        case "en revisión":
-        case "en revision": // ✅ acepta ambas formas
-          return "estado-revision";
-        case "finalizado":
-          return "estado-finalizado";
-        default:
-          return "";
-      };
-  }
-
   return (
     <div className="pv-container">
-      <h2 className="pv-title">🌿 Proyectos Vecinales Disponibles</h2>
+      <h2 className="pv-title">Actividades Vecinales Disponibles</h2>
 
-      <div className="pv-grid">
-        {proyectos.map((p, index) => (
-          <div key={index} className="pv-card">
-            <div className="pv-header">
-              <h3 className="pv-nombre">{p.nombre}</h3>
-              <span className={`pv-estado ${normalizarEstado(p.estado)}`}>
-                {p.estado}
-              </span>
-            </div>
+      {proyectos.length === 0 ? (
+        <p className="pv-msg">No hay Actividades disponibles por el momento.</p>
+      ) : (
+        <div className="historial-container">
+         {proyectos
+  .filter((p) => {
+    // ✅ Mostrar sólo proyectos que NO están finalizados hace más de 7 días
+    if (p.Estado === "Finalizado") {
+      const fechaFin = new Date(p.FechaFin);
+      const hoy = new Date();
+      const diffDias = (hoy - fechaFin) / (1000 * 60 * 60 * 24);
+      return diffDias <= 7;
+    }
+    return true;
+  })
+  .map((p) => {
+    const claseEstado =
+      p.Estado === "Abierto"
+        ? "estado-abierto"
+        : p.Estado === "En revisión"
+        ? "estado-revision"
+        : "estado-finalizado";
 
-            <p className="pv-descripcion">{p.descripcion}</p>
-            <div className="pv-fechas">
-              <strong>Horario:</strong>{" "}
-                <span>{p.horario} hr</span>
-            </div>
+    return (
+      <div key={p.ID_Proyecto} className={`proyecto-card ${claseEstado}`}>
+        <div className="proyecto-header">
+          <h4>{p.Nombre}</h4>
+          <span className={`estado-badge ${claseEstado}`}>
+            {p.Estado}
+          </span>
+        </div>
 
-            <div className="pv-fechas">
-              <strong>Fechas:</strong>{" "}
-              <span>
-                {p.fechaInicio} → {p.fechaFin}
-              </span>
-            </div>
+        <p>{p.Descripcion}</p>
 
-           <div className="pv-bases">
-              {p.bases ? (
-                <details className="pv-details">
-                  <summary className="pv-link">📄 Ver bases</summary>
-                  <p className="pv-basesText">{p.bases}</p>
-                </details>
-              ) : (
-                <span className="pv-nobases">No requiere bases</span>
-              )}
-            </div>
+        <p>
+          <strong>Fechas:</strong> {p.FechaInicio?.slice(0, 10)} -{" "}
+          {p.FechaFin?.slice(0, 10)}
+        </p>
 
-            <div className="pv-actions">
-              {p.estado === "Abierto" ? (
-                <button className="pv-btn" onClick={() => postularAProyecto(p)}>
-                  Postular
-                </button>
-              ) : p.estado === "En revisión" ? (
-                <p className="pv-msg">
-                  🔒 En revisión — Si requiere una excepción, contacte con la directiva.
-                </p>
-              ) : p.estado === "Finalizado" ? (
-                <p className="pv-msg">
-                  ⏰ Proyecto finalizado — No se pueden recibir más postulaciones.
-                </p>
-              ) : (
-                <p className="pv-msg">Estado no disponible</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+        {p.HoraInicio && (
+          <p>
+            <strong>Horario:</strong> {p.HoraInicio.substring(0, 5)} —{" "}
+            {p.HoraFin ? p.HoraFin.substring(0, 5) : ""}
+          </p>
+        )}
 
-      {/* 🔹 MODAL DE POSTULACIÓN */}
-      {modalOpen && (
-        <div className="pv-modalOverlay" onClick={cerrarModal}>
-          <div
-            className="pv-modal"
-            onClick={(e) => e.stopPropagation()} // evita cerrar al hacer clic dentro
+        {/* Mostrar bases si existen */}
+        {p.Bases && (
+          <details className="pv-details">
+            <summary className="pv-link"> Ver bases</summary>
+            <p className="pv-basesText">{p.Bases}</p>
+          </details>
+        )}
+
+        {/* 🔹 Lógica según estado */}
+        {p.Estado === "Abierto" && (
+          <button
+            className="pv-btn pv-btn-green"
+            onClick={() => handlePostular(p.ID_Proyecto)}
           >
-            <h3 className="pv-modalTitle">
-              📝 Postulación - {proyectoSeleccionado?.nombre}
-            </h3>
+            Postularse
+          </button>
+        )}
 
-            <p className="pv-modalDesc">
-              Para postular, completa la siguiente información requerida por las
-              bases del proyecto.
-            </p>
+        {p.Estado === "En revisión" && (
+          <div className="pv-msg-warning">
+            ⚠️ Este proyecto está en revisión.  
+            <br />
+            Si aún deseas postular, comunícate directamente con la directiva.
+          </div>
+        )}
 
-            <form className="pv-form" onSubmit={enviarPostulacion}>
-              <label>
-                Nombre completo:
-                <input
-                  type="text"
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
+        {p.Estado === "Finalizado" && (
+          <div className="pv-msg-finalizado">
+            🔴 Este proyecto ya finalizó.
+          </div>
+        )}
+      </div>
+    );
+  })}
+        </div>
+      )}
 
-              <label>
-                RUT:
-                <input
-                  type="text"
-                  name="rut"
-                  value={form.rut}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
+      {/* 🔹 Modal dinámico */}
+      {showModal && proyectoSeleccionado && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Postulación a {proyectoSeleccionado.Nombre}</h3>
 
-              <label>
-                Dirección:
-                <input
-                  type="text"
-                  name="direccion"
-                  value={form.direccion}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Comentarios adicionales:
+            {proyectoSeleccionado.Bases &&
+            proyectoSeleccionado.Bases.trim() !== "" ? (
+              <>
+                <p className="modal-text">
+                  <strong>Requisitos:</strong> {proyectoSeleccionado.Bases}
+                </p>
+                <label>Motivo o comentario:</label>
                 <textarea
-                  name="comentarios"
-                  rows={3}
-                  value={form.comentarios}
-                  onChange={handleChange}
+                  value={formData.motivo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, motivo: e.target.value })
+                  }
+                  placeholder="Ej. Estoy interesada en participar por..."
                 />
-              </label>
-
-              <div className="pv-modalActions">
-                <button type="button" onClick={cerrarModal} className="pv-cancel">
-                  Cancelar
-                </button>
-                <button type="submit" className="pv-submit">
-                  Enviar Postulación
-                </button>
-              </div>
-            </form>
+                <div className="modal-actions">
+                  <button className="pv-btn" onClick={handlePostular}>
+                    Enviar Postulación
+                  </button>
+                  <button className="btn-cancelar" onClick={cerrarModal}>
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>¿Deseas confirmar tu postulación a este proyecto?</p>
+                <div className="modal-actions">
+                  <button className="pv-btn" onClick={handlePostular}>
+                    Confirmar
+                  </button>
+                  <button className="btn-cancelar" onClick={cerrarModal}>
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
+
 
 export default ProyectosVecinalesVecino;

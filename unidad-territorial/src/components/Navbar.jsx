@@ -101,7 +101,7 @@ export default function Navbar() {
     { to: "/certificados", label: "Certificados" },
     { to: "/noticias", label: "Noticias" },
     { to: "/requerimientos", label: "Buzón Vecinal" }, // 👈 NUEVO
-    { to: "/proyectos", label: "Proyectos" },
+    { to: "/proyectos", label: "Actividades" },
   ];
 
   /** 👤 Links de sesión */
