@@ -1,6 +1,7 @@
 import sql from "mssql";
 import { getPool } from "../pool.js";
 import nodemailer from 'nodemailer';
+import { generarCertificadoResidenciaPDF } from "../services/certificadoPdf.js";
 
 /* ======================================================
    📧 Configuración de correo (nodemailer)
@@ -19,12 +20,11 @@ const mailTransporter = nodemailer.createTransport({
   },
 });
 
-
 /**
- * Envía un correo simple (sin PDF por ahora) informando que el certificado fue aprobado.
- * Más adelante aquí mismo adjuntaremos el PDF.
+ * Envía un correo informando que el certificado fue aprobado.
+ * Si se le pasa pdfBuffer + pdfFileName, adjunta el PDF al correo.
  */
-async function enviarCorreoCertificadoBasico(cert) {
+async function enviarCorreoCertificadoBasico(cert, pdfBuffer, pdfFileName) {
   if (!cert?.Email) {
     console.warn("No hay correo para este certificado, no se envía email.");
     return { sent: false, reason: "NO_EMAIL" };
@@ -55,7 +55,7 @@ async function enviarCorreoCertificadoBasico(cert) {
         Fecha de aprobación: <b>${fechaHoy}</b>
       </p>
       <p>
-        En una siguiente etapa adjuntaremos el PDF del certificado en este mismo correo.
+        Adjuntamos en este correo tu <b>Certificado de Residencia en PDF</b>.
       </p>
       <p>
         Atentamente,<br/>
@@ -63,6 +63,16 @@ async function enviarCorreoCertificadoBasico(cert) {
       </p>
     `,
   };
+
+  // Adjuntamos el PDF solo si viene definido
+  if (pdfBuffer && pdfFileName) {
+    mailOptions.attachments = [
+      {
+        filename: pdfFileName,
+        content: pdfBuffer,
+      },
+    ];
+  }
 
   try {
     const info = await mailTransporter.sendMail(mailOptions);
@@ -151,7 +161,7 @@ export async function obtenerCertificado(req, res) {
         SELECT TOP 1
           C.*,
           COALESCE(C.TELEFONO, S.Telefono) AS TELEFONO  -- 👈 TELEFONO
-        FROM dbo.CCERTIFICADO_RESIDENCIA C
+        FROM dbo.CERTIFICADO_RESIDENCIA C
         LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_CERT}
         WHERE C.ID_Cert = @id;
       `);
@@ -447,17 +457,37 @@ export async function cambiarEstado(req, res) {
 
       await tx.commit();
 
-      // 🔹 Después del commit, manejamos PDF / email (por ahora solo email simple)
       const folio = cert.Folio;
       const generarPDF = generarPDFFlag ?? (estadoCanon === "Aprobado");
       const sendEmail  = sendEmailFlag  ?? (estadoCanon === "Aprobado");
 
-      let certificadoUrl = null; // luego aquí pondremos la ruta real del PDF
+      let certificadoUrl = null;
       let emailResult = { sent: false };
+      let pdfBuffer = null;
 
+      // 1) Generar PDF si está aprobado
+      if (estadoCanon === "Aprobado" && generarPDF) {
+        try {
+          const pdfMeta = await generarCertificadoResidenciaPDF(cert);
+          certificadoUrl = pdfMeta.filePathPublic;  // /uploads/certificados/folio.pdf
+          pdfBuffer = pdfMeta.pdfBuffer;            // buffer para adjuntar al correo
+        } catch (err) {
+          console.error("Error generando PDF del certificado:", err);
+        }
+      }
+
+      // 2) Enviar correo (con adjunto si se generó el PDF)
       if (estadoCanon === "Aprobado" && sendEmail) {
         try {
-          emailResult = await enviarCorreoCertificadoBasico(cert);
+          const pdfFileName = folio
+            ? `Certificado_Residencia_${folio}.pdf`
+            : "Certificado_Residencia.pdf";
+
+          emailResult = await enviarCorreoCertificadoBasico(
+            cert,
+            pdfBuffer,
+            pdfFileName
+          );
         } catch (err) {
           console.error("Error al enviar correo tras aprobar:", err);
           emailResult = { sent: false, error: err.message };
@@ -468,7 +498,7 @@ export async function cambiarEstado(req, res) {
         ok: true,
         mensaje: "Estado actualizado correctamente",
         certificadoUrl,
-        email: emailResult
+        email: emailResult,
       });
     } catch (inner) {
       await tx.rollback();
