@@ -30,6 +30,13 @@ r.get("/folio/:folio", C.obtenerPorFolio);
 r.delete("/folio/:folio", C.eliminarPorFolio);
 
 /* ======================================================
+   🔹 PDF — GENERAR / SERVIR (preview o download)
+   ====================================================== */
+   
+r.get("/:valor/pdf", C.servirCertificadoPDF);
+
+
+/* ======================================================
    🔹 RUTAS POR ID (deben ir después de las de folio)
    ====================================================== */
 

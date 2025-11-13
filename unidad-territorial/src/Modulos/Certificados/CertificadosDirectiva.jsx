@@ -90,10 +90,40 @@ const IconoEliminar = () => (
 );
 
 /* =================== Modales =================== */
-function ApproveConfirmModal({ open, onClose, onConfirm, checkbox, setCheckbox, folio, datos }) {
+function ApproveConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  checkbox,
+  setCheckbox,
+  folio,
+  datos,
+}) {
   if (!open) return null;
+
+  const handlePreview = () => {
+    if (!folio) {
+      console.warn("No hay folio para previsualizar");
+      return;
+    }
+
+    const BASE =
+      (import.meta.env?.VITE_API_BASE &&
+        String(import.meta.env.VITE_API_BASE).replace(/\/$/, "")) ||
+      "http://localhost:4010";
+
+    // 👇 OJO: aquí va /api/certificados/{folio}/pdf (sin /folio/)
+    const url = `${BASE}/api/certificados/${encodeURIComponent(folio)}/pdf`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-approve-title">
+    <div
+      className="cd__modalBack"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cd-approve-title"
+    >
       <div className="cd__modal">
         <div className="cd__modalHead">
           <span className="cd__modalAttention">ATENCIÓN</span>
@@ -103,29 +133,68 @@ function ApproveConfirmModal({ open, onClose, onConfirm, checkbox, setCheckbox, 
         <div className="cd__modalBody">
           <p>
             Estás a punto de <strong>aprobar</strong> la solicitud
-            {folio ? <> con folio <strong>{folio}</strong></> : null}. Esta acción es
-            <strong> irreversible</strong> y al confirmar se enviará automáticamente el
-            certificado al correo del socio.
+            {folio ? (
+              <>
+                {" "}
+                con folio <strong>{folio}</strong>
+              </>
+            ) : null}
+            . Esta acción es
+            <strong> irreversible</strong> y al confirmar se enviará
+            automáticamente el certificado al correo del socio.
           </p>
 
           {datos && (
             <div className="cd__modalData">
-              <p><b>Nombre:</b> {datos.nombre || "-"}</p>
-              <p><b>RUT:</b> {datos.rut || "-"}</p>
-              <p><b>Dirección:</b> {datos.direccion || "-"}</p>
-              <p><b>Correo:</b> {datos.email || "-"}</p>
+              <p>
+                <b>Nombre:</b> {datos.nombre || "-"}
+              </p>
+              <p>
+                <b>RUT:</b> {datos.rut || "-"}
+              </p>
+              <p>
+                <b>Dirección:</b> {datos.direccion || "-"}
+              </p>
+              <p>
+                <b>Correo:</b> {datos.email || "-"}
+              </p>
             </div>
           )}
 
-          <label className="cd__checkRow">
-            <input type="checkbox" checked={checkbox} onChange={(e) => setCheckbox(e.target.checked)} />
-            <span>Descargar PDF al confirmar</span>
-          </label>
+          
         </div>
 
         <div className="cd__modalActions">
-          <button className="cd__btn cd__btn--ghost" onClick={onClose}>Cancelar</button>
-          <button className="cd__btn cd__btn--ok" onClick={onConfirm}>Confirmar</button>
+          {/* Cancelar */}
+          <button className="cd__btn cd__btn--ghost" onClick={onClose}>
+            Cancelar
+          </button>
+
+         {/* >>> NUEVO: Botón de previsualizar PDF <<< */}
+<button
+  type="button"
+  className="cd__btn cd__btn--ghost"
+   style={{
+    marginTop: "1px",
+    backgroundColor: "#f1f5f9",   // azul muy clarito para diferenciar
+    borderColor: "#cbd5e1",
+    color: "#334155",
+  }}
+  onClick={() => {
+    if (!folio) return;
+    const BASE = import.meta.env.VITE_API_BASE || "http://localhost:4010";
+    const urlPreview = `${BASE}/api/certificados/${encodeURIComponent(folio)}/pdf?mode=preview`;
+    window.open(urlPreview, "_blank", "noopener,noreferrer");
+  }}
+>
+  Previsualizar
+</button>
+
+
+          {/* Confirmar */}
+          <button className="cd__btn cd__btn--ok" onClick={onConfirm}>
+            Confirmar
+          </button>
         </div>
       </div>
     </div>
@@ -135,7 +204,12 @@ function ApproveConfirmModal({ open, onClose, onConfirm, checkbox, setCheckbox, 
 function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
   if (!open) return null;
   return (
-    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-save-title">
+    <div
+      className="cd__modalBack"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cd-save-title"
+    >
       <div className="cd__modal">
         <div className="cd__modalHead">
           <span className="cd__modalAttention">ATENCIÓN</span>
@@ -143,21 +217,38 @@ function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
         </div>
 
         <div className="cd__modalBody">
-          <p>Este ingreso <b>manual</b> quedará registrado y se <b>aprobará de inmediato</b> (pasará al historial).</p>
+          <p>
+            Este ingreso <b>manual</b> quedará registrado y se{" "}
+            <b>aprobará de inmediato</b> (pasará al historial).
+          </p>
           {datos && (
             <div className="cd__modalData">
-              <p><b>Nombre:</b> {datos.nombre || "-"} </p>
-              <p><b>RUT:</b> {datos.rut || "-"} </p>
-              <p><b>Dirección:</b> {datos.direccion || "-"} </p>
-              <p><b>Correo:</b> {datos.email || "-"} </p>
-              <p><b>Método de pago:</b> {datos.metodoPago || "-"} </p>
+              <p>
+                <b>Nombre:</b> {datos.nombre || "-"}{" "}
+              </p>
+              <p>
+                <b>RUT:</b> {datos.rut || "-"}{" "}
+              </p>
+              <p>
+                <b>Dirección:</b> {datos.direccion || "-"}{" "}
+              </p>
+              <p>
+                <b>Correo:</b> {datos.email || "-"}{" "}
+              </p>
+              <p>
+                <b>Método de pago:</b> {datos.metodoPago || "-"}{" "}
+              </p>
             </div>
           )}
         </div>
 
         <div className="cd__modalActions">
-          <button className="cd__btn cd__btn--ghost" onClick={onCancel}>Cancelar</button>
-          <button className="cd__btn cd__btn--ok" onClick={onAccept}>Aceptar</button>
+          <button className="cd__btn cd__btn--ghost" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button className="cd__btn cd__btn--ok" onClick={onAccept}>
+            Aceptar
+          </button>
         </div>
       </div>
     </div>
@@ -167,29 +258,45 @@ function SaveConfirmModal({ open, onCancel, onAccept, datos }) {
 function DeleteConfirmModal({ open, onClose, onConfirm, folio }) {
   if (!open) return null;
   return (
-    <div className="cd__modalBack" role="dialog" aria-modal="true" aria-labelledby="cd-delete-title">
+    <div
+      className="cd__modalBack"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cd-delete-title"
+    >
       <div className="cd__modal">
         <div className="cd__modalHead">
-          <span className="cd__modalAttention" >PELIGRO</span>
+          <span className="cd__modalAttention">PELIGRO</span>
           <h3 id="cd-delete-title">Confirmar Eliminación</h3>
         </div>
         <div className="cd__modalBody">
           <p>
             ¿Estás seguro de que quieres eliminar la solicitud
-            {folio ? <> con folio <strong>{folio}</strong></> : null}?
+            {folio ? (
+              <>
+                {" "}
+                con folio <strong>{folio}</strong>
+              </>
+            ) : null}
+            ?
           </p>
-          <p style={{ fontWeight: 'bold', color: '#ef4444' }}>
+          <p style={{ fontWeight: "bold", color: "#ef4444" }}>
             Esta acción no se puede deshacer.
           </p>
         </div>
         <div className="cd__modalActions">
-          <button className="cd__btn cd__btn--ghost" onClick={onClose}>Cancelar</button>
-          <button className="cd__btn cd__btn--danger" onClick={onConfirm}>Confirmar Eliminación</button>
+          <button className="cd__btn cd__btn--ghost" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="cd__btn cd__btn--danger" onClick={onConfirm}>
+            Confirmar Eliminación
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
 
 /* =================== Página =================== */
 function CertificadosContent() {
@@ -918,6 +1025,21 @@ function CertificadosContent() {
                       <button className="cd__iconBtn" title="Ver" onClick={() => onHistView(h.folio)}><IconoVer /></button>
                       <button className="cd__iconBtn" title="Editar" onClick={() => onHistEdit(h.folio)}><IconoEditar /></button>
                       <button className="cd__iconBtn" title="Eliminar" onClick={() => onHistDelete(h.folio)}><IconoEliminar /></button>
+                      {/* >>> NUEVO: Descargar PDF desde historial <<< */}
+                      <button
+                        className="cd__iconBtn"
+                        title="Descargar PDF"
+                        onClick={() => {
+                          const BASE = import.meta.env.VITE_API_BASE || "http://localhost:4010";
+                          const urlPDF = `${BASE}/api/certificados/${encodeURIComponent(h.folio)}/pdf?mode=download`;
+                          window.open(urlPDF, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" className="cd__icon">
+                          <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1zM5 20a1 1 0 1 1 0-2h14a1 1 0 1 1 0 2H5z"/>
+                        </svg>
+                      </button>
+
                     </td>
                   </tr>
                 ))}
@@ -929,20 +1051,21 @@ function CertificadosContent() {
       )}
 
       {/* Modales */}
-      <ApproveConfirmModal
-        open={showApprove}
-        onClose={() => setShowApprove(false)}
-        onConfirm={confirmarAprobacion}
-        checkbox={wantDownload}
-        setCheckbox={setWantDownload}
-        folio={seleccion?.Folio}
-        datos={{
-          nombre: seleccion?.Nombre,
-          rut: formatearRut(seleccion?.RUT || ""),
-          direccion: seleccion?.Direccion,
-          email: seleccion?.Email,
-        }}
-      />
+     <ApproveConfirmModal
+  open={showApprove}
+  onClose={() => setShowApprove(false)}
+  onConfirm={confirmarAprobacion}
+  checkbox={wantDownload}
+  setCheckbox={setWantDownload}
+  folio={seleccion?.Folio}
+  datos={{
+    nombre: seleccion?.Nombre,
+    rut: formatearRut(seleccion?.RUT || ""),
+    direccion: seleccion?.Direccion,
+    email: seleccion?.Email,
+  }}
+/>
+
       <SaveConfirmModal
         open={showSaveConfirm}
         onCancel={confirmSaveCancel}

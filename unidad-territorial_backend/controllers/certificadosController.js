@@ -772,3 +772,96 @@ export async function subirComprobante(req, res) {
     return res.status(500).json({ ok: false, error: "DB_ERROR_UPLOAD" });
   }
 }
+/* ======================================================
+   📄 SERVIR / GENERAR PDF (por ID_Cert o por Folio)
+   GET /api/certificados/:valor/pdf
+   - "valor" puede ser:
+     • ID_Cert numérico (ej: 25)
+     • Folio string (ej: C-00015)
+   ====================================================== */
+export async function servirCertificadoPDF(req, res) {
+  // OJO: el nombre del parámetro debe coincidir con la ruta (/:valor/pdf)
+  const valor = String(req.params.valor || "").trim();
+  if (!valor) {
+    return res.status(400).json({ ok: false, error: "ID_O_FOLIO_REQUERIDO" });
+  }
+
+  const modo = String(req.query.mode || "download").toLowerCase();
+  const esPreview = modo === "preview" || modo === "inline";
+
+  try {
+    const pool = await getPool();
+    let cert = null;
+
+    // 🔢 Si es solo números → lo tratamos como ID_Cert
+    if (/^\d+$/.test(valor)) {
+      const r1 = await pool.request()
+        .input("id", sql.Int, Number(valor))
+        .query(`
+          SELECT TOP 1 *
+          FROM dbo.CERTIFICADO_RESIDENCIA
+          WHERE ID_Cert = @id;
+        `);
+
+      if (r1.recordset.length) {
+        cert = r1.recordset[0];
+      } else {
+        const r2 = await pool.request()
+          .input("id", sql.Int, Number(valor))
+          .query(`
+            SELECT TOP 1 *
+            FROM dbo.HISTORIAL_CERTIFICADO
+            WHERE ID_Cert = @id
+            ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+          `);
+        if (r2.recordset.length) cert = r2.recordset[0];
+      }
+    } else {
+      // 🔤 Si no es solo números → lo tratamos como Folio
+      const r1 = await pool.request()
+        .input("folio", sql.VarChar(20), valor)
+        .query(`
+          SELECT TOP 1 *
+          FROM dbo.CERTIFICADO_RESIDENCIA
+          WHERE Folio = @folio;
+        `);
+
+      if (r1.recordset.length) {
+        cert = r1.recordset[0];
+      } else {
+        const r2 = await pool.request()
+          .input("folio", sql.VarChar(20), valor)
+          .query(`
+            SELECT TOP 1 *
+            FROM dbo.HISTORIAL_CERTIFICADO
+            WHERE Folio = @folio
+            ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+          `);
+        if (r2.recordset.length) cert = r2.recordset[0];
+      }
+    }
+
+    if (!cert) {
+      return res.status(404).json({ ok: false, error: "CERT_NO_ENCONTRADO" });
+    }
+
+    // 🧾 Generar PDF en el momento (usa la misma plantilla/base que el correo)
+    const pdfMeta = await generarCertificadoResidenciaPDF(cert);
+    const pdfBuffer = pdfMeta.pdfBuffer;
+
+    const fileName = cert.Folio
+      ? `Certificado_Residencia_${cert.Folio}.pdf`
+      : `Certificado_Residencia_${cert.ID_Cert || "Documento"}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `${esPreview ? "inline" : "attachment"}; filename="${fileName}"`
+    );
+
+    return res.send(pdfBuffer);
+  } catch (e) {
+    console.error("servirCertificadoPDF:", e);
+    return res.status(500).json({ ok: false, error: "ERROR_GENERAR_PDF" });
+  }
+}
