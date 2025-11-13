@@ -1,5 +1,78 @@
 import sql from "mssql";
 import { getPool } from "../pool.js";
+import nodemailer from 'nodemailer';
+
+/* ======================================================
+   📧 Configuración de correo (nodemailer)
+   ====================================================== */
+const mailTransporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST || "smtp.gmail.com",
+  port: Number(process.env.MAIL_PORT) || 465,
+  secure: true, // gmail usa SSL en 465
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+  tls: {
+    // evita error self-signed certificate
+    rejectUnauthorized: false,
+  },
+});
+
+
+/**
+ * Envía un correo simple (sin PDF por ahora) informando que el certificado fue aprobado.
+ * Más adelante aquí mismo adjuntaremos el PDF.
+ */
+async function enviarCorreoCertificadoBasico(cert) {
+  if (!cert?.Email) {
+    console.warn("No hay correo para este certificado, no se envía email.");
+    return { sent: false, reason: "NO_EMAIL" };
+  }
+
+  const destinatario = cert.Email;
+  const nombre = cert.Nombre || "";
+  const folio = cert.Folio || "";
+  const rut = cert.RUT || "";
+  const direccion = cert.Direccion || "";
+  const fechaHoy = new Date().toLocaleDateString("es-CL");
+
+  const mailOptions = {
+    from: `"Junta de Vecinos" <${process.env.MAIL_USER}>`,
+    to: destinatario,
+    subject: `Certificado de residencia – Folio ${folio}`,
+    html: `
+      <p>Hola <b>${nombre}</b>,</p>
+      <p>
+        Te informamos que tu solicitud de <b>certificado de residencia</b> ha sido
+        <b>aprobada</b>.
+      </p>
+      <p>
+        <b>Datos registrados:</b><br/>
+        Folio: <b>${folio}</b><br/>
+        RUT: <b>${rut}</b><br/>
+        Dirección: <b>${direccion}</b><br/>
+        Fecha de aprobación: <b>${fechaHoy}</b>
+      </p>
+      <p>
+        En una siguiente etapa adjuntaremos el PDF del certificado en este mismo correo.
+      </p>
+      <p>
+        Atentamente,<br/>
+        Junta de Vecinos
+      </p>
+    `,
+  };
+
+  try {
+    const info = await mailTransporter.sendMail(mailOptions);
+    console.log("Correo enviado:", info.messageId);
+    return { sent: true };
+  } catch (err) {
+    console.error("Error enviando correo:", err);
+    return { sent: false, error: err.message };
+  }
+}
 
 /* ======================================================
    🔤 Catálogos y normalización
@@ -78,7 +151,7 @@ export async function obtenerCertificado(req, res) {
         SELECT TOP 1
           C.*,
           COALESCE(C.TELEFONO, S.Telefono) AS TELEFONO  -- 👈 TELEFONO
-        FROM dbo.CERTIFICADO_RESIDENCIA C
+        FROM dbo.CCERTIFICADO_RESIDENCIA C
         LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_CERT}
         WHERE C.ID_Cert = @id;
       `);
@@ -374,25 +447,28 @@ export async function cambiarEstado(req, res) {
 
       await tx.commit();
 
+      // 🔹 Después del commit, manejamos PDF / email (por ahora solo email simple)
       const folio = cert.Folio;
       const generarPDF = generarPDFFlag ?? (estadoCanon === "Aprobado");
       const sendEmail  = sendEmailFlag  ?? (estadoCanon === "Aprobado");
 
-      let certificadoUrl = null;
-      let emailSent = false;
+      let certificadoUrl = null; // luego aquí pondremos la ruta real del PDF
+      let emailResult = { sent: false };
 
-      if (estadoCanon === "Aprobado" && generarPDF) {
-        certificadoUrl = `/uploads/certificados/${folio}.pdf`; // placeholder
-      }
       if (estadoCanon === "Aprobado" && sendEmail) {
-        emailSent = true; // simula éxito
+        try {
+          emailResult = await enviarCorreoCertificadoBasico(cert);
+        } catch (err) {
+          console.error("Error al enviar correo tras aprobar:", err);
+          emailResult = { sent: false, error: err.message };
+        }
       }
 
       return res.json({
         ok: true,
         mensaje: "Estado actualizado correctamente",
         certificadoUrl,
-        email: { sent: emailSent }
+        email: emailResult
       });
     } catch (inner) {
       await tx.rollback();
