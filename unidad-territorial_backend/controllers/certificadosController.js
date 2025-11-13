@@ -1,6 +1,88 @@
-// controllers/certificadosController.js
 import sql from "mssql";
 import { getPool } from "../pool.js";
+import nodemailer from 'nodemailer';
+import { generarCertificadoResidenciaPDF } from "../services/certificadoPdf.js";
+
+/* ======================================================
+   📧 Configuración de correo (nodemailer)
+   ====================================================== */
+const mailTransporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST || "smtp.gmail.com",
+  port: Number(process.env.MAIL_PORT) || 465,
+  secure: true, // gmail usa SSL en 465
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+  tls: {
+    // evita error self-signed certificate
+    rejectUnauthorized: false,
+  },
+});
+
+/**
+ * Envía un correo informando que el certificado fue aprobado.
+ * Si se le pasa pdfBuffer + pdfFileName, adjunta el PDF al correo.
+ */
+async function enviarCorreoCertificadoBasico(cert, pdfBuffer, pdfFileName) {
+  if (!cert?.Email) {
+    console.warn("No hay correo para este certificado, no se envía email.");
+    return { sent: false, reason: "NO_EMAIL" };
+  }
+
+  const destinatario = cert.Email;
+  const nombre = cert.Nombre || "";
+  const folio = cert.Folio || "";
+  const rut = cert.RUT || "";
+  const direccion = cert.Direccion || "";
+  const fechaHoy = new Date().toLocaleDateString("es-CL");
+
+  const mailOptions = {
+    from: `"Junta de Vecinos" <${process.env.MAIL_USER}>`,
+    to: destinatario,
+    subject: `Certificado de residencia – Folio ${folio}`,
+    html: `
+      <p>Hola <b>${nombre}</b>,</p>
+      <p>
+        Te informamos que tu solicitud de <b>certificado de residencia</b> ha sido
+        <b>aprobada</b>.
+      </p>
+      <p>
+        <b>Datos registrados:</b><br/>
+        Folio: <b>${folio}</b><br/>
+        RUT: <b>${rut}</b><br/>
+        Dirección: <b>${direccion}</b><br/>
+        Fecha de aprobación: <b>${fechaHoy}</b>
+      </p>
+      <p>
+        Adjuntamos en este correo tu <b>Certificado de Residencia en PDF</b>.
+      </p>
+      <p>
+        Atentamente,<br/>
+        Junta de Vecinos
+      </p>
+    `,
+  };
+
+  // Adjuntamos el PDF solo si viene definido
+  if (pdfBuffer && pdfFileName) {
+    mailOptions.attachments = [
+      {
+        filename: pdfFileName,
+        content: pdfBuffer,
+      },
+    ];
+  }
+
+  try {
+    const info = await mailTransporter.sendMail(mailOptions);
+    console.log("Correo enviado:", info.messageId);
+    return { sent: true };
+  } catch (err) {
+    console.error("Error enviando correo:", err);
+    return { sent: false, error: err.message };
+  }
+}
 
 /* ======================================================
    🔤 Catálogos y normalización
@@ -8,7 +90,7 @@ import { getPool } from "../pool.js";
 const ESTADOS_CANON = new Set(["Pendiente", "EnRevision", "Aprobado", "Rechazado"]);
 const METODOS = new Set(["Transferencia", "Fisico"]);
 
-// Acepta variantes como "En revisión", "en_revision", etc. y devuelve el canon DB
+// Acepta variantes y devuelve el canon DB
 function normEstado(raw) {
   if (!raw) return null;
   const s = String(raw).trim().toLowerCase();
@@ -18,6 +100,16 @@ function normEstado(raw) {
   if (s === "rechazado") return "Rechazado";
   return null;
 }
+
+// Normalización de RUT para JOIN con SOCIOS
+const RUT_EQ_CERT = `
+  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
+  REPLACE(REPLACE(UPPER(C.RUT),'.',''),'-','')
+`;
+const RUT_EQ_HIST = `
+  REPLACE(REPLACE(UPPER(S.RUT),'.',''),'-','') =
+  REPLACE(REPLACE(UPPER(H.RUT),'.',''),'-','')
+`;
 
 /* ======================================================
    📜 LISTAR (pendientes)
@@ -31,19 +123,18 @@ export async function listarCertificados(req, res) {
     const pool = await getPool();
 
     let q = `
-      SELECT ID_Cert, Folio, Nombre, RUT, Direccion, Email,
-             Metodo_Pago, Comprobante_URL, Estado, Notas, Fecha_Solicitud
-      FROM dbo.CERTIFICADO_RESIDENCIA
+      SELECT
+        C.ID_Cert, C.Folio, C.Nombre, C.RUT, C.Direccion, C.Email,
+        C.Metodo_Pago, C.Comprobante_URL, C.Estado, C.Notas, C.Fecha_Solicitud,
+        COALESCE(C.TELEFONO, S.Telefono) AS TELEFONO   -- 👈 TELEFONO (fallback desde SOCIOS)
+      FROM dbo.CERTIFICADO_RESIDENCIA C
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_CERT}
     `;
-    const params = [];
-    if (estado) {
-      q += ` WHERE Estado = @estado `;
-      params.push(["estado", sql.VarChar(12), estado]);
-    }
-    q += ` ORDER BY Fecha_Solicitud DESC;`;
+    if (estado) q += ` WHERE C.Estado = @estado `;
+    q += ` ORDER BY C.Fecha_Solicitud DESC;`;
 
     const request = pool.request();
-    for (const [n, t, v] of params) request.input(n, t, v);
+    if (estado) request.input("estado", sql.VarChar(12), estado);
     const { recordset } = await request.query(q);
 
     res.json({ ok: true, data: recordset });
@@ -67,9 +158,12 @@ export async function obtenerCertificado(req, res) {
       .request()
       .input("id", sql.Int, id)
       .query(`
-        SELECT TOP 1 *
-        FROM dbo.CERTIFICADO_RESIDENCIA
-        WHERE ID_Cert = @id;
+        SELECT TOP 1
+          C.*,
+          COALESCE(C.TELEFONO, S.Telefono) AS TELEFONO  -- 👈 TELEFONO
+        FROM dbo.CERTIFICADO_RESIDENCIA C
+        LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_CERT}
+        WHERE C.ID_Cert = @id;
       `);
 
     if (!recordset.length) return res.status(404).json({ ok: false, error: "NO_ENCONTRADO" });
@@ -95,7 +189,14 @@ export async function obtenerPorFolio(req, res) {
     let { recordset } = await pool
       .request()
       .input("folio", sql.VarChar(20), folio)
-      .query(`SELECT TOP 1 * FROM dbo.CERTIFICADO_RESIDENCIA WHERE Folio = @folio;`);
+      .query(`
+        SELECT TOP 1
+          C.*,
+          COALESCE(C.TELEFONO, S.Telefono) AS TELEFONO   -- 👈 TELEFONO
+        FROM dbo.CERTIFICADO_RESIDENCIA C
+        LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_CERT}
+        WHERE C.Folio = @folio;
+      `);
 
     if (recordset.length) return res.json({ ok: true, data: recordset[0] });
 
@@ -105,11 +206,13 @@ export async function obtenerPorFolio(req, res) {
       .input("folio", sql.VarChar(20), folio)
       .query(`
         SELECT TOP 1
-          ID_Cert, Folio, Nombre, RUT, Direccion, Email,
-          Metodo_Pago, Comprobante_URL, Estado, Comentario, Validador_FK, Fecha_Cambio
-        FROM dbo.HISTORIAL_CERTIFICADO
-        WHERE Folio = @folio
-        ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+          H.ID_Cert, H.Folio, H.Nombre, H.RUT, H.Direccion, H.Email,
+          H.Metodo_Pago, H.Comprobante_URL, H.Estado, H.Comentario, H.Validador_FK, H.Fecha_Cambio,
+          COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO   -- 👈 TELEFONO
+        FROM dbo.HISTORIAL_CERTIFICADO H
+        LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_HIST}
+        WHERE H.Folio = @folio
+        ORDER BY H.Fecha_Cambio DESC, H.ID_Hist DESC;
       `);
 
     if (!r2.recordset.length) {
@@ -126,7 +229,6 @@ export async function obtenerPorFolio(req, res) {
    🕓 HISTORIAL (1 fila por solicitud)
    GET /api/certificados/_historial/lista/all?estado=Aprobado
    ====================================================== */
-// controllers/certificadosController.js
 export async function listarHistorial(req, res) {
   const estadoRaw = req.query.estado || null;
   const estado = estadoRaw ? normEstado(estadoRaw) : null;
@@ -138,12 +240,14 @@ export async function listarHistorial(req, res) {
 
     const { recordset } = await request.query(`
       SELECT
-        ID_Hist, ID_Cert, Folio, Nombre, RUT,
-        Direccion, Email, Metodo_Pago, Comprobante_URL,
-        Estado, Comentario, Validador_FK, Fecha_Cambio
-      FROM dbo.HISTORIAL_CERTIFICADO
-      ${estado ? "WHERE Estado = @estado" : ""}
-      ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+        H.ID_Hist, H.ID_Cert, H.Folio, H.Nombre, H.RUT,
+        H.Direccion, H.Email, H.Metodo_Pago, H.Comprobante_URL,
+        H.Estado, H.Comentario, H.Validador_FK, H.Fecha_Cambio,
+        COALESCE(H.TELEFONO, S.Telefono) AS TELEFONO   -- 👈 TELEFONO
+      FROM dbo.HISTORIAL_CERTIFICADO H
+      LEFT JOIN dbo.SOCIOS S ON ${RUT_EQ_HIST}
+      ${estado ? "WHERE H.Estado = @estado" : ""}
+      ORDER BY H.Fecha_Cambio DESC, H.ID_Hist DESC;
     `);
 
     res.json({ ok: true, data: recordset });
@@ -153,43 +257,55 @@ export async function listarHistorial(req, res) {
   }
 }
 
-
 /* ======================================================
-   ➕ CREAR (socio web o manual)
-   - Inserta en principal (Pendiente).
-   - Crea UNA fila en historial con snapshots (Pendiente).
+   ➕ CREAR (socio web o manual) — con TELEFONO
    POST /api/certificados
    ====================================================== */
 export async function crearCertificado(req, res) {
   try {
     const {
       nombre, rut, direccion, email,
+      telefono,                         // 👈 NUEVO
       metodoPago, comprobanteUrl = null,
       idSocio = null, idUsuarioSolicita = null,
       notas = "Solicitud web (socio)"
     } = req.body || {};
 
-    if (!nombre || !rut || !direccion || !email) {
+    if (!nombre || !rut || !direccion) {
       return res.status(400).json({ ok: false, error: "FALTAN_CAMPOS" });
     }
     if (!METODOS.has(metodoPago)) {
       return res.status(400).json({ ok: false, error: "METODO_INVALIDO" });
     }
-    // ⚠️ En modo 2 pasos NO exigimos comprobante aquí.
+    // (Convertimos un string vacío "" en un 'null' real para la BDD)
+    const emailFinal = (email && String(email).trim()) ? String(email).trim() : null;
 
     const pool = await getPool();
+
+    // Buscar teléfono en SOCIOS si no viene
+    const telLookup = await pool.request()
+      .input("rut", sql.VarChar(20), rut)
+      .query(`
+        SELECT TOP 1 Telefono
+        FROM dbo.SOCIOS
+        WHERE REPLACE(REPLACE(UPPER(RUT),'.',''),'-','') =
+              REPLACE(REPLACE(UPPER(@rut),'.',''),'-','')
+      `);
+    const telefonoFinal = (telefono && String(telefono).trim()) || telLookup.recordset?.[0]?.Telefono || null;
+
     const tx = new sql.Transaction(pool);
     await tx.begin();
 
     try {
-      // 1) Insert principal Pendiente
+      // 1) Insert principal Pendiente (con TELEFONO)
       const req1 = new sql.Request(tx)
         .input("idSocio", sql.Int, idSocio)
         .input("idUser", sql.Int, idUsuarioSolicita)
         .input("nombre", sql.NVarChar(120), nombre)
         .input("rut", sql.VarChar(12), rut)
         .input("dir", sql.NVarChar(200), direccion)
-        .input("email", sql.NVarChar(160), email)
+        .input("email", sql.NVarChar(160), emailFinal)
+        .input("tel", sql.VarChar(20), telefonoFinal)      // 👈 TELEFONO
         .input("metodo", sql.VarChar(20), metodoPago)
         .input("url", sql.NVarChar(400), comprobanteUrl)
         .input("notas", sql.NVarChar(500), notas)
@@ -197,18 +313,18 @@ export async function crearCertificado(req, res) {
 
       const ins = await req1.query(`
         INSERT INTO dbo.CERTIFICADO_RESIDENCIA
-          (ID_Socio, ID_Usuario_Solicita, Nombre, RUT, Direccion, Email,
+          (ID_Socio, ID_Usuario_Solicita, Nombre, RUT, Direccion, Email, TELEFONO,
            Metodo_Pago, Comprobante_URL, Notas, Estado)
         OUTPUT inserted.ID_Cert, inserted.Folio, inserted.Estado, inserted.Fecha_Solicitud,
                inserted.Nombre, inserted.RUT, inserted.Direccion, inserted.Email,
-               inserted.Metodo_Pago, inserted.Comprobante_URL
-        VALUES (@idSocio, @idUser, @nombre, @rut, @dir, @email,
+               inserted.TELEFONO, inserted.Metodo_Pago, inserted.Comprobante_URL
+        VALUES (@idSocio, @idUser, @nombre, @rut, @dir, @email, @tel,
                 @metodo, @url, @notas, @estado);
       `);
 
       const row = ins.recordset[0];
 
-      // 2) Historial inicial con snapshot
+      // 2) Historial inicial con snapshot (incluye TELEFONO)
       await new sql.Request(tx)
         .input("idc", sql.Int, row.ID_Cert)
         .input("estado", sql.VarChar(12), "Pendiente")
@@ -217,12 +333,13 @@ export async function crearCertificado(req, res) {
         .input("rut", sql.VarChar(12), row.RUT)
         .input("dir", sql.NVarChar(200), row.Direccion)
         .input("mail", sql.NVarChar(160), row.Email)
+        .input("tel", sql.VarChar(20), row.TELEFONO)        // 👈 TELEFONO
         .input("met", sql.VarChar(20), row.Metodo_Pago)
         .input("url", sql.NVarChar(400), row.Comprobante_URL)
         .query(`
           INSERT INTO dbo.HISTORIAL_CERTIFICADO
-            (ID_Cert, Estado, Folio, Nombre, RUT, Direccion, Email, Metodo_Pago, Comprobante_URL)
-          VALUES (@idc, @estado, @folio, @nom, @rut, @dir, @mail, @met, @url);
+            (ID_Cert, Estado, Folio, Nombre, RUT, Direccion, Email, TELEFONO, Metodo_Pago, Comprobante_URL)
+          VALUES (@idc, @estado, @folio, @nom, @rut, @dir, @mail, @tel, @met, @url);
         `);
 
       await tx.commit();
@@ -248,9 +365,8 @@ export async function cambiarEstado(req, res) {
   const comentario = req.body?.comentario ?? null;
   const validadorId = req.body?.validadorId ?? null;
 
-  // 🔹 flags opcionales (stubs paso 1)
-  const generarPDFFlag = req.body?.generarPDF; // true/false/undefined
-  const sendEmailFlag  = req.body?.sendEmail;  // true/false/undefined
+  const generarPDFFlag = req.body?.generarPDF;
+  const sendEmailFlag  = req.body?.sendEmail;
 
   if (!id) return res.status(400).json({ ok: false, error: "ID_INVALIDO" });
   if (!estadoCanon || !ESTADOS_CANON.has(estadoCanon)) {
@@ -279,7 +395,7 @@ export async function cambiarEstado(req, res) {
 
       const cert = recordset[0];
 
-      // 2️⃣ Actualizar historial (upsert de última fila)
+      // 2️⃣ Actualizar historial (upsert de última fila) — incluye TELEFONO
       const existingHist = await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`SELECT TOP 1 ID_Hist FROM dbo.HISTORIAL_CERTIFICADO WHERE ID_Cert = @id;`);
@@ -294,6 +410,7 @@ export async function cambiarEstado(req, res) {
           .input("rut", sql.VarChar(12), cert.RUT)
           .input("dir", sql.NVarChar(200), cert.Direccion)
           .input("mail", sql.NVarChar(160), cert.Email)
+          .input("tel", sql.VarChar(20), cert.TELEFONO)      // 👈 TELEFONO
           .input("met", sql.VarChar(20), cert.Metodo_Pago)
           .input("url", sql.NVarChar(400), cert.Comprobante_URL)
           .query(`
@@ -305,6 +422,7 @@ export async function cambiarEstado(req, res) {
                 RUT = @rut,
                 Direccion = @dir,
                 Email = @mail,
+                TELEFONO = @tel,
                 Metodo_Pago = @met,
                 Comprobante_URL = @url,
                 Fecha_Cambio = SYSDATETIME()
@@ -319,15 +437,16 @@ export async function cambiarEstado(req, res) {
           .input("rut", sql.VarChar(12), cert.RUT)
           .input("dir", sql.NVarChar(200), cert.Direccion)
           .input("mail", sql.NVarChar(160), cert.Email)
+          .input("tel", sql.VarChar(20), cert.TELEFONO)      // 👈 TELEFONO
           .input("met", sql.VarChar(20), cert.Metodo_Pago)
           .input("url", sql.NVarChar(400), cert.Comprobante_URL)
           .input("coment", sql.NVarChar(500), comentario)
           .input("val", sql.Int, validadorId)
           .query(`
             INSERT INTO dbo.HISTORIAL_CERTIFICADO
-              (ID_Cert, Estado, Folio, Nombre, RUT, Direccion, Email, Metodo_Pago, Comprobante_URL, Comentario, Validador_FK)
+              (ID_Cert, Estado, Folio, Nombre, RUT, Direccion, Email, TELEFONO, Metodo_Pago, Comprobante_URL, Comentario, Validador_FK)
             VALUES
-              (@id, @estado, @folio, @nom, @rut, @dir, @mail, @met, @url, @coment, @val);
+              (@id, @estado, @folio, @nom, @rut, @dir, @mail, @tel, @met, @url, @coment, @val);
           `);
       }
 
@@ -338,26 +457,48 @@ export async function cambiarEstado(req, res) {
 
       await tx.commit();
 
-      // ✅ Respuesta con stubs
       const folio = cert.Folio;
       const generarPDF = generarPDFFlag ?? (estadoCanon === "Aprobado");
       const sendEmail  = sendEmailFlag  ?? (estadoCanon === "Aprobado");
 
       let certificadoUrl = null;
-      let emailSent = false;
+      let emailResult = { sent: false };
+      let pdfBuffer = null;
 
+      // 1) Generar PDF si está aprobado
       if (estadoCanon === "Aprobado" && generarPDF) {
-        certificadoUrl = `/uploads/certificados/${folio}.pdf`; // placeholder
+        try {
+          const pdfMeta = await generarCertificadoResidenciaPDF(cert);
+          certificadoUrl = pdfMeta.filePathPublic;  // /uploads/certificados/folio.pdf
+          pdfBuffer = pdfMeta.pdfBuffer;            // buffer para adjuntar al correo
+        } catch (err) {
+          console.error("Error generando PDF del certificado:", err);
+        }
       }
+
+      // 2) Enviar correo (con adjunto si se generó el PDF)
       if (estadoCanon === "Aprobado" && sendEmail) {
-        emailSent = true; // simula éxito
+        try {
+          const pdfFileName = folio
+            ? `Certificado_Residencia_${folio}.pdf`
+            : "Certificado_Residencia.pdf";
+
+          emailResult = await enviarCorreoCertificadoBasico(
+            cert,
+            pdfBuffer,
+            pdfFileName
+          );
+        } catch (err) {
+          console.error("Error al enviar correo tras aprobar:", err);
+          emailResult = { sent: false, error: err.message };
+        }
       }
 
       return res.json({
         ok: true,
         mensaje: "Estado actualizado correctamente",
         certificadoUrl,
-        email: { sent: emailSent }
+        email: emailResult,
       });
     } catch (inner) {
       await tx.rollback();
@@ -376,7 +517,7 @@ export async function cambiarEstado(req, res) {
    ====================================================== */
 export async function actualizarCertificado(req, res) {
   const { id } = req.params;
-  const { nombre, rut, direccion, email, metodoPago } = req.body;
+  const { nombre, rut, direccion, email, telefono, metodoPago } = req.body; // 👈 TELEFONO
 
   try {
     const pool = await getPool();
@@ -386,15 +527,16 @@ export async function actualizarCertificado(req, res) {
       .input("RUT", sql.VarChar(12), rut)
       .input("Direccion", sql.NVarChar(200), direccion)
       .input("Email", sql.NVarChar(160), email)
+      .input("Telefono", sql.VarChar(20), telefono || null)  // 👈 TELEFONO
       .input("Metodo_Pago", sql.VarChar(20), metodoPago)
       .query(`
         UPDATE CERTIFICADO_RESIDENCIA
         SET Nombre=@Nombre, RUT=@RUT, Direccion=@Direccion,
-            Email=@Email, Metodo_Pago=@Metodo_Pago
+            Email=@Email, TELEFONO=@Telefono, Metodo_Pago=@Metodo_Pago
         WHERE ID_Cert=@ID_Cert
       `);
 
-    return res.json({ ok: true, data: { id: Number(id), nombre, rut, direccion, email, metodoPago } });
+    return res.json({ ok: true, data: { id: Number(id), nombre, rut, direccion, email, telefono, metodoPago } });
   } catch (e) {
     console.error("❌ Error actualizarCertificado:", e);
     res.status(500).json({ ok: false, error: "Error al actualizar certificado" });
@@ -415,12 +557,10 @@ export async function eliminarCertificado(req, res) {
     await tx.begin();
 
     try {
-      // borrar historial (una fila)
       await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`DELETE FROM dbo.HISTORIAL_CERTIFICADO WHERE ID_Cert=@id;`);
 
-      // borrar principal si existe
       const del = await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`DELETE FROM dbo.CERTIFICADO_RESIDENCIA WHERE ID_Cert=@id;`);
@@ -439,8 +579,9 @@ export async function eliminarCertificado(req, res) {
     res.status(500).json({ ok: false, error: "DB_ERROR_ELIMINAR" });
   }
 }
+
 /* ======================================================
-   🗑️ ELIMINAR POR FOLIO (borra historial y principal)
+   🗑️ ELIMINAR POR FOLIO
    DELETE /api/certificados/folio/:folio
    ====================================================== */
 export async function eliminarPorFolio(req, res) {
@@ -453,7 +594,6 @@ export async function eliminarPorFolio(req, res) {
     await tx.begin();
 
     try {
-      // 1) (Opcional) obtener ID_Cert asociado al folio en la principal
       const cur = await new sql.Request(tx)
         .input("folio", sql.VarChar(20), folio)
         .query(`
@@ -464,24 +604,18 @@ export async function eliminarPorFolio(req, res) {
 
       const idCert = cur.recordset?.[0]?.ID_Cert ?? null;
 
-      // 2) Borrar HISTORIAL por FOLIO (y por ID_Cert si existe)
       const reqHist = new sql.Request(tx)
         .input("folio", sql.VarChar(20), folio);
-
       if (idCert) reqHist.input("id", sql.Int, idCert);
-
       const delHist = await reqHist.query(`
         DELETE FROM dbo.HISTORIAL_CERTIFICADO
         WHERE Folio = @folio
         ${idCert ? " OR ID_Cert = @id" : ""};
       `);
 
-      // 3) Borrar PRINCIPAL por FOLIO (y por ID_Cert si existe)
       const reqMain = new sql.Request(tx)
         .input("folio", sql.VarChar(20), folio);
-
       if (idCert) reqMain.input("id", sql.Int, idCert);
-
       const delMain = await reqMain.query(`
         DELETE FROM dbo.CERTIFICADO_RESIDENCIA
         WHERE Folio = @folio
@@ -490,7 +624,6 @@ export async function eliminarPorFolio(req, res) {
 
       await tx.commit();
 
-      // filas afectadas
       const removedHist = delHist.rowsAffected?.reduce((a, b) => a + b, 0) || 0;
       const removedMain = delMain.rowsAffected?.reduce((a, b) => a + b, 0) || 0;
 
@@ -509,7 +642,6 @@ export async function eliminarPorFolio(req, res) {
   }
 }
 
-
 /* ======================================================
    ✏️ ACTUALIZAR HISTORIAL por FOLIO (última versión)
    PATCH /api/certificados/_historial/:folio
@@ -520,14 +652,14 @@ export async function actualizarHistorial(req, res) {
 
   const {
     nombre, rut, direccion, email,
-    metodoPago, comprobanteUrl, // puede venir null para limpiar
+    telefono,                         // 👈 TELEFONO
+    metodoPago, comprobanteUrl,
     comentario
   } = req.body || {};
 
   try {
     const pool = await getPool();
 
-    // SET dinámico solo con campos enviados (undefined = no tocar)
     const sets = [];
     const rq = pool.request().input("folio", sql.VarChar(20), folio);
 
@@ -535,13 +667,12 @@ export async function actualizarHistorial(req, res) {
     if (rut !== undefined) { sets.push("RUT = @rut"); rq.input("rut", sql.VarChar(12), rut); }
     if (direccion !== undefined) { sets.push("Direccion = @dir"); rq.input("dir", sql.NVarChar(200), direccion); }
     if (email !== undefined) { sets.push("Email = @mail"); rq.input("mail", sql.NVarChar(160), email); }
+    if (telefono !== undefined) { sets.push("TELEFONO = @tel"); rq.input("tel", sql.VarChar(20), telefono || null); } // 👈 TELEFONO
     if (metodoPago !== undefined) {
       const met = (String(metodoPago).toLowerCase() === "fisico") ? "Fisico" : "Transferencia";
       sets.push("Metodo_Pago = @met"); rq.input("met", sql.VarChar(20), met);
     }
-    if (comprobanteUrl !== undefined) { // permite setear a null
-      sets.push("Comprobante_URL = @url"); rq.input("url", sql.NVarChar(400), comprobanteUrl);
-    }
+    if (comprobanteUrl !== undefined) { sets.push("Comprobante_URL = @url"); rq.input("url", sql.NVarChar(400), comprobanteUrl); }
     if (comentario !== undefined) { sets.push("Comentario = @coment"); rq.input("coment", sql.NVarChar(500), comentario); }
 
     if (!sets.length) return res.status(400).json({ ok: false, error: "SIN_CAMBIOS" });
@@ -574,10 +705,8 @@ export async function actualizarHistorial(req, res) {
 }
 
 /* ======================================================
-   ⬆️ SUBIR COMPROBANTE (imagen/pdf) y guardar URL
+   ⬆️ SUBIR COMPROBANTE
    POST /api/certificados/:id/comprobante
-   Body: form-data { file, folio (opcional) }
-   - Requiere middleware uploadComprobantes.single("file")
    ====================================================== */
 export async function subirComprobante(req, res) {
   const id = Number(req.params.id);
@@ -586,7 +715,6 @@ export async function subirComprobante(req, res) {
   const file = req.file;
   if (!file) return res.status(400).json({ ok: false, error: "FILE_REQUIRED" });
 
-  // Construye URL pública (gracias a app.use('/uploads', ...))
   const publicUrl = `/uploads/comprobantes/${file.filename}`;
 
   try {
@@ -595,7 +723,6 @@ export async function subirComprobante(req, res) {
     await tx.begin();
 
     try {
-      // Verifica que el certificado exista
       const cur = await new sql.Request(tx)
         .input("id", sql.Int, id)
         .query(`
@@ -607,7 +734,6 @@ export async function subirComprobante(req, res) {
         return res.status(404).json({ ok: false, error: "CERT_NO_ENCONTRADO" });
       }
 
-      // Actualiza principal
       await new sql.Request(tx)
         .input("id", sql.Int, id)
         .input("url", sql.NVarChar(400), publicUrl)
@@ -617,7 +743,6 @@ export async function subirComprobante(req, res) {
           WHERE ID_Cert = @id;
         `);
 
-      // Actualiza última versión en historial
       await new sql.Request(tx)
         .input("id", sql.Int, id)
         .input("url", sql.NVarChar(400), publicUrl)
@@ -645,5 +770,98 @@ export async function subirComprobante(req, res) {
   } catch (e) {
     console.error("subirComprobante:", e);
     return res.status(500).json({ ok: false, error: "DB_ERROR_UPLOAD" });
+  }
+}
+/* ======================================================
+   📄 SERVIR / GENERAR PDF (por ID_Cert o por Folio)
+   GET /api/certificados/:valor/pdf
+   - "valor" puede ser:
+     • ID_Cert numérico (ej: 25)
+     • Folio string (ej: C-00015)
+   ====================================================== */
+export async function servirCertificadoPDF(req, res) {
+  // OJO: el nombre del parámetro debe coincidir con la ruta (/:valor/pdf)
+  const valor = String(req.params.valor || "").trim();
+  if (!valor) {
+    return res.status(400).json({ ok: false, error: "ID_O_FOLIO_REQUERIDO" });
+  }
+
+  const modo = String(req.query.mode || "download").toLowerCase();
+  const esPreview = modo === "preview" || modo === "inline";
+
+  try {
+    const pool = await getPool();
+    let cert = null;
+
+    // 🔢 Si es solo números → lo tratamos como ID_Cert
+    if (/^\d+$/.test(valor)) {
+      const r1 = await pool.request()
+        .input("id", sql.Int, Number(valor))
+        .query(`
+          SELECT TOP 1 *
+          FROM dbo.CERTIFICADO_RESIDENCIA
+          WHERE ID_Cert = @id;
+        `);
+
+      if (r1.recordset.length) {
+        cert = r1.recordset[0];
+      } else {
+        const r2 = await pool.request()
+          .input("id", sql.Int, Number(valor))
+          .query(`
+            SELECT TOP 1 *
+            FROM dbo.HISTORIAL_CERTIFICADO
+            WHERE ID_Cert = @id
+            ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+          `);
+        if (r2.recordset.length) cert = r2.recordset[0];
+      }
+    } else {
+      // 🔤 Si no es solo números → lo tratamos como Folio
+      const r1 = await pool.request()
+        .input("folio", sql.VarChar(20), valor)
+        .query(`
+          SELECT TOP 1 *
+          FROM dbo.CERTIFICADO_RESIDENCIA
+          WHERE Folio = @folio;
+        `);
+
+      if (r1.recordset.length) {
+        cert = r1.recordset[0];
+      } else {
+        const r2 = await pool.request()
+          .input("folio", sql.VarChar(20), valor)
+          .query(`
+            SELECT TOP 1 *
+            FROM dbo.HISTORIAL_CERTIFICADO
+            WHERE Folio = @folio
+            ORDER BY Fecha_Cambio DESC, ID_Hist DESC;
+          `);
+        if (r2.recordset.length) cert = r2.recordset[0];
+      }
+    }
+
+    if (!cert) {
+      return res.status(404).json({ ok: false, error: "CERT_NO_ENCONTRADO" });
+    }
+
+    // 🧾 Generar PDF en el momento (usa la misma plantilla/base que el correo)
+    const pdfMeta = await generarCertificadoResidenciaPDF(cert);
+    const pdfBuffer = pdfMeta.pdfBuffer;
+
+    const fileName = cert.Folio
+      ? `Certificado_Residencia_${cert.Folio}.pdf`
+      : `Certificado_Residencia_${cert.ID_Cert || "Documento"}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `${esPreview ? "inline" : "attachment"}; filename="${fileName}"`
+    );
+
+    return res.send(pdfBuffer);
+  } catch (e) {
+    console.error("servirCertificadoPDF:", e);
+    return res.status(500).json({ ok: false, error: "ERROR_GENERAR_PDF" });
   }
 }

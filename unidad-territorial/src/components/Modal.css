@@ -1,0 +1,97 @@
+:root {
+    /* Tus colores (del Perfil.css) */
+    --color-base-oscuro: #1e3a8a; /* Azul principal (Info) */
+    --color-secundario: #1e40af; /* Azul oscuro (Hover) */
+    --color-acento: #f97316; /* Naranja (Warning) */
+    --color-blanco: #FFFFFF;
+
+    /* Colores de estado estándar */
+    --color-success: #22c55e;
+    --color-success-dark: #16a34a;
+    --color-error: #ef4444;
+    --color-error-dark: #dc2626;
+    --color-warning-dark: #e0630b;
+}
+
+/* El fondo oscuro semitransparente */
+.modal-overlay {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; 
+}
+
+/* La tarjeta blanca del modal */
+.modal-card {
+  background-color: var(--color-blanco);
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.modal-titulo {
+  color: var(--color-base-oscuro);
+  font-size: 1.8em;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.modal-texto {
+  font-size: 1.1em;
+  color: #333;
+  margin-bottom: 25px;
+  line-height: 1.5; 
+}
+
+/* --- ESTILOS DE TIPO DE MODAL --- */
+
+/* El contenedor del ícono */
+.modal-icon {
+  font-size: 48px; /* Tamaño grande */
+  margin-bottom: 15px;
+}
+
+/* Colores del ícono */
+.modal-icon.success .modal-icon-svg { color: var(--color-success); }
+.modal-icon.error .modal-icon-svg { color: var(--color-error); }
+.modal-icon.info .modal-icon-svg { color: var(--color-base-oscuro); }
+.modal-icon.warning .modal-icon-svg { color: var(--color-acento); }
+
+/* --- BOTONES --- */
+
+/* El botón "Aceptar" (Estilo base por defecto = INFO) */
+.modal-btn {
+  background-color: var(--color-base-oscuro); 
+  color: var(--color-blanco);
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-btn.modal-btn--info:hover {
+  background-color: var(--color-secundario); /* Azul oscuro */
+}
+
+/* Colores de botón que SOBRESCRIBEN el azul */
+.modal-btn.modal-btn--success { background-color: var(--color-success); }
+.modal-btn.modal-btn--success:hover { background-color: var(--color-success-dark); }
+        
+.modal-btn.modal-btn--error { background-color: var(--color-error); }
+.modal-btn.modal-btn--error:hover { background-color: var(--color-error-dark); }
+
+.modal-btn.modal-btn--warning { background-color: var(--color-acento); }
+.modal-btn.modal-btn--warning:hover { background-color: var(--color-warning-dark); }

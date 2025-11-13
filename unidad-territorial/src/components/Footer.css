@@ -1,109 +1,182 @@
-/* Variables de colores (Actualizadas a la paleta) */
-:root{
-  --nav-bg: #1e3a8a;   /* blue-900 */
-  --nav-fg: #ffffff;   /* white */
+/* Variables de colores (Se mantienen) */
+:root {
+  --nav-bg: #1e3a8a;     /* blue-900 */
+  --nav-fg: #ffffff;     /* white */
   --nav-accent: #f97316; /* orange-500 */
   --nav-border: #1e40af; /* blue-800 */
 }
 
 /* Pie principal */
-.ft{
+.ft {
   background: var(--nav-bg);
   color: var(--nav-fg);
-  border-top: 1px solid var(--nav-border); /* Borde más claro */
+  border-top: 1px solid var(--nav-border);
 }
 
 /* Contenedor en grid */
-.ft__grid{
-  max-width: 1200px;
+.ft__grid {
+  max-width: 1300px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem; /* Un poco más de padding vertical */
   display: grid;
-  gap: 1.25rem;
+  gap: 2rem; /* Más espacio entre columnas */
   grid-template-columns: 1fr;
 }
 
-/* Grid en pantallas grandes */
-@media (min-width: 900px){
-  .ft__grid{
-    grid-template-columns: 1.2fr 1fr 1fr 1fr; /* marca + 3 columnas */
+@media (min-width: 900px) {
+  .ft__grid {
+    /* (Marca + 3 columnas) - Marca con más espacio */
+    grid-template-columns: 0.9fr 1fr 1.2fr 1fr;
     align-items: start;
+    gap: 1.5rem;
   }
 }
 
 /* Marca y logo */
-.ft__brand{
+.ft__brand {
   display: flex;
   align-items: center;
-  gap: .75rem;
+  gap: 1rem; 
   margin-bottom: .5rem;
+  /* En móvil, centrado y apilado */
+  flex-direction: column; 
+  align-items: center;
+  text-align: center;
 }
-.ft__logo{
-  height: 250px;
+
+/* Logo */
+.ft__logo {
+  height: 150px; /* Reducido de 200px */
   width: auto;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 4px;
 }
-.ft__brand-name{ font-size: 1.05rem; font-weight: 800; }
-.ft__brand-sub{ opacity: .9; }
+.ft__brand-name { 
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.ft__brand-sub { 
+  opacity: .9; 
+  font-size: 0.9rem;
+}
 
 /* Columnas */
-.ft__col{ display: grid; gap: .5rem; }
-.ft__title{ margin: 0; font-size: 1.05rem; font-weight: 800; }
-.ft__text{ margin: 0; opacity: .95; line-height: 1.6; }
+.ft__col { 
+  display: grid; 
+  gap: .75rem; /* Un poco más de espacio */
+}
+.ft__title { 
+  margin: 0; 
+  font-size: 1.1rem; 
+  font-weight: 700;
+  text-transform: uppercase; /* Distingue mejor los títulos */
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+.ft__text { 
+  margin: 0; 
+  opacity: .95; 
+  line-height: 1.6; 
+}
 
 /* Listas de contacto */
-.ft__list{
+.ft__list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: .35rem;
+  gap: .5rem; /* Espacio entre email y teléfono */
 }
 
 /* Enlaces */
-.ft__link{
+.ft__link {
   color: inherit;
   text-decoration: none;
-  opacity: .95;
+  opacity: .9;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
-/* Hover usa el acento naranja */
-.ft__link:hover{ 
+/* Hover usa el acento naranja y subraya */
+.ft__link:hover { 
   color: var(--nav-accent); 
+  opacity: 1;
+  text-decoration: underline;
+  text-decoration-color: var(--nav-accent);
 } 
 
+/* Clase unificada para enlaces con ícono */
+.ft__link--with-icon {
+  display: flex;
+  align-items: flex-start; /* Alinea al inicio si el texto es largo */
+  gap: 0.6rem; /* Espacio entre ícono y texto */
+  font-weight: 500;
+  line-height: 1.5;
+}
+.ft__link--with-icon strong {
+  font-weight: 600;
+}
+.ft__link--with-icon span {
+  /* Permite que el email o @usuario se corte si es muy largo */
+  word-break: break-word;
+}
+
+/* Estilo unificado de ícono */
+.ft__icon {
+  font-size: 1.1rem; /* Tamaño de fuente para íconos FA */
+  color: var(--nav-fg);
+  opacity: 0.7;
+  margin-top: 0.2rem; /* Alinea verticalmente con la primera línea de texto */
+  width: 20px; /* Ancho fijo para alineación */
+  text-align: center;
+}
+.ft__link:hover .ft__icon {
+  color: var(--nav-accent); /* El ícono también cambia de color */
+  opacity: 1;
+}
+
+.ft__social-icons {
+  display: grid;
+  gap: 0.5rem;
+}
+
 /* Parte inferior del footer */
-.ft__bottom{
-  max-width: 1200px;
+.ft__bottom {
+  max-width: 1300px;
   margin: 0 auto;
-  padding: .9rem 1rem 1.25rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: .75rem;
-  border-top: 1px solid var(--nav-border); /* Borde más claro */
+  gap: 1rem;
+  border-top: 1px solid var(--nav-border);
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
-.ft__legal{ display: flex; gap: .9rem; }
+.ft__legal { 
+  display: flex; 
+  gap: 1.25rem; 
+  white-space: nowrap; /* Evita que se partan los enlaces */
+}
 
 /* Ajustes móviles */
-@media (max-width: 640px){
-  .ft__bottom{
-    flex-direction: column;
-    align-items: flex-start;
+@media (max-width: 640px) {
+  .ft__brand {
+    gap: 0.5rem;
+    align-items: center; /* Centrado en móvil */
   }
-}
-
-/* Icono de Instagram */
-.ft__social {
-  margin-top: 10px;
-}
-
-.ft__icon {
-  width: 50px;
-  height: 50px;
-  transition: transform 0.2s ease;
-}
-
-.ft__icon:hover {
-  transform: scale(1.1);
+  .ft__logo {
+    height: 80px; /* Aún más pequeño en móvil */
+  }
+  .ft__grid {
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+  .ft__bottom {
+    flex-direction: column;
+    align-items: center; /* Centrado en móvil */
+    text-align: center;
+    gap: 0.75rem;
+  }
+  .ft__legal {
+    margin-top: 0.5rem;
+  }
 }

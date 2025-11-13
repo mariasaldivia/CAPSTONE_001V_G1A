@@ -1,13 +1,22 @@
-:root{
-  /* Mapeo de la paleta de colores */
-  --nav-bg: #1e40af;     /* blue-800 (Fondo principal del header) */
-  --nav-fg: #ffffff;     /* white (Texto principal) */
-  --nav-accent: #38bdf8;
-  --nav-active: #22c55e;  /* orange-500 (Color del enlace activo) */
+:root {
+  /* Paleta Monocromática Azul (Armonizada) */
+  --nav-bg: #1e40af;       /* blue-800 (Fondo) */
+  --nav-fg: #ffffff;       /* (Texto principal) */
+  --nav-fg-subtle: #dbeafe; /* blue-100 (Iconos, texto más suave) */
   
-  /* Neutrales (estos funcionan bien) */
-  --nav-neutral: rgba(255, 255, 255, .08); /* hover sutil sobre fondo azul */
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, .15);
+  /* Color Primario (Botón Usuario) */
+  --nav-primary-bg: #3b82f6;   /* blue-500 */
+  --nav-primary-hover: #2563eb; /* blue-600 */
+  
+  /* Color Neutro (Hover, Botón Logout) */
+  --nav-neutral-bg: rgba(255, 255, 255, 0.1);
+  --nav-neutral-hover: rgba(255, 255, 255, 0.15);
+  --nav-neutral-border: rgba(255, 255, 255, 0.2);
+  
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+  --nav-danger-fg: #e54c4c; 
+ 
 }
 
 * { box-sizing: border-box; }
@@ -46,7 +55,7 @@
   font-size: 1rem;
 }
 
-/* LINKS */
+/* LINKS (Estilo de navegación simplificado) */
 .nav__links {
   display: none;
   align-items: center;
@@ -57,59 +66,73 @@
   text-decoration: none;
   padding: .5rem .75rem;
   border-radius: .6rem;
-  transition: background .15s ease, color .15s ease;
+  transition: background .15s ease, opacity .15s ease, font-weight .15s ease;
+  font-weight: 500; 
+  opacity: 0.8; /* Sutil para inactivos */
 }
 .nav__link:hover {
-  background: var(--nav-neutral);
+  background: var(--nav-neutral-bg);
+  opacity: 1;
 }
 .nav__link--active {
-  color: var(--nav-active);
-  /* Fondo transparente basado en orange-500 (#f97316) */
-  background: rgba(22, 219, 249, 0.15); 
+  background: var(--nav-neutral-bg);
+  font-weight: 700; 
+  opacity: 1;
+  color: var(--nav-fg);
 }
 
-/* CHIP USUARIO (Actualizado a naranja) */
+/* CHIP USUARIO (Simplificado a "Botón Primario") */
 .nav__user-chip {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
   padding: .4rem .7rem;
   border-radius: .6rem;
-  /* Borde y fondo basados en orange-500 */
-  border: 1px solid rgba(249, 115, 22, 0.25);
-  background: rgba(249, 115, 22, 0.1);
+  background: var(--nav-primary-bg); 
+  border: 1px solid var(--nav-primary-bg);
   font-weight: 600;
-  color: var(--nav-accent);
+  color: var(--nav-fg); 
   text-decoration: none;
+  transition: background .15s ease, box-shadow .15s ease;
 }
 .nav__user-chip:hover {
-  /* Hover naranja más intenso */
-  background: rgba(249, 115, 22, 0.2);
+  background: var(--nav-primary-hover);
 }
 .nav__user-icon {
   font-size: 1.1rem;
-  opacity: .85;
+  color: var(--nav-fg);
+  opacity: 0.9;
 }
 .nav__user-text {
   text-transform: capitalize;
-}
-
-/* BOTÓN CERRAR SESIÓN (neutral) */
-.nav__btn-logout {
-  border: 1px solid rgba(255, 255, 255, .2);
-  background: var(--nav-neutral); /* usa el neutral */
   color: var(--nav-fg);
-  padding: .45rem .75rem;
-  border-radius: .6rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s ease, transform .1s ease;
 }
-.nav__btn-logout:hover {
-  background: rgba(255, 255, 255, .15);
-  transform: translateY(-1px);
+.nav__user-chip--active {
+  background: var(--nav-primary-hover);
+  box-shadow: 0 0 0 2px var(--nav-bg), 0 0 0 4px var(--nav-primary-bg);
 }
 
+
+/* BOTÓN CERRAR SESIÓN  */
+.nav__btn-logout {
+  border: 1px solid transparent; /* Sin borde visible */
+  background: transparent;       /* Sin fondo */
+  color: var(--nav-fg);          /* Texto blanco normal */
+  opacity: 0.6;                  /* Igual que los links inactivos */
+  padding: .5rem .75rem;
+  border-radius: .6rem;
+  font-weight: 500; 
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, opacity .15s ease;
+}
+
+.nav__btn-logout:hover {
+  background: transparent;      
+  color: var(--nav-danger-fg);  
+  opacity: 1;
+  transform: none; 
+}
 /* Hamburguesa */
 .nav__burger {
   display: inline-flex;
@@ -126,7 +149,7 @@
   background: var(--nav-fg);
 }
 
-/* Drawer móvil (usando blue-900 para un leve contraste) */
+/* Drawer móvil */
 .nav__drawer {
   position: fixed;
   inset: 0 0 0 auto;
@@ -134,7 +157,7 @@
   max-width: 360px;
   translate: 100% 0;
   transition: translate .25s ease;
-  background: #1e3a8a; /* blue-900 (el del footer original) */
+  background: #1e3a8a;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -157,21 +180,29 @@
   display: flex;
   align-items: center;
   gap: .6rem;
+  font-weight: 500;
+  opacity: 0.9;
 }
 .nav__drawer-link:hover,
 .nav__drawer-user:hover {
-  background: rgba(255, 255, 255, .08);
+  background: var(--nav-neutral-bg);
+  opacity: 1;
 }
 .nav__drawer-link--active {
-  color: var(--nav-active);
-  /* Fondo transparente basado en orange-500 */
-  background: rgba(249, 115, 22, 0.15);
+  background: var(--nav-neutral-bg);
+  font-weight: 700; 
+  opacity: 1;
+  color: var(--nav-fg); 
+}
+.nav__drawer-user {
+  background: var(--nav-primary-bg);
+  font-weight: 700;
 }
 
 .nav__drawer-btn-logout {
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, .25);
-  background: rgba(255, 255, 255, .08);
+  border: 1px solid var(--nav-neutral-border);
+  background: var(--nav-neutral-bg);
   color: var(--nav-fg);
   padding: .9rem 1rem;
   border-radius: .9rem;
@@ -179,14 +210,13 @@
   cursor: pointer;
 }
 .nav__drawer-btn-logout:hover {
-  background: rgba(255, 255, 255, .15);
+  background: var(--nav-neutral-hover);
 }
 
-/* Backdrop (usando blue-900 transparente) */
+/* Backdrop */
 .nav__backdrop {
   position: fixed;
   inset: 0;
-  /* Fondo transparente basado en blue-900 (#1e3a8a) */
   background: rgba(30, 58, 138, 0.6); 
   backdrop-filter: blur(2px);
   z-index: 55;
@@ -198,7 +228,6 @@
   .nav__burger { display: none; }
   .nav__drawer, .nav__backdrop { display: none; }
 }
-
 @media (max-width: 640px) {
   .nav__title { display: none; }
 }

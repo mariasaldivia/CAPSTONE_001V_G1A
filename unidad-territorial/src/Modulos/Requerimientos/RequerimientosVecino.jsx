@@ -48,6 +48,34 @@ function SuccessPanel({ data, onClose }) {
     </section>
   );
 }
+// ... (Aquí termina el código de SuccessPanel)
+function leerUsuarioSesion() {
+  try {
+    const raw = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+// --- AÑADE ESTA FUNCIÓN DE API ---
+async function obtenerDatosSocioPorId(idUsuario) {
+  const url = `${API_BASE}/api/socios/detalles/${idUsuario}`; 
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al cargar datos del socio');
+    }
+    const data = await response.json();
+    return data.socio; // Devuelve el objeto { Nombres, RUT, Telefono, ... }
+  } catch (error) {
+    console.error("Fallo al obtener datos del socio:", error);
+    throw error;
+  }
+}
+// --- FIN DE LA FUNCIÓN ---
+
 
 export default function RequerimientosVecino() {
   const [sessionUser, setSessionUser] = useState(null);
@@ -81,31 +109,51 @@ export default function RequerimientosVecino() {
     return null;
   };
 
+// --- REEMPLAZA TU USEEFFECT COMPLETO POR ESTE ---
   useEffect(() => {
-    (async () => {
-      try {
-        const resp = await fetch(`${API_BASE}/api/auth/me`, { credentials: "include" });
-        const data = await resp.json().catch(() => ({}));
-        if (resp.ok && (data?.ok || data?.user || data?.data)) {
-          const u = data.data || data.user || data;
-          setSessionUser(u);
-          const nombre = u.nombre || `${[u.nombres, u.apellidos].filter(Boolean).join(" ")}`;
-          const rut = u.rut || u.rut_socio || u.perfil_rut || "";
-          const telefono = u.telefono || u.phone || "";
-          setForm((s) => ({ ...s, socioNombre: nombre, rut, telefono }));
-          return;
-        }
-      } catch {}
-      const u = readLocalUser();
-      if (u) {
-        const nombre = u.nombre || `${[u.nombres, u.apellidos].filter(Boolean).join(" ")}`;
-        const rut = u.rut || u.rut_socio || u.perfil_rut || "";
-        const telefono = u.telefono || u.phone || "";
-        setSessionUser(u);
-        setForm((s) => ({ ...s, socioNombre: nombre, rut, telefono }));
-      }
-    })();
-  }, []);
+    // 1. Lee la sesión (igual que en Perfil)
+    const usuarioGuardado = leerUsuarioSesion();
+    
+    // (Buscamos en el objeto 'usuario' anidado, o en la raíz)
+    const usuarioData = usuarioGuardado?.usuario || usuarioGuardado;
+    setSessionUser(usuarioData);
+
+    // 2. Buscamos el ID (igual que en Perfil)
+    const idParaBuscar = usuarioData ? (usuarioData.ID_Usuario || usuarioData.id) : null;
+
+    // 3. Si se encontró un ID, llamamos a la API (igual que en Perfil)
+    if (idParaBuscar) { 
+      
+      obtenerDatosSocioPorId(idParaBuscar)
+        .then(data => {
+          // ¡ÉXITO! 'data' es el objeto COMPLETO de la tabla SOCIOS
+          
+          // 4. ¡AQUÍ ESTÁ EL ARREGLO!
+          // Rellenamos el formulario con los datos correctos
+          setForm((s) => ({
+            ...s, // Mantenemos los campos vacíos (direccion, tipo, etc.)
+            socioNombre: data.Nombres ? `${data.Nombres} ${data.Apellidos}` : (usuarioData.nombre || ''),
+            rut: data.RUT || '',
+            telefono: data.Telefono || ''
+          }));
+        })
+        .catch(err => {
+          // Si falla, usamos el plan B (los datos incompletos del login)
+          console.warn("No se pudo autocompletar desde BDD, usando datos de sesión:", err.message);
+          setForm((s) => ({
+            ...s,
+            socioNombre: usuarioData.nombre || '',
+            rut: usuarioData.rut || '',
+            telefono: usuarioData.telefono || ''
+          }));
+        });
+
+    } else {
+      // No hay usuario en sesión
+      console.log("No hay usuario en sesión para autocompletar.");
+    }
+  }, []); // El array vacío [] asegura que esto se ejecute solo una vez
+  // --- FIN DEL REEMPLAZO ---
 
   useEffect(() => () => previewURL && URL.revokeObjectURL(previewURL), [previewURL]);
   useEffect(() => { if (titleRef.current) titleRef.current.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); }, [successData]);
@@ -195,26 +243,55 @@ export default function RequerimientosVecino() {
           <SuccessPanel data={successData} onClose={() => setSuccessData(null)} />
         ) : (
           <>
-            <p className="rv__intro">
-              Cuéntanos lo que necesita tu comunidad.
-Usa este formulario para informar problemas, hacer sugerencias o solicitar apoyo a la Junta de Vecinos. Tu participación ayuda a mejorar el entorno de todos.
+{/* --- REEMPLAZA ESTE BLOQUE COMPLETO --- */}
+            
+            <p className="rv__intro-text">
+              Este es tu canal directo para informar a la directiva sobre problemas 
+              en el barrio. Usa este formulario para enviar un <b>aviso sobre el entorno</b>, 
+              como un foco quemado, basura acumulada, vidrios en la calle o problemas 
+              con sumideros. Tu reporte nos ayuda a gestionar una solución.
             </p>
-           
+            
+            <ul className="rv__instructions-list">
+              <li> Tus datos de <strong>Nombre, RUT</strong> y <strong>Teléfono</strong> se cargan automáticamente desde tu sesión.</li> 
+              <li> Elige el <strong>Tipo</strong> que mejor describa el problema (Seguridad, Limpieza, etc.). </li> 
+              <li> Indica la <strong>Dirección o ubicación</strong> lo más precisa posible (¡este campo es muy importante!).</li>
+              <li> Adjunta una <strong>Imagen</strong> si ayuda a explicar el caso o entender el problema (opcional). </li>
+              <li> Usa <strong>Comentarios</strong> adicionales para cualquier otro detalle (opcional).</li> 
+            </ul>
+            
+            <p className="rv__community-message">
+              Tu aviso es el primer paso. Gracias por tu participación. 
+              <strong> ¡Unidos mejoramos nuestro entorno!</strong>
+            </p>
+             
             <form className="rv__form" onSubmit={onSubmit} noValidate>
-              <div className="rv__row">
+
                 <div className="rv__field">
                   <label htmlFor="socioNombre">Nombre</label>
-                  <input id="socioNombre" name="socioNombre" value={form.socioNombre} onChange={onChange} required disabled={sending} />
+                  <input 
+                    id="socioNombre" 
+                    name="socioNombre" 
+                    value={form.socioNombre} 
+                    onChange={onChange} 
+                    required
+                    disabled={sending} 
+                    readOnly
+                  />
                 </div>
                 <div className="rv__field">
                   <label htmlFor="rut">RUT</label>
-                  <input id="rut" name="rut" placeholder="12.345.678-9" value={form.rut} onChange={onChange} required disabled={sending} />
+                  <input 
+                    id="rut" 
+                    name="rut" 
+                    value={form.rut} 
+                    onChange={onChange} 
+                    required disabled={sending} 
+                    readOnly
+                  />
                 </div>
-              </div>
-
-              {/* ✅ Nuevo campo teléfono */}
-              <div className="rv__row">
-                <div className="rv__field" style={{ width: "100%" }}>
+    
+                <div className="rv__field rv__colspan-2">
                   <label htmlFor="telefono">Teléfono</label>
                   <input
                     id="telefono"
@@ -224,11 +301,9 @@ Usa este formulario para informar problemas, hacer sugerencias o solicitar apoyo
                     onChange={onChange}
                     required
                     disabled={sending}
+                    readOnly
                   />
                 </div>
-              </div>
-
-              <div className="rv__row">
                 <div className="rv__field">
                   <label htmlFor="tipo">Tipo de requerimiento</label>
                   <div className="rv__selectWrap">
@@ -246,28 +321,47 @@ Usa este formulario para informar problemas, hacer sugerencias o solicitar apoyo
                 </div>
 
                 <div className="rv__field">
-                  <label htmlFor="direccion">Dirección</label>
-                  <input id="direccion" name="direccion" value={form.direccion} onChange={onChange} required disabled={sending} />
+                  <label htmlFor="direccion">Dirección o ubicación aproximada</label>
+                  <input id="direccion" 
+                  name="direccion" 
+                  value={form.direccion} 
+                  onChange={onChange} 
+                  required 
+                  disabled={sending} />
                 </div>
-              </div>
+      
 
-              <div className="rv__row">
+
                 <div className="rv__field">
-                  <label>Imagen</label>
+                  <label>Imagen (Opcional)</label>
                   <label className="rv__file">
-                    <input type="file" name="imagen" accept="image/*" onChange={onChange} disabled={sending} />
+                    <input 
+                      type="file" 
+                      name="imagen" 
+                      accept="image/*" 
+                      onChange={onChange} 
+                      disabled={sending} 
+                    />
                     <span className="rv__clip">📎</span>
-                    <span className="rv__fname">{fileName || "Adjuntar imagen (opcional)"}</span>
+                    <span className="rv__fname">{fileName || "Adjuntar imagen..."}</span>
                   </label>
                   {previewURL && <div className="rv__preview"><img src={previewURL} alt="Adjunto" /></div>}
                 </div>
                 <div className="rv__field">
                   <label htmlFor="comentarios">Comentarios adicionales</label>
-                  <textarea id="comentarios" name="comentarios" rows={5} value={form.comentarios} onChange={onChange} disabled={sending} />
+                  <textarea 
+                    id="comentarios" 
+                    name="comentarios" 
+                    rows={5} 
+                    value={form.comentarios} 
+                    onChange={onChange} 
+                    disabled={sending} 
+                    placeholder="Ej: El foco del poste está parpadeando..."
+                  />
                 </div>
-              </div>
+      
 
-              <div className="rv__actions">
+              <div className="rv__actions rv__colspan-2">
                 <button className="rv__btn" disabled={!puedeEnviar || sending}>
                   {sending ? "ENVIANDO…" : "INGRESAR"}
                 </button>

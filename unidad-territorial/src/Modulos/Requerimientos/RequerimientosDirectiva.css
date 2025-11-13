@@ -56,7 +56,15 @@
 .cd__btn--warn{ background: #fffbeb; border-color: #fef3c7; color: #854d0e; }
 .cd__btn--warn:hover{ background: #fef3c7; }
 .cd__link{ color: var(--content-accent); text-decoration: underline; }
+.cd__btn--info {
+  background: #dbeafe; /* Fondo azul muy claro */
+  border-color: #bfdbfe; /* Borde azul claro */
+  color: var(--content-text-muted); /* Texto azul oscuro (1e40af) */
+}
 
+.cd__btn--info:hover {
+  background: #bfdbfe; /* Fondo azul más oscuro al pasar el mouse */
+}
 /* ===================================================================
    TARJETAS
    =================================================================== */
