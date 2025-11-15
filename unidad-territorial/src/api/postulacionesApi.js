@@ -15,11 +15,11 @@ export async function obtenerPostulaciones(idProyecto) {
   return res.json();
 }
 
-export const actualizarEstadoPostulacion = async (idPostulacion, nuevoEstado) => {
+export const actualizarEstadoPostulacion = async (idPostulacion, data) => {
   const res = await fetch(`http://localhost:4010/api/postulaciones/${idPostulacion}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ Estado: nuevoEstado }),
+    body: JSON.stringify(data),
   });
 
   if (!res.ok) {

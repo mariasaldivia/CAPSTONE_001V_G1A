@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSocios, aprobarSocio, rechazarSocio, obtenerDetallesSocio, actualizarContacto } from "../controllers/sociosController.js";
+import { getSocios, aprobarSocio, rechazarSocio, obtenerDetallesSocio, actualizarContacto,  buscarSocioPorIdentificador } from "../controllers/sociosController.js";
 
 const router = Router();
 
@@ -21,5 +21,6 @@ router.get("/detalles/:idUsuario", obtenerDetallesSocio);
 //ACTUALIZAR
 router.patch("/actualizar/:idUsuario",actualizarContacto);
 
+router.get("/buscar", buscarSocioPorIdentificador);
 export default router;
 

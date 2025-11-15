@@ -25,6 +25,7 @@ export const crearProyecto = async (req, res) => {
     FechaFin,
     HoraInicio,
     HoraFin,
+    TipoProyecto,
   } = req.body;
 
   try {
@@ -68,12 +69,13 @@ export const crearProyecto = async (req, res) => {
     request.input("HoraInicio", sql.NVarChar(8), horaInicioValida);
     request.input("HoraFin", sql.NVarChar(8), horaFinValida);
     request.input("Estado", sql.NVarChar(20), estadoInicial);
+    request.input("TipoProyecto", sql.NVarChar(30), TipoProyecto || "JJVV");
 
     await request.query(`
-      INSERT INTO PROYECTO_VECINAL 
-        (Nombre, Descripcion, Bases, FechaInicio, FechaFin, HoraInicio, HoraFin, Estado)
-      VALUES 
-        (@Nombre, @Descripcion, @Bases, @FechaInicio, @FechaFin, @HoraInicio, @HoraFin, @Estado)
+      INSERT INTO PROYECTO_VECINAL
+      (Nombre, Descripcion, Bases, FechaInicio, FechaFin, HoraInicio, HoraFin, Estado, TipoProyecto)
+    VALUES
+      (@Nombre, @Descripcion, @Bases, @FechaInicio, @FechaFin, @HoraInicio, @HoraFin, @Estado, @TipoProyecto)
     `);
 
     console.log("✅ Proyecto creado correctamente");
@@ -88,29 +90,41 @@ export const crearProyecto = async (req, res) => {
 export const obtenerProyectos = async (req, res) => {
   try {
     const pool = await getPool();
+
+    // 🔹 Actualizar estado automático
     await pool.request().query(`
       UPDATE PROYECTO_VECINAL
       SET Estado = 'Finalizado'
       WHERE FechaFin < GETDATE() AND Estado <> 'Finalizado';
     `);
+
+    // 🔹 Obtener proyectos con total de interesados
     const result = await pool.request().query(`
-      
       SELECT 
-        ID_Proyecto,
-        Nombre,
-        Descripcion,
-        Bases,
-        FechaInicio,
-        FechaFin,
-        CONVERT(VARCHAR(8), HoraInicio, 108) AS HoraInicio,
-        CONVERT(VARCHAR(8), HoraFin, 108) AS HoraFin,
-        Estado,
-        Fecha_Creacion
-      FROM PROYECTO_VECINAL
-      ORDER BY FechaInicio ASC
+        P.ID_Proyecto,
+        P.Nombre,
+        P.Descripcion,
+        P.Bases,
+        P.FechaInicio,
+        P.FechaFin,
+        CONVERT(VARCHAR(8), P.HoraInicio, 108) AS HoraInicio,
+        CONVERT(VARCHAR(8), P.HoraFin, 108) AS HoraFin,
+        P.Estado,
+        P.Fecha_Creacion,
+        P.TipoProyecto,
+
+        -- 🔹 Contador de interesados
+        (SELECT COUNT(*) 
+         FROM INTERES_PROYECTO I 
+         WHERE I.ID_Proyecto = P.ID_Proyecto
+        ) AS TotalInteres
+
+      FROM PROYECTO_VECINAL P
+      ORDER BY P.FechaInicio ASC;
     `);
 
     res.json(result.recordset);
+
   } catch (err) {
     console.error("❌ Error al obtener proyectos:", err);
     res.status(500).json({ error: "Error al obtener proyectos" });

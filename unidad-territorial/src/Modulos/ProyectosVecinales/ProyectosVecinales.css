@@ -741,3 +741,506 @@ textarea {
     transform: scale(1);
   }
 }
+.campo-titulo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3a8a; /* azul bonito */
+  margin-bottom: 4px;
+}
+
+.checkbox-muni {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.checkbox-muni input {
+  width: 18px;
+  height: 18px;
+}
+
+.campo-descripcion {
+  font-size: 0.9rem;
+  color: #6b7280; /* gris suave */
+}
+/* Contenedor de título + badge */
+.header-titles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Badge tipo de proyecto */
+.tipo-badge {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  font-weight: bold;
+  color: white;
+}
+
+.tipo-badge.jjvv {
+  background-color: #f97316; /* Naranjo */
+}
+
+.tipo-badge.municipal {
+  background-color: #1e40af; /* Azul municipal */
+}
+.pv-interes {
+  margin-top: 6px;
+  padding: 4px 8px;
+  background-color: #e0e7ff; /* azul suave */
+  border-left: 4px solid #1e40af;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.pv-admin {
+  width: 100%;
+}
+
+/* ---- LAYOUT GENERAL ---- */
+.pv-admin .pv-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ---- CARDS PRINCIPALES ---- */
+.pv-admin .pv-card {
+  background: var(--pv-panel);
+  border-radius: 1.1rem;
+  padding: 2rem 2.2rem;
+  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.08);
+  border: 1px solid var(--pv-border);
+}
+
+/* ---- TÍTULOS ---- */
+.pv-admin .pv-cardHeader {
+  padding-bottom: 0.9rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--pv-border);
+}
+
+.pv-admin .pv-cardHeader h3,
+.pv-admin .pv-historialHeader h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--pv-text);
+}
+
+.pv-admin .pv-cardHint {
+  font-size: 0.9rem;
+  margin-top: 4px;
+  color: var(--pv-text-muted);
+}
+
+/* ---- FORMULARIO (2 COLUMNAS) ---- */
+.pv-admin .rv__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem 1.4rem;
+}
+
+.pv-admin .rv__field textarea {
+  min-height: 100px;
+}
+
+/* ---- HISTORIAL: TARJETAS COMPLETAS ---- */
+.pv-admin .historial-container {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+/* ---- TARJETA DE ACTIVIDAD (ADMIN) ---- */
+.pv-admin .proyecto-card {
+  width: 100%;
+  padding: 1.6rem 1.8rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.08);
+  background: var(--pv-panel);
+  border-left: 6px solid var(--pv-border);
+  transition: all 0.15s ease-out;
+}
+
+.pv-admin .proyecto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 20px rgba(30, 64, 175, 0.12);
+}
+
+/* ---- HEADER DE CADA ACTIVIDAD ---- */
+.pv-admin .proyecto-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pv-admin .proyecto-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pv-admin .proyecto-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--pv-text);
+}
+
+/* ---- DESCRIPCIÓN ---- */
+.pv-admin .proyecto-descripcion {
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  color: var(--pv-text-muted);
+}
+
+/* ---- INFORMACIÓN (fechas, horarios, interesados) ---- */
+.pv-admin .proyecto-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.2rem;
+  margin: 0.6rem 0;
+  font-size: 0.9rem;
+  color: var(--pv-text-muted);
+}
+
+/* ---- BASES ---- */
+.pv-admin .pv-details summary {
+  color: var(--pv-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pv-admin .pv-details summary:hover {
+  text-decoration: underline;
+}
+
+.pv-admin .pv-basesText {
+  margin-top: 6px;
+  padding: 0.7rem 0.8rem;
+  background: var(--pv-input-bg);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--pv-text-muted);
+}
+
+/* ---- BADGE TIPO PROYECTO ---- */
+.pv-admin .tipo-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.pv-admin .tipo-badge.jjvv {
+  background-color: var(--pv-accent);
+}
+
+.pv-admin .tipo-badge.municipal {
+  background-color: #1e40af;
+}
+
+/* ---- ACCIONES ---- */
+.pv-admin .acciones-proyecto {
+  margin-top: 1rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pv-admin .acciones-proyecto-right {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* ---- EDICIÓN INLINE ---- */
+.pv-admin .editar-fechas {
+  margin-top: 1rem;
+  padding: 1.3rem 1.6rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid var(--pv-border);
+  animation: despliegue 0.2s ease-out;
+}
+
+@keyframes despliegue {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pv-admin .editar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem 1.2rem;
+  margin-bottom: 0.9rem;
+}
+
+.pv-admin .editar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+/* ---- SELECT ESTADO (solo admin) ---- */
+.pv-admin .estado-select {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid var(--pv-border);
+  background: var(--pv-input-bg);
+}
+
+/* ---- COLOR DE BORDE POR ESTADO ---- */
+.pv-admin .estado-abierto   { border-left-color: #22c55e; }
+.pv-admin .estado-revision  { border-left-color: #eab308; }
+.pv-admin .estado-finalizado{ border-left-color: #ef4444; }
+
+/* ---- INTERESADOS (solo municipalidad) ---- */
+.pv-admin .pv-interes {
+  margin-top: 0.2rem;
+  padding: 5px 10px;
+  background: #e0e7ff;
+  border-left: 4px solid #1e40af;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+/* ---- TABLA DE POSTULANTES ---- */
+.pv-admin .tabla-postulantes {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+.pv-admin .tabla-postulantes th,
+.pv-admin .tabla-postulantes td {
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.pv-admin .tabla-postulantes tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* ---- TABLA DE POSTULANTES ---- */
+.pv-admin .tabla-postulantes {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+.pv-admin .tabla-postulantes th,
+.pv-admin .tabla-postulantes td {
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.pv-admin .tabla-postulantes tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.pv-admin .btn-editar,
+.pv-admin .btn-eliminar,
+.pv-admin .btn-ver-postulantes {
+  padding: 0.4rem 0.7rem;          
+  font-size: 0.85rem;
+  border-radius: 5px;
+} 
+.pv-admin .pv-table-wrapper {
+  background: white;
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(30,64,175,0.08);
+  margin-top: 1rem;
+}
+
+.pv-admin .pv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.pv-admin .pv-table thead tr {
+  background: #eef2ff;
+}
+
+.pv-admin .pv-table th {
+  padding: 0.9rem;
+  color: #1e3a8a;
+  text-align: left;
+  font-weight: 700;
+}
+
+.pv-admin .pv-table td {
+  padding: 0.8rem;
+  color: #1e40af;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pv-admin .pv-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* Descripción */
+.pv-admin .pv-descripcion-tabla {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+/* Interesados */
+.pv-admin .pv-interes-tabla {
+  font-size: 0.8rem;
+  margin-top: 2px;
+  color: #1e3a8a;
+}
+
+/* Select */
+.pv-admin .pv-select-tabla {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Badges */
+.pv-admin .badge-jjvv {
+  background: #f97316;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.pv-admin .badge-muni {
+  background: #1e40af;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+/* Acciones */
+.pv-admin .pv-acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pv-admin .pv-acciones button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pv-admin .btn-editar {
+  color: #2563eb;
+}
+
+.pv-admin .btn-ver-postulantes {
+  color: #4b5563;
+}
+
+.pv-admin .btn-eliminar {
+  color: #dc2626;
+}
+
+/* Fila editable */
+.pv-admin .pv-edit-row td {
+  background: #f8fafc;
+  padding: 1rem 1.2rem;
+}
+/* Bases dentro de la tabla (columna Actividad) */
+.pv-admin .pv-bases-tabla {
+  font-size: 0.8rem;
+  margin-top: 2px;
+  color: #4b5563;
+}
+
+.pv-admin .pv-bases-sin {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Versión inline del details para bases */
+.pv-admin .pv-details-inline summary {
+  cursor: pointer;
+  color: var(--pv-accent);
+  font-weight: 500;
+}
+
+.pv-admin .pv-details-inline p {
+  margin-top: 0.2rem;
+  background: var(--pv-input-bg);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+}
+.pv-admin .pv-actions-circle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Botón base */
+.pv-admin .circ-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d9e1f9; /* similar a noticias */
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.06);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.pv-admin .circ-btn svg {
+  fill: #6b7280; /* muted */
+}
+
+/* Hover / Active */
+.pv-admin .circ-btn:hover {
+  background: #eef2ff;
+}
+.pv-admin .circ-btn:active {
+  transform: translateY(1px);
+}
+
+/* Editar (azul) */
+.pv-admin .circ-edit svg {
+  fill: #1e40af;
+}
+
+/* Flecha (estado) */
+.pv-admin .circ-archive svg {
+  fill: #0284c7; /* celeste */
+}
+.pv-admin .circ-archive:hover {
+  background: #e0f2fe;
+}
+
+/* Eliminar (rojo) */
+.pv-admin .circ-delete {
+  border-color: #fecaca;
+}
+.pv-admin .circ-delete svg {
+  fill: #dc2626;
+}
+.pv-admin .circ-delete:hover {
+  background: #fee2e2;
+}

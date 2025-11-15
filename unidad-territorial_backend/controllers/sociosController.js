@@ -198,3 +198,59 @@ export const actualizarContacto = async (req, res) => {
     res.status(500).json({ ok: false, message: "Error en el servidor", error: error.message });
   }
 };
+export const buscarSocioPorIdentificador = async (req, res) => {
+  const { correo, rut } = req.query;
+
+  if (!correo && !rut) {
+    return res.status(400).json({
+      ok: false,
+      message: "Debe enviar correo o rut para buscar al socio",
+    });
+  }
+
+  try {
+    const pool = await getPool();
+    const request = pool.request();
+
+    let query = `
+      SELECT 
+        ID_Socio,
+        ID_Usuario,
+        RUT,
+        Nombres,
+        Apellidos,
+        Correo,
+        Telefono
+      FROM dbo.SOCIOS
+      WHERE `;
+
+    if (correo) {
+      query += `Correo = @value`;
+      request.input("value", sql.NVarChar, correo);
+    } else {
+      query += `RUT = @value`;
+      request.input("value", sql.NVarChar, rut);
+    }
+
+    const result = await request.query(query);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "No se encontró un socio con esos datos",
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      socio: result.recordset[0],
+    });
+  } catch (error) {
+    console.error("Error buscando socio:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Error interno en el servidor",
+      error: error.message,
+    });
+  }
+};

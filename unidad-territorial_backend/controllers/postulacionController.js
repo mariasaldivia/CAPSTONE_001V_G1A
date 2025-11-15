@@ -41,7 +41,10 @@ export const obtenerPostulacionesPorProyecto = async (req, res) => {
           p.Estado,
           p.Fecha_Postulacion,
           s.Nombres,
-          s.Apellidos
+          s.Apellidos,
+          s.Correo,
+          s.Telefono,
+          s.Rut
         FROM POSTULACION_PROYECTO p
         INNER JOIN SOCIOS s ON s.ID_Socio = p.ID_Socio
         WHERE p.ID_Proyecto = @ID_Proyecto
@@ -57,7 +60,7 @@ export const obtenerPostulacionesPorProyecto = async (req, res) => {
 // ✅ Actualizar estado de una postulación
 // 📌 Actualizar estado de una postulación
 export const actualizarEstadoPostulacion = async (req, res) => {
-  const { idPostulacion } = req.params;
+  const idPostulacion = req.params.id;  // ← FIX AQUÍ
   const { Estado } = req.body;
 
   console.log("📥 Datos recibidos:", { idPostulacion, Estado });

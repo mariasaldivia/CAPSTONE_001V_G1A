@@ -4,7 +4,7 @@ const botonEstilo = {
   backgroundColor: '#f97316',
   color: '#ffffff',
   border: 'none',
-  borderRadius: '999px',
+  borderRadius: "6px",   
   padding: '0.6rem 1.4rem',
   cursor: 'pointer',
   fontWeight: '600',
@@ -20,6 +20,7 @@ function ProyectoForm({ onSubmit }) {
   const [fechaFin, setFechaFin] = useState("");
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
+  const [esMunicipalidad, setEsMunicipalidad] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,6 +35,7 @@ function ProyectoForm({ onSubmit }) {
       FechaFin: fechaFin,
       HoraInicio: horaInicio,
       HoraFin: horaFin,
+      TipoProyecto: esMunicipalidad ? "MUNICIPAL" : "JJVV",
     });
 
     setNombre("");
@@ -43,7 +45,10 @@ function ProyectoForm({ onSubmit }) {
     setFechaFin("");
     setHoraInicio("");
     setHoraFin("");
+    setEsMunicipalidad(false);
+   
   };
+
 
   return (
     <form className="rv__form" onSubmit={handleSubmit}>
@@ -56,7 +61,6 @@ function ProyectoForm({ onSubmit }) {
             placeholder="Ej. Bingo Comunitario"
           />
         </div>
-
         <div className="rv__field">
           <label>Descripción *</label>
           <input
@@ -106,7 +110,21 @@ function ProyectoForm({ onSubmit }) {
           />
         </div>
       </div>
+     
+ <div className="rv__field">
+        <h4 className="campo-titulo">Tipo de Actividad</h4>
 
+        <label className="checkbox-muni">
+          <input
+            type="checkbox"
+            checked={esMunicipalidad}
+            onChange={(e) => setEsMunicipalidad(e.target.checked)}
+          />
+          <span>Marcar si es "Municipalidad"</span>
+        </label>
+
+        <p className="campo-descripcion">Por defecto: "Junta de vecinos"</p>
+      </div>
       <div className="rv__field">
         <label>Bases o condiciones (opcional)</label>
         <textarea
@@ -117,11 +135,10 @@ function ProyectoForm({ onSubmit }) {
         ></textarea>
       </div>
 
-      <div className="rv__actions">
-        <button style={botonEstilo} type="submit">
-          Crear Proyecto
-        </button>
+      <div style={{ textAlign: "center", marginTop: "1rem" }}>
+        <button style={botonEstilo}>Crear Proyecto</button>
       </div>
+      
     </form>
   );
 }
