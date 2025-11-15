@@ -150,9 +150,9 @@ const handleSubmit = async (e) => {
     try {
       // 4. Hacemos la llamada a la API (backend)
       // Asegúrate de que esta URL base esté en tu .env.VITE_API_URL
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010/api";
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010";
       
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
