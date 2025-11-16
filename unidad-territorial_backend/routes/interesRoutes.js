@@ -4,7 +4,7 @@ import { registrarInteres, obtenerInteresados } from "../controllers/interesCont
 const router = express.Router();
 
 // Registrar interés
-router.post("/:idProyecto", registrarInteres);
+router.post("/", registrarInteres);
 
 // Obtener interesados por proyecto
 router.get("/:idProyecto", obtenerInteresados);

@@ -34,8 +34,8 @@ function ProyectosVecinalesAdmin() {
   }, []);
 
   const cargarProyectos = async () => {
-   // const data = await obtenerProyectos();
-   // setProyectos(data);
+    const data = await obtenerProyectos();
+    setProyectos(data);
    console.log("Modo Layout: Carga de proyectos omitida.");
   };
 

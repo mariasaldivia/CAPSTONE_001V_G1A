@@ -1244,3 +1244,47 @@ textarea {
 .pv-admin .circ-delete:hover {
   background: #fee2e2;
 }
+
+/* ================================================================
+   Marca de Agua para Tarjetas de Actividades
+================================================================ */
+
+/* 1. Añadimos position: relative al contenedor de la tarjeta
+      (Esto es VITAL para que la marca de agua se posicione) */
+.pv-container .proyecto-card {
+  position: relative;
+  overflow: hidden; /* Ayuda a que la marca no se salga */
+}
+
+/* 2. Estilo base para la marca de agua (tu código)
+      Usamos ::before para que se dibuje "detrás" */
+.pv-container .proyecto-card::before {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 80px; /* Tu tamaño */
+  height: 80px; /* Tu tamaño */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.7; 
+  pointer-events: none; /* Para que no interfiera con el mouse */
+  z-index: 1; /* Capa 1: La marca de agua */
+}
+
+/* 3. Ponemos el contenido (hijos directos) POR ENCIMA */
+.pv-container .proyecto-card > * {
+  position: relative; /* Necesario para que z-index funcione */
+  z-index: 2; /* Capa 2: El contenido (texto, botones, etc.) */
+}
+
+/* 4. Logo para Junta de Vecino (JJVV) */
+.pv-container .proyecto-card.proyecto-card--jv::before {
+  background-image: url('/logo.png'); 
+}
+
+/* 5. Logo para Municipalidad */
+.pv-container .proyecto-card.proyecto-card--muni::before {
+  background-image: url('/logo_municipalidad_2.png');
+}

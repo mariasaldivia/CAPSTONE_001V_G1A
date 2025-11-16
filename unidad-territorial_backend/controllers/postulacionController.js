@@ -2,15 +2,15 @@ import { sql, getPool } from "../pool.js";
 
 // 📌 Crear una postulación
 export const crearPostulacion = async (req, res) => {
-  const { id_socio, id_proyecto, comentario } = req.body;
+  const { ID_Socio, ID_Proyecto, Comentario } = req.body;
 
   try {
     const pool = await getPool();
 
     await pool.request()
-      .input("ID_Socio", sql.Int, id_socio)
-      .input("ID_Proyecto", sql.Int, id_proyecto)
-      .input("Comentario", sql.NVarChar(500), comentario || "")
+      .input("ID_Socio", sql.Int, ID_Socio)
+      .input("ID_Proyecto", sql.Int, ID_Proyecto)
+      .input("Comentario", sql.NVarChar(500), Comentario || "")
       .input("Estado", sql.NVarChar(20), "Pendiente")
       .query(`
         INSERT INTO POSTULACION_PROYECTO (ID_Socio, ID_Proyecto, Comentario, Estado, Fecha_Postulacion)
