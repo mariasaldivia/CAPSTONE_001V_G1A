@@ -178,12 +178,12 @@ export default function PanelLateralD({
           </NavLink>
 
           <NavLink
-            to="/admin/pagos"
+            to="/directiva/finanzas"
             className={({ isActive }) =>
               "adm__item" + (isActive ? " adm__item--active" : "")
             }
           >
-            Pagos y Cuotas
+            Movimientos financieros
           </NavLink>
 
           <NavLink

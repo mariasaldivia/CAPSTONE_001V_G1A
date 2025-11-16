@@ -20,6 +20,7 @@ import requerimientosRoutes from "./routes/requerimientosRoutes.js"; //
 import proyectoRoutes from "./routes/proyectoRoutes.js";
 import postulacionRoutes from "./routes/postulacionRoutes.js";
 import interesRoutes from "./routes/interesRoutes.js";
+import finanzasRoutes from './routes/finanzasRoutes.js';
 
 // ================================
 // 🚀 Inicialización de servidor
@@ -63,6 +64,7 @@ app.use("/api/requerimientos", requerimientosRoutes);
 app.use("/api/proyectos", proyectoRoutes);
 app.use("/api/postulaciones", postulacionRoutes);
 app.use("/api/interes", interesRoutes);
+app.use('/api/finanzas', finanzasRoutes);
 
 
 // ================================

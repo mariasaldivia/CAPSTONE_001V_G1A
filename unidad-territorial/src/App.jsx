@@ -15,6 +15,8 @@ import ProyectosVecinalesAdmin from "./Modulos/ProyectosVecinales/ProyectosVecin
 import CertificadosDirectiva from "./Modulos/Certificados/CertificadosDirectiva.jsx";
 import Gestion_Socios from "./Modulos/GestionSocios/Gestion_Socios.jsx";
 import NoticiasDirectiva from "./Modulos/ComunicacionNoticias/NoticiasDirectiva.jsx";
+import DashboardFinanzas from "./Modulos/Finanzas/DashboardFinanzas.jsx";
+
 
 /* Auth */
 import Login from "./Modulos/Auth/Login.jsx";
@@ -62,6 +64,7 @@ function AppInner() {
         <Route path="/directiva/certificados" element={<CertificadosDirectiva />} />
         <Route path="/gestion" element={<Gestion_Socios/>} />
         <Route path="/directiva/noticias" element={<NoticiasDirectiva />} />
+        <Route path="/directiva/finanzas" element={<DashboardFinanzas />} />
 
         {/* Redirección por defecto de /directiva → certificados */}
         <Route path="/directiva" element={<Navigate to="/directiva/certificados" replace />} />

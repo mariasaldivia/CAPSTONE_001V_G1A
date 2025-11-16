@@ -1,0 +1,260 @@
+:root {
+  --content-bg: #eff6ff;
+  --content-panel: #ffffff;
+  --content-text: #1e3a8a;
+  --content-text-muted: #1e40af;
+  --content-border: #dbeafe;
+  --content-hover: rgba(30,64,175,.05);
+  --content-accent: #f97316;
+  --content-accent-bg: rgba(249,115,22,.08);
+  --content-accent-bg-light: rgba(249,115,22,.12);
+
+  --ok: #16a34a;
+  --bad: #dc2626;
+  --warn: #eab308;
+}
+
+/* ============================
+   CONTENEDOR GENERAL
+============================ */
+.finanzas-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.finanzas-title {
+  color: var(--content-text);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* ============================
+   TARJETAS DE RESUMEN
+============================ */
+.dashboard-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  justify-content: center;
+}
+
+.summary-card {
+  flex-basis: 280px;
+  flex-grow: 1;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: #fff;
+}
+
+.summary-card h3 {
+  margin: 0 0 .5rem 0;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  opacity: .9;
+}
+
+.summary-card p {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Colores de tarjetas */
+.card-ingreso { background: linear-gradient(45deg,#28a745,#218838); }
+.card-egreso  { background: linear-gradient(45deg,#dc3545,#c82333); }
+.card-saldo   { background: linear-gradient(45deg,#007bff,#0069d9); }
+
+/* ============================
+   TABLA DE MOVIMIENTOS
+============================ */
+.panel-movimientos h3 {
+  font-size: 1.5rem;
+  color: var(--content-text-muted);
+  margin-bottom: 1rem;
+}
+
+.table-wrapper { overflow-x: auto; }
+
+.movimientos-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--content-panel);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.movimientos-table th,
+.movimientos-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--content-border);
+}
+
+.movimientos-table th {
+  background-color: var(--content-bg);
+  font-size: .9rem;
+  color: var(--content-text-muted);
+  text-transform: uppercase;
+}
+
+.movimientos-table tbody tr:hover {
+  background-color: var(--content-hover);
+}
+
+.movimientos-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Colores tipo/monto */
+.tipo-ingreso,
+.monto-ingreso { color: var(--ok); font-weight: 600; }
+
+.tipo-egreso,
+.monto-egreso { color: var(--bad); font-weight: 600; }
+
+/* Caja de error */
+.error-box {
+  background-color: #fef2f2;
+  border: 1px solid var(--bad);
+  color: var(--bad);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+/* ============================
+   FORMULARIOS
+============================ */
+.paneles-accion {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 800px) {
+  .paneles-accion {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-movimiento-card {
+  background: var(--content-panel);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-top: 4px solid var(--content-border);
+}
+
+.form-movimiento-card h3 {
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+}
+
+.form-movimiento-card h3.tipo-ingreso { color: var(--ok); border-top-color: var(--ok); }
+.form-movimiento-card h3.tipo-egreso  { color: var(--bad); border-top-color: var(--bad); }
+
+/* Inputs */
+.input-group { margin-bottom: 1rem; }
+
+.input-group label {
+  display: block;
+  margin-bottom: .5rem;
+  font-weight: 500;
+  font-size: .9rem;
+  color: var(--content-text-muted);
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: .75rem;
+  border: 1px solid var(--content-border);
+  border-radius: 6px;
+  background: var(--content-bg);
+  color: var(--content-text);
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  border-color: var(--content-accent);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--content-accent-bg);
+}
+
+/* Botones */
+.btn-finanzas {
+  width: 100%;
+  padding: .8rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-finanzas:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.btn-ingreso { background-color: var(--ok); }
+.btn-ingreso:hover:not(:disabled) { background-color: #14833d; }
+
+.btn-egreso { background-color: var(--bad); }
+.btn-egreso:hover:not(:disabled) { background-color: #b02121; }
+
+/* ============================
+   LAYOUT PRINCIPAL
+============================ */
+.dashboard-main-content {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr; /* FORM / GRAFICO */
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-main-content { grid-template-columns: 1fr; }
+}
+
+.paneles-accion-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ============================
+   PANEL DEL GRÁFICO
+============================ */
+.panel-grafico {
+  background: var(--content-panel);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.panel-grafico h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+  color: var(--content-text);
+  text-align: center;
+}
+
+.grafico-container {
+  position: relative;
+  height: 350px;
+}
+
+.panel-grafico p {
+  text-align: center;
+  color: var(--content-text-muted);
+  padding: 2rem 0;
+}
