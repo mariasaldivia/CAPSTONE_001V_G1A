@@ -16,6 +16,8 @@ import {
 
 import "./ProyectosVecinales.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010";
+
 function ProyectosVecinalesAdmin() {
   const [proyectos, setProyectos] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
@@ -32,9 +34,11 @@ function ProyectosVecinalesAdmin() {
   }, []);
 
   const cargarProyectos = async () => {
-    const data = await obtenerProyectos();
-    setProyectos(data);
+   // const data = await obtenerProyectos();
+   // setProyectos(data);
+   console.log("Modo Layout: Carga de proyectos omitida.");
   };
+
 
   // 🔹 Crear nuevo proyecto
   const agregarProyecto = async (nuevoProyecto) => {
@@ -46,7 +50,8 @@ function ProyectosVecinalesAdmin() {
   const cambiarEstado = async (idProyecto, nuevoEstado) => {
     try {
       const res = await fetch(
-        `http://localhost:4010/api/proyectos/${idProyecto}`,
+      //  `http://localhost:4010/api/proyectos/${idProyecto}`,
+      `${API_URL}/api/proyectos/${idProyecto}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -130,7 +135,8 @@ const cambiarEstadoPostulante = async (pos, nuevoEstado) => {
         Estado: cambios.Estado,
       };
 
-      const res = await fetch(`http://localhost:4010/api/proyectos/${id}`, {
+    //  const res = await fetch(`http://localhost:4010/api/proyectos/${id}`, {
+      const res = await fetch(`${API_URL}/api/proyectos/${id}`, { 
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

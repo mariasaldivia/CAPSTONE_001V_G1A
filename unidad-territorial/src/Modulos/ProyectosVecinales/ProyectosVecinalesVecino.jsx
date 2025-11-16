@@ -12,15 +12,15 @@ function ProyectosVecinalesVecino() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ motivo: "" });
   const [socioId, setSocioId] = useState(null);
-  const [ setCargandoSocio] = useState(true);
+  const [ cargandoSocio, setCargandoSocio] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMensaje, setModalMensaje] = useState("");
   const [modalTipo, setModalTipo] = useState("info");
 
   useEffect(() => {
     async function fetchData() {
-      const data = await obtenerProyectos();
-      setProyectos(data);
+     // const data = await obtenerProyectos();
+     // setProyectos(data);
     }
     fetchData();
   }, []);
@@ -55,7 +55,11 @@ function ProyectosVecinalesVecino() {
     if (correo) params.append("correo", correo);
     if (rut) params.append("rut", rut);
 
-    fetch(`http://localhost:4010/api/socios/buscar?${params.toString()}`)
+    // LEER LA VARIABLE DE ENTORNO (Como en tu RegisterForm)
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010";
+
+    //fetch(`http://localhost:4010/api/socios/buscar?${params.toString()}`)
+    fetch(`${API_URL}/api/socios/buscar?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ok && data.socio?.ID_Socio) {
