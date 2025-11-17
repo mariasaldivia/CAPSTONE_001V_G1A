@@ -9,11 +9,13 @@ export const crearMovimiento = async (req, res) => {
   const { Tipo, Monto, Descripcion, Categoria, ID_Socio_FK } = req.body;
   
   // 2. Obtenemos el ID del admin/tesorera que está registrando esto.
-  // 👇 ¡IMPORTANTE! Esto debe venir de tu middleware de seguridad (del token).
-  // Por ahora, para probar, pondremos '1' (o un ID de usuario admin que exista)
-  const ID_Dire_FK = req.user?.ID_Usuario || 1; // 👈 CAMBIA ESTO O USA EL MIDDLEWARE
+  // ¡IMPORTANTE! Esto viene del middleware 'protect' que adjuntó 'req.user'
+  const ID_Dire_FK = req.user?.ID_Usuario; 
 
-  // Validación simple
+  // Validación
+  if (!ID_Dire_FK) {
+    return res.status(401).json({ error: 'Usuario no autorizado para esta acción' });
+  }
   if (!Tipo || !Monto || !Descripcion || !Categoria) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
@@ -25,11 +27,11 @@ export const crearMovimiento = async (req, res) => {
       .input('Monto', sql.Decimal(10, 2), Monto)
       .input('Descripcion', sql.NVarChar(255), Descripcion)
       .input('Categoria', sql.NVarChar(50), Categoria)
-      .input('ID_Socio_FK', sql.Int, ID_Socio_FK || null)
-      .input('ID_Dire_FK', sql.Int, ID_Dire_FK)
+      .input('ID_Socio_FK', sql.Int, ID_Socio_FK || null) // Acepta nulos
+      .input('ID_Dire_FK', sql.Int, ID_Dire_FK) // El ID de la Tesorera (de req.user)
       .query(`
-        INSERT INTO MOVIMIENTOS (Tipo, Monto, Descripcion, Categoria, ID_Socio_FK, ID_Dire_FK)
-        VALUES (@Tipo, @Monto, @Descripcion, @Categoria, @ID_Socio_FK, @ID_Dire_FK)
+        INSERT INTO MOVIMIENTOS (Tipo, Monto, Descripcion, Categoria, ID_Socio_FK, ID_Dire_FK, Fecha)
+        VALUES (@Tipo, @Monto, @Descripcion, @Categoria, @ID_Socio_FK, @ID_Dire_FK, SYSDATETIME())
       `);
     
     res.status(201).json({ message: 'Movimiento registrado con éxito' });
@@ -63,7 +65,7 @@ export const obtenerDashboard = async (req, res) => {
         FROM MOVIMIENTOS
       `);
 
-    // El resultado es un array con un solo objeto: [ { SaldoNeto: 0, ... } ]
+    // Devuelve el primer (y único) objeto del resultado
     res.json(result.recordset[0]); 
 
   } catch (err) {
@@ -92,7 +94,9 @@ export const obtenerMovimientos = async (req, res) => {
           U.Nombre_Usuario AS RegistradoPor, -- El admin que lo registró
           S.Nombres AS Socio -- El socio que pagó (si aplica)
         FROM MOVIMIENTOS M
+        -- Unimos con USUARIO para saber quién lo registró
         JOIN USUARIO U ON M.ID_Dire_FK = U.ID_Usuario
+        -- Unimos con SOCIOS para saber quién pagó (si es NULL, no pasa nada)
         LEFT JOIN SOCIOS S ON M.ID_Socio_FK = S.ID_Socio
         ORDER BY M.Fecha DESC
       `);

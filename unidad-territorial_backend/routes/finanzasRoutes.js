@@ -5,29 +5,29 @@ import {
   obtenerDashboard,
 } from '../controllers/finanzasController.js';
 
-// 💡 ¡IMPORTANTE! Aquí debes importar tu middleware de seguridad
-// Este 'protect' revisa el token JWT
-// Y 'isTesorera' revisa si el rol es 'Tesorera' o 'Admin'
-// import { protect, isTesorera } from '../middleware/authMiddleware.js';
+// 1. Importa tus "porteros" de seguridad
+// (Asegúrate que la ruta a tu middleware sea correcta)
+import { protect, isTesorera } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
-// --- RUTAS PROTEGIDAS (Solo Tesorería/Admin) ---
+/*
+ * Todas estas rutas están protegidas. El usuario debe:
+ * 1. Estar logueado (función 'protect')
+ * 2. Tener el Cargo 'Tesorera' o Rol 'ADMIN' (función 'isTesorera')
+ */
 
-// POST /api/finanzas/
+// POST /api/finanzas
 // Crea un movimiento (ya sea Ingreso o Egreso)
-// router.post('/', protect, isTesorera, crearMovimiento); // <-- Así se verá con seguridad
-router.post('/', crearMovimiento); // <-- Por ahora lo dejamos sin seguridad para probar
+router.post('/', protect, isTesorera, crearMovimiento);
 
 // GET /api/finanzas/dashboard
 // Obtiene los totales (Saldo Neto, Ingresos, Egresos)
-// router.get('/dashboard', protect, isTesorera, obtenerDashboard);
-router.get('/dashboard', obtenerDashboard);
+router.get('/dashboard', protect, isTesorera, obtenerDashboard);
 
 // GET /api/finanzas/
 // Obtiene la lista de los últimos movimientos
-// router.get('/', protect, isTesorera, obtenerMovimientos);
-router.get('/', obtenerMovimientos);
+router.get('/', protect, isTesorera, obtenerMovimientos);
 
 
 export default router;

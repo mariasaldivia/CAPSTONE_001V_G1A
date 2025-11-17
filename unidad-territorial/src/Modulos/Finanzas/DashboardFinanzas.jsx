@@ -7,8 +7,6 @@ import {
 } from "../../api/finanzasApi";
 
 import FormularioMovimiento from "./FormularioMovimiento"; 
-import ModalMensaje from "../../components/ModalMensaje";
-
 import "./DashboardFinanzas.css";
 import PanelLateralD from "../../components/PanelLateralD";
 
@@ -61,15 +59,11 @@ function DashboardFinanzasContent() {
     }, [cargarDatos]); 
 
     const handleMovimientoCreado = () => {
-        // Mostramos un modal de éxito aquí (opcional)
-        // setModalVisible(true) ...
-        
-        // Recargamos los datos del dashboard y la tabla
+
         cargarDatos(); 
     };
 
-    // 👈 3. PROCESAMIENTO DE DATOS PARA EL GRÁFICO
-    // Usamos 'useMemo' para que esto solo se calcule cuando los 'movimientos' cambien
+   // --- PROCESAMIENTO GRÁFICO 1: EGRESOS ---
   const datosGraficoEgresos = useMemo(() => {
     const egresos = movimientos.filter(m => m.Tipo === 'Egreso');
     
@@ -105,6 +99,35 @@ function DashboardFinanzasContent() {
     };
   }, [movimientos]); // Se recalcula solo si 'movimientos' cambia
 
+  // 👈 --- PROCESAMIENTO GRÁFICO 2: INGRESOS (NUEVO) ---
+  const datosGraficoIngresos = useMemo(() => {
+    const ingresos = movimientos.filter(m => m.Tipo === 'Ingreso');
+    const categoriasMap = new Map();
+    ingresos.forEach(mov => {
+      const totalAnterior = categoriasMap.get(mov.Categoria) || 0;
+      categoriasMap.set(mov.Categoria, totalAnterior + mov.Monto);
+    });
+    const labels = Array.from(categoriasMap.keys());
+    const data = Array.from(categoriasMap.values());
+    return {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Total Ingesos',
+          data: data,
+          backgroundColor: [
+            'rgba(22, 163, 74, 0.7)',   // --ok (Verde)
+            'rgba(30, 64, 175, 0.7)',  // --content-text (Azul)
+            'rgba(59, 130, 246, 0.7)', // Azul claro
+            'rgba(20, 184, 166, 0.7)', // Teal
+            '#6b7280', // Gris
+          ],
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+      ],
+    };
+  }, [movimientos]);
 
      // --- Renderizado ---
     if (loading && movimientos.length === 0) {
@@ -152,28 +175,52 @@ function DashboardFinanzasContent() {
                 onMovimientoCreado={handleMovimientoCreado} 
             />
             </div>
-            {/* Columna 2: Gráfico */}
-            <div className="panel-grafico">
-            <h3>Egresos por Categoría</h3>
-            {movimientos.filter(m => m.Tipo === 'Egreso').length > 0 ? (
-                <div className="grafico-container">
-                <Doughnut 
-                    data={datosGraficoEgresos} 
-                    options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                        position: 'top',
-                        },
-                    },
-                    }}
-                />
-                </div>
-            ) : (
-                <p>No hay egresos registrados para mostrar en el gráfico.</p>
-            )}
-            </div>
+              <section className="paneles-graficos">
+              {/* Gráfico Ingresos*/}
+              <div className="panel-grafico">
+              <h3>ingresos por Categoría</h3>
+              {movimientos.filter(m => m.Tipo === 'Egreso').length > 0 ? (
+                  <div className="grafico-container">
+                  <Doughnut 
+                      data={datosGraficoIngresos} 
+                      options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                          legend: {
+                          position: 'top',
+                          },
+                      },
+                      }}
+                  />
+                  </div>
+              ) : (
+                  <p>No hay ingresos registrados para mostrar en el gráfico.</p>
+              )}
+              </div>
+              {/* Gráfico Egresos */}
+              <div className="panel-grafico">
+              <h3>Egresos por Categoría</h3>
+              {movimientos.filter(m => m.Tipo === 'Egreso').length > 0 ? (
+                  <div className="grafico-container">
+                  <Doughnut 
+                      data={datosGraficoEgresos} 
+                      options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                          legend: {
+                          position: 'top',
+                          },
+                      },
+                      }}
+                  />
+                  </div>
+              ) : (
+                  <p>No hay egresos registrados para mostrar en el gráfico.</p>
+              )}
+              </div>
+            </section>
         </section>
 
       {/* ==================
