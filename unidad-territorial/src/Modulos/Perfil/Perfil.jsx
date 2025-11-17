@@ -14,7 +14,11 @@ function leerUsuarioSesion() {
 
 // --- 1. FUNCIÓN DE CONEXIÓN ---
 async function obtenerDatosSocioPorId(idUsuario) {
-    const url = `/api/socios/detalles/${idUsuario}`; 
+    // 1. LEEMOS LA VARIABLE DE ENTORNO
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010";
+    
+    // 2.  LA RUTA ABSOLUTA
+    const url = `${API_URL}/api/socios/detalles/${idUsuario}`; 
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -32,7 +36,10 @@ async function obtenerDatosSocioPorId(idUsuario) {
 
 // FUNCIÓN PARA ACTUALIZAR
 async function  actualizarDatosSocio(idUsuario, datos) {
-  const url = `/api/socios/actualizar/${idUsuario}`;
+  // 1. LEEMOS LA VARIABLE DE ENTORNO
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4010";
+  // 2.  LA RUTA ABSOLUTA
+  const url = `${API_URL}/api/socios/actualizar/${idUsuario}`;
 
   const response = await fetch(url, {
       method: 'PATCH', // Usamos PATCH o PUT para actualizar
